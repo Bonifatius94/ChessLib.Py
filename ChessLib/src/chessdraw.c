@@ -5,7 +5,7 @@ ChessDraw create_draw_from_hash(uint32_t hash)
 	return (ChessDraw)hash;
 }
 
-ChessDrawType determine_draw_type(ChessBitboard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
+ChessDrawType determine_draw_type(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
 {
     ChessPiece piece = get_piece_at(board, oldPos);
     ChessDrawType type = Standard;
@@ -32,7 +32,7 @@ ChessDrawType determine_draw_type(ChessBitboard board, ChessPosition oldPos, Che
     return type;
 }
 
-ChessDraw create_draw(ChessBitboard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
+ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
 {
     // get the drawing piece
     ChessPiece piece = get_piece_at(board, oldPos);

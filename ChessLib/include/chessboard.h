@@ -59,24 +59,24 @@
 #define FIELD_G8 0x4000000000000000uLL
 #define FIELD_H8 0x8000000000000000uLL
 
-#define START_FORMATION ((ChessBitboard){ { FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS } })
+#define START_FORMATION ((ChessBoard){ { FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS } })
 
 #define SIDE_OFFSET(color) (((uint8_t)(color)) * 6)
 #define PIECE_OFFSET(piece) (((uint8_t)(piece)) - 1)
-#define WHITE_MASK(color) (((uint64_t)(((int64_t)(color)) - 1)))
+#define WHITE_MASK(color) (((Bitboard)(((int64_t)(color)) - 1)))
 #define BLACK_MASK(color) (~WHITE_MASK((color)))
 
 /* ====================================================
             D E F I N E     F U N C T I O N S
    ==================================================== */
 
-ChessBitboard create_board(const uint64_t bitboards[]);
+ChessBoard create_board(const Bitboard bitboards[]);
 
-uint64_t is_captured_at(ChessBitboard board, ChessPosition pos);
-ChessPiece get_piece_at(ChessBitboard board, ChessPosition pos);
-uint64_t was_piece_moved(ChessBitboard board, ChessPosition pos);
+Bitboard is_captured_at(ChessBoard board, ChessPosition pos);
+ChessPiece get_piece_at(ChessBoard board, ChessPosition pos);
+Bitboard was_piece_moved(ChessBoard board, ChessPosition pos);
 
-ChessBitboard apply_draw(ChessBitboard board, ChessDraw draw);
-void apply_draw_to_bitboards(uint64_t* bitboards, ChessDraw draw);
+ChessBoard apply_draw(ChessBoard board, ChessDraw draw);
+void apply_draw_to_bitboards(Bitboard* bitboards, ChessDraw draw);
 
 #endif

@@ -1,18 +1,18 @@
-﻿#include "chessbitboard.h"
+﻿#include "chessboard.h"
 
-ChessBitboard create_board(const uint64_t bitboards[])
+ChessBoard create_board(const Bitboard bitboards[])
 {
 	// TODO: check if memory allocation works
-	ChessBitboard board = { bitboards };
+	ChessBoard board = { bitboards };
 	return board;
 }
 
-uint64_t is_captured_at(ChessBitboard board, ChessPosition pos)
+Bitboard is_captured_at(ChessBoard board, ChessPosition pos)
 {
-	uint64_t mask = 0x1uLL << pos;
+    Bitboard mask = 0x1uLL << pos;
 
 	/* combine all bitboards to one bitboard by bitwise OR */
-	uint64_t allPieces = board.bitboards[0] | board.bitboards[1] | board.bitboards[2] 
+    Bitboard allPieces = board.bitboards[0] | board.bitboards[1] | board.bitboards[2]
 		| board.bitboards[3] | board.bitboards[4] | board.bitboards[5]
 		| board.bitboards[6] | board.bitboards[7] | board.bitboards[8] 
 		| board.bitboards[9] | board.bitboards[10] | board.bitboards[11];
@@ -20,7 +20,7 @@ uint64_t is_captured_at(ChessBitboard board, ChessPosition pos)
 	return (allPieces & mask);
 }
 
-ChessPiece get_piece_at(ChessBitboard board, ChessPosition pos)
+ChessPiece get_piece_at(ChessBoard board, ChessPosition pos)
 {
 	int i;
 	ChessPiece piece = CHESS_PIECE_NULL;
@@ -48,15 +48,15 @@ ChessPiece get_piece_at(ChessBitboard board, ChessPosition pos)
 	return piece;
 }
 
-uint64_t was_piece_moved(ChessBitboard board, ChessPosition pos)
+Bitboard was_piece_moved(ChessBoard board, ChessPosition pos)
 {
 	return ((~START_POSITIONS | board.bitboards[12]) & (0x1uLL << pos));
 }
 
-ChessBitboard apply_draw(ChessBitboard board, ChessDraw draw)
+ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 {
 	int i;
-	ChessBitboard new_board;
+	ChessBoard new_board;
 
 	for (i = 0; i < 13; i++)
 	{
@@ -69,11 +69,11 @@ ChessBitboard apply_draw(ChessBitboard board, ChessDraw draw)
 	// TODO: check if the memory allocation actually works
 }
 
-void apply_draw_to_bitboards(uint64_t* bitboards, ChessDraw draw)
+void apply_draw_to_bitboards(Bitboard* bitboards, ChessDraw draw)
 {
     // determine bitboard masks of the drawing piece's old and new position
-    uint64_t old_pos = 0x1uLL <<  get_old_position(draw);
-    uint64_t new_pos = 0x1uLL << get_new_position(draw);
+    Bitboard old_pos = 0x1uLL <<  get_old_position(draw);
+    Bitboard new_pos = 0x1uLL << get_new_position(draw);
 
     // determine the bitboard index of the drawing piece
     uint8_t side_offset = SIDE_OFFSET(get_drawing_side(draw));
@@ -108,11 +108,11 @@ void apply_draw_to_bitboards(uint64_t* bitboards, ChessDraw draw)
         if (get_draw_type(draw) == EnPassant)
         {
             // determine the white and black mask
-            uint64_t white_mask = WHITE_MASK(get_drawing_side(draw));
-            uint64_t black_mask = ~white_mask;
+            Bitboard white_mask = WHITE_MASK(get_drawing_side(draw));
+            Bitboard black_mask = ~white_mask;
 
             // catch the enemy peasant by flipping the bit at his position
-            uint64_t targetColumn = COL_A << get_column(get_new_position(draw));
+            Bitboard targetColumn = COL_A << get_column(get_new_position(draw));
             bitboards[taken_piece_bitboard_index] ^=
                   (white_mask & targetColumn & ROW_5)  // caught enemy white peasant
                 | (black_mask & targetColumn & ROW_4); // caught enemy black peasant

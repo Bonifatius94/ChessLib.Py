@@ -18,7 +18,7 @@
 
 #include "chesspiece.h"
 #include "chessposition.h"
-#include "chessbitboard.h"
+#include "chessboard.h"
 
 /* TODO: add missing makros, constants, method stubs, etc. */
 

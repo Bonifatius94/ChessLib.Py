@@ -10,7 +10,7 @@
 
 #include "chesspiece.h"
 #include "chessposition.h"
-#include "chessbitboard.h"
+#include "chessboard.h"
 #include "chesstypes.h"
 
 #include <stdint.h>
@@ -27,7 +27,7 @@
    ==================================================== */
 
 ChessDraw create_draw_from_hash(uint32_t hash);
-ChessDraw create_draw(ChessBitboard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
+ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
 
 int get_is_first_move(ChessDraw draw);
 ChessDrawType get_draw_type(ChessDraw draw);
