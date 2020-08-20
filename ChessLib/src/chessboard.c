@@ -3,7 +3,8 @@
 ChessBoard create_board(const Bitboard bitboards[])
 {
 	// TODO: check if memory allocation works
-	ChessBoard board = { bitboards };
+    ChessBoard board;
+    for (size_t i = 0; i < 13; i++) { board.bitboards[i] = bitboards[i]; }
 	return board;
 }
 
