@@ -1,12 +1,29 @@
 #include "chessdrawgen.h"
 using namespace std;
 
-vector<ChessDraw> get_draws(Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw lastDraw);
-vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw> draws);
+/* ====================================================
+            H E L P E R    F U N C T I O N S
+   ==================================================== */
 
-Bitboard get_king_draw_positions(Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw lastDraw);
-Bitboard get_queen_draw_positions(Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw lastDraw);
-// TODO: reuse method stubs from C#
+vector<ChessDraw> get_draws(Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw lastDraw);
+vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw> draws, ChessColor drawing_side);
+
+Bitboard get_king_draw_positions(const Bitboard bitboards[], ChessColor side, int rochade);
+Bitboard get_standard_king_draw_positions(const Bitboard bitboards[], ChessColor side);
+Bitboard get_rochade_king_draw_positions(const Bitboard bitboards[], ChessColor side);
+Bitboard get_queen_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawingPiecesFilter);
+Bitboard get_rook_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawingPiecesFilter, uint8_t pieceOffset);
+Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawingPiecesFilter, uint8_t piece_pffset);
+Bitboard get_knight_draw_positions(Bitboard bitboards[], ChessColor side, Bitboard drawingPiecesFilter);
+Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawingPiecesFilter);
+
+vector<ChessPosition> get_positions(Bitboard bitboard);
+Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
+Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
+
+/* ====================================================
+               D R A W - G E N    M A I N
+   ==================================================== */
 
 vector<ChessDraw> get_all_draws(ChessBoard board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
@@ -32,14 +49,14 @@ vector<ChessDraw> get_all_draws(ChessBoard board, ChessColor drawing_side, Chess
      draws.insert(draws.end(), peasant_draws.begin(), peasant_draws.end());
 
      // if flag is active, filter only draws that do not cause draws into check
-     return analyze_draw_into_check ? eliminate_draws_into_check(board, draws) : draws;
+     return analyze_draw_into_check ? eliminate_draws_into_check(board, draws, drawing_side) : draws;
 }
 
 vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw> draws, ChessColor drawing_side)
 {
     // make a working copy of all local bitboards
-    Bitboard simBitboards[13];
-    for (int i = 0; i < 13; i++) { simBitboards[i] = board.bitboards[i]; }
+    Bitboard sim_bitboards[13];
+    for (int i = 0; i < 13; i++) { sim_bitboards[i] = board.bitboards[i]; }
 
     // init legal draws count with the amount of all draws (unvalidated)
     size_t legalDrawsCount = sizeof(draws) / sizeof(ChessDraw);
@@ -50,27 +67,29 @@ vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw>
     for (size_t i = 0; i < legalDrawsCount; i++)
     {
         // simulate the draw
-        apply_draw_to_bitboards(simBitboards, draws[i]);
-        Bitboard king_mask = simBitboards[side_offset];
+        apply_draw_to_bitboards(sim_bitboards, draws[i]);
+        Bitboard king_mask = sim_bitboards[side_offset];
 
         // calculate enemy answer draws (only fields that could be captured as one bitboard)
-        Bitboard enemyCapturableFields =
-              getKingDrawBitboards(simBitboards, opponent, false)
-            | getQueenDrawBitboards(simBitboards, opponent)
-            | getRookDrawBitboards(simBitboards, opponent)
-            | getBishopDrawBitboards(simBitboards, opponent)
-            | getKnightDrawBitboards(simBitboards, opponent)
-            | getPeasantDrawBitboards(simBitboards, opponent);
+        Bitboard enemyCapturableFields = get_capturable_fields(sim_bitboards, opponent, draws[i]);
+
+        // old code
+        /*Bitboard enemyCapturableFields =
+              get_king_draw_positions(sim_bitboards, opponent, false)
+            | get_queen_draw_positions(sim_bitboards, opponent)
+            | getRookDrawBitboards(sim_bitboards, opponent)
+            | getBishopDrawBitboards(sim_bitboards, opponent)
+            | getKnightDrawBitboards(sim_bitboards, opponent)
+            | getPeasantDrawBitboards(sim_bitboards, opponent);*/
 
         // revert the simulated draw (flip the bits back)
-        apply_draw_to_bitboards(simBitboards, draws[i]);
+        apply_draw_to_bitboards(sim_bitboards, draws[i]);
 
         // check if one of those draws would catch the allied king (bitwise AND) -> draw-into-check
         if ((king_mask & enemyCapturableFields) > 0)
         {
             // overwrite the illegal draw with the last unevaluated draw in the array
             draws[i--] = draws[--legalDrawsCount];
-            // TODO: check if this works
         }
     }
 
@@ -78,61 +97,327 @@ vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw>
     return vector<ChessDraw>(draws.begin(), draws.begin() + legalDrawsCount);
 }
 
-vector<ChessDraw> get_draws(Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw lastDraw)
+vector<ChessDraw> get_draws(const ChessBoard board, ChessColor side, ChessPieceType type, ChessDraw lastDraw)
 {
     // get drawinh pieces
-    byte index = (byte)(side.SideOffset() + type.PieceTypeOffset());
-    var drawingPieces = getPositions(bitboards[index]);
+    uint8_t index = SIDE_OFFSET(side) + PIECE_OFFSET(type);
+    vector<ChessPosition> drawing_pieces = get_positions(board.bitboards[index]);
 
     // init draws result set (max. draws)
-    var draws = new ChessDraw[drawingPieces.Length * 28];
-    byte count = 0;
+    vector<ChessDraw> draws(drawing_pieces.size() * 28);
+    size_t count = 0;
 
     // loop through drawing pieces
-    for (byte i = 0; i < drawingPieces.Length; i++)
+    for (size_t i = 0; i < drawing_pieces.size(); i++)
     {
-        var pos = (byte)drawingPieces[i].GetHashCode();
+        ChessPosition pos = drawing_pieces[i];
 
         // only set the drawing piece to the bitboard, wipe all others
-        ulong filter = 0x1uL << pos;
-        ulong drawBitboard;
+        uint64_t filter = 0x1uLL << pos;
+        uint64_t drawBitboard;
 
         // compute the chess piece's capturable positions as bitboard
         switch (type)
         {
-        case ChessPieceType.King:    drawBitboard = getKingDrawBitboards(bitboards, side, true);                break;
-        case ChessPieceType.Queen:   drawBitboard = getQueenDrawBitboards(bitboards, side, filter);             break;
-        case ChessPieceType.Rook:    drawBitboard = getRookDrawBitboards(bitboards, side, filter);              break;
-        case ChessPieceType.Bishop:  drawBitboard = getBishopDrawBitboards(bitboards, side, filter);            break;
-        case ChessPieceType.Knight:  drawBitboard = getKnightDrawBitboards(bitboards, side, filter);            break;
-        case ChessPieceType.Peasant: drawBitboard = getPeasantDrawBitboards(bitboards, side, lastDraw, filter); break;
-        default: throw new ArgumentException("Invalid chess piece type detected!");
+            case King:    drawBitboard = get_king_draw_positions(board.bitboards, side, true);                break;
+            case Queen:   drawBitboard = get_queen_draw_positions(board.bitboards, side, filter);             break;
+            case Rook:    drawBitboard = get_rook_draw_positions(board.bitboards, side, filter);              break;
+            case Bishop:  drawBitboard = get_bishop_draw_positions(board.bitboards, side, filter);            break;
+            case Knight:  drawBitboard = get_knight_draw_positions(board.bitboards, side, filter);            break;
+            case Peasant: drawBitboard = get_peasant_draw_positions(board.bitboards, side, lastDraw, filter); break;
+            //default: throw new ArgumentException("Invalid chess piece type detected!");
         }
 
         // extract all capturable positions from the draws bitboard
-        var capturablePositions = getPositions(drawBitboard);
+        vector<ChessPosition> capturable_positions = get_positions(drawBitboard);
 
         // check for peasant promotion
-        bool containsPeasantPromotion = type == ChessPieceType.Peasant
-            && ((side == ChessColor.White && (drawBitboard & ROW_8) > 0) || (side == ChessColor.Black && (drawBitboard & ROW_1) > 0));
+        int containsPeasantPromotion = (type == Peasant && ((side == White && (drawBitboard & ROW_8)) || (side == Black && (drawBitboard & ROW_1))));
 
         // convert the positions into chess draws
         if (containsPeasantPromotion)
         {
             // peasant will advance to level 8, all draws need to be peasant promotions
-            for (byte j = 0; j < capturablePositions.Length; j++)
+            for (size_t j = 0; j < capturable_positions.size(); j++)
             {
                 // add types that the piece can promote to (queen, rook, bishop, knight)
-                for (byte pieceType = 2; pieceType < 6; pieceType++) { draws[count++] = new ChessDraw(this, drawingPieces[i], capturablePositions[j], (ChessPieceType)pieceType); }
+                for (uint8_t pieceType = 2; pieceType < 6; pieceType++) { draws[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], (ChessPieceType)pieceType); }
             }
         }
-        else { for (byte j = 0; j < capturablePositions.Length; j++) { draws[count++] = new ChessDraw(this, drawingPieces[i], capturablePositions[j]); } }
+        else { for (size_t j = 0; j < capturable_positions.size(); j++) { draws[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], Invalid); } }
     }
 
-    return draws.SubArray(0, count);
+    // cut trailing empty draws from draws array and return only the actual draws
+    vector<ChessDraw> out_draws(count);
+    out_draws.insert(out_draws.begin(), draws.begin(), draws.begin() + count);
+    return out_draws;
 }
 
-Bitboard getCapturedFields(Bitboard bitboards[], ChessColor side)
+Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw)
+{
+    Bitboard capturableFields =
+          get_king_draw_positions(bitboards, side, 0)
+        | get_queen_draw_positions(bitboards, side)
+        | get_rook_draw_positions(bitboards, side)
+        | get_bishop_draw_positions(bitboards, side)
+        | get_knight_draw_positions(bitboards, side)
+        | get_peasant_draw_positions(bitboards, side, last_draw);
+
+    return capturableFields;
+}
+
+/* ====================================================
+                K I N G    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_king_draw_positions(const Bitboard bitboards[], ChessColor side, int rochade)
+{
+    // determine standard and rochade draws
+    Bitboard standardDraws = get_standard_king_draw_positions(bitboards, side);
+    Bitboard rochadeDraws = rochade ? get_rochade_king_draw_positions(bitboards, side) : 0x0uLL;
+
+    return standardDraws | rochadeDraws;
+}
+
+Bitboard get_standard_king_draw_positions(const Bitboard bitboards[], ChessColor side)
+{
+    // get the king bitboard
+    Bitboard bitboard = bitboards[SIDE_OFFSET(side)];
+
+    // determine allied pieces to eliminate blocked draws
+    Bitboard alliedPieces = get_captured_fields(bitboards, side);
+
+    // compute all possible draws using bit-shift, moreover eliminate illegal overflow draws
+    // info: the top/bottom comments are related to white-side perspective
+    Bitboard standardDraws =
+          ((bitboard << 7) & ~(ROW_1 | COL_H | alliedPieces))  // top left
+        | ((bitboard << 8) & ~(ROW_1 | alliedPieces))          // top mid
+        | ((bitboard << 9) & ~(ROW_1 | COL_A | alliedPieces))  // top right
+        | ((bitboard >> 1) & ~(COL_H | alliedPieces))          // side left
+        | ((bitboard << 1) & ~(COL_A | alliedPieces))          // side right
+        | ((bitboard >> 9) & ~(ROW_8 | COL_H | alliedPieces))  // bottom left
+        | ((bitboard >> 8) & ~(ROW_8 | alliedPieces))          // bottom mid
+        | ((bitboard >> 7) & ~(ROW_8 | COL_A | alliedPieces)); // bottom right
+
+    // TODO: cache draws to save computation
+
+    return standardDraws;
+}
+
+Bitboard get_rochade_king_draw_positions(const Bitboard bitboards[], ChessColor side)
+{
+    // get the king and rook bitboard
+    uint8_t offset = SIDE_OFFSET(side);
+    Bitboard king = bitboards[offset];
+    Bitboard rooks = bitboards[offset + PIECE_OFFSET(Rook)];
+    Bitboard wasMoved = bitboards[12];
+
+    // enemy capturable positions (for validation)
+    Bitboard enemyCapturableFields = get_capturable_fields(bitboards, OPPONENT(side), DRAW_NULL);
+    Bitboard freeKingPassage =
+          ~((FIELD_C1 & enemyCapturableFields) & ((FIELD_D1 & enemyCapturableFields) >> 1) & ((FIELD_E1 & enemyCapturableFields) >> 2))  // white big rochade
+        | ~((FIELD_G1 & enemyCapturableFields) & ((FIELD_F1 & enemyCapturableFields) << 1) & ((FIELD_E1 & enemyCapturableFields) << 2))  // white small rochade
+        | ~((FIELD_C8 & enemyCapturableFields) & ((FIELD_D8 & enemyCapturableFields) >> 1) & ((FIELD_E8 & enemyCapturableFields) >> 2))  // black big rochade
+        | ~((FIELD_G8 & enemyCapturableFields) & ((FIELD_F8 & enemyCapturableFields) << 1) & ((FIELD_E8 & enemyCapturableFields) << 2)); // black small rochade
+
+    // get rochade draws (king and rook not moved, king passage free)
+    Bitboard draws =
+          (((king & FIELD_E1 & ~wasMoved) >> 2) & ((rooks & FIELD_A1 & ~wasMoved) << 3) & freeKingPassage)  // white big rochade
+        | (((king & FIELD_E1 & ~wasMoved) << 2) & ((rooks & FIELD_H1 & ~wasMoved) >> 2) & freeKingPassage)  // white small rochade
+        | (((king & FIELD_E8 & ~wasMoved) >> 2) & ((rooks & FIELD_A8 & ~wasMoved) << 3) & freeKingPassage)  // black big rochade
+        | (((king & FIELD_E8 & ~wasMoved) >> 2) & ((rooks & FIELD_H8 & ~wasMoved) >> 2) & freeKingPassage); // black small rochade
+
+    // TODO: cache draws to save computation
+
+    return draws;
+}
+
+/* ====================================================
+               Q U E E N    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_queen_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL)
+{
+    return get_rook_draw_positions(bitboards, side, drawing_pieces_filter, 1) | get_bishop_draw_positions(bitboards, side, drawing_pieces_filter, 1);
+}
+
+/* ====================================================
+                R O O K    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_rook_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL, uint8_t pieceOffset = 2)
+{
+    Bitboard draws = 0uLL;
+
+    // get the bitboard
+    Bitboard bitboard = bitboards[SIDE_OFFSET(side) + pieceOffset] & drawing_pieces_filter;
+
+    // determine allied and enemy pieces (for collision / catch handling)
+    Bitboard enemyPieces = get_captured_fields(bitboards, OPPONENT(side));
+    Bitboard alliedPieces = get_captured_fields(bitboards, side);
+
+    // init empty draws bitboards, separated by field color
+    Bitboard bRooks = bitboard;
+    Bitboard lRooks = bitboard;
+    Bitboard rRooks = bitboard;
+    Bitboard tRooks = bitboard;
+
+    // compute draws (try to apply 1-7 shifts in each direction)
+    for (uint8_t i = 1; i < 8; i++)
+    {
+        // simulate the computing of all draws:
+        // if there would be one or more overflows / collisions with allied pieces, remove certain rooks 
+        // from the rooks bitboard, so the overflow won't occur on the real draw computation afterwards
+        bRooks ^= ((bRooks >> (i * 8)) & (ROW_8 | alliedPieces)) << (i * 8); // bottom
+        lRooks ^= ((lRooks >> (i * 1)) & (COL_H | alliedPieces)) << (i * 1); // left
+        rRooks ^= ((rRooks << (i * 1)) & (COL_A | alliedPieces)) >> (i * 1); // right
+        tRooks ^= ((tRooks << (i * 8)) & (ROW_1 | alliedPieces)) >> (i * 8); // top
+
+        // compute all legal draws and apply them to the result bitboard
+        draws |= bRooks >> (i * 8) | lRooks >> (i * 1) | rRooks << (i * 1) | tRooks << (i * 8);
+
+        // handle catches the same way as overflow / collision detection (this has to be done afterwards 
+        // as the catches are legal draws that need to occur onto the result bitboard)
+        bRooks ^= ((bRooks >> (i * 8)) & enemyPieces) << (i * 8); // bottom
+        lRooks ^= ((lRooks >> (i * 1)) & enemyPieces) << (i * 1); // left
+        rRooks ^= ((rRooks << (i * 1)) & enemyPieces) >> (i * 1); // right
+        tRooks ^= ((tRooks << (i * 8)) & enemyPieces) >> (i * 8); // top
+    }
+
+    // TODO: implement hyperbola quintessence
+
+    return draws;
+}
+
+/* ====================================================
+             B I S H O P    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL, uint8_t piece_pffset = 3)
+{
+    Bitboard draws = 0uLL;
+
+    // get the bitboard
+    Bitboard bitboard = bitboards[SIDE_OFFSET(side) + piece_pffset] & drawing_pieces_filter;
+
+    // determine allied and enemy pieces (for collision / catch handling)
+    Bitboard enemyPieces = get_captured_fields(bitboards, OPPONENT(side));
+    Bitboard alliedPieces = get_captured_fields(bitboards, side);
+
+    // init empty draws bitboards, separated by field color
+    Bitboard brBishops = bitboard;
+    Bitboard blBishops = bitboard;
+    Bitboard trBishops = bitboard;
+    Bitboard tlBishops = bitboard;
+
+    // compute draws (try to apply 1-7 shifts in each direction)
+    for (uint8_t i = 1; i < 8; i++)
+    {
+        // simulate the computing of all draws:
+        // if there would be one or more overflows / collisions with allied pieces, remove certain bishops 
+        // from the bishops bitboard, so the overflow won't occur on the real draw computation afterwards
+        brBishops ^= ((brBishops >> (i * 7)) & (ROW_8 | COL_A | alliedPieces)) << (i * 7); // bottom right
+        blBishops ^= ((blBishops >> (i * 9)) & (ROW_8 | COL_H | alliedPieces)) << (i * 9); // bottom left
+        trBishops ^= ((trBishops << (i * 9)) & (ROW_1 | COL_A | alliedPieces)) >> (i * 9); // top right
+        tlBishops ^= ((tlBishops << (i * 7)) & (ROW_1 | COL_H | alliedPieces)) >> (i * 7); // top left
+
+        // compute all legal draws and apply them to the result bitboard
+        draws |= brBishops >> (i * 7) | blBishops >> (i * 9) | trBishops << (i * 9) | tlBishops << (i * 7);
+
+        // handle catches the same way as overflow / collision detection (this has to be done afterwards 
+        // as the catches are legal draws that need to occur onto the result bitboard)
+        brBishops ^= ((brBishops >> (i * 7)) & enemyPieces) << (i * 7); // bottom right
+        blBishops ^= ((blBishops >> (i * 9)) & enemyPieces) << (i * 9); // bottom left
+        trBishops ^= ((trBishops << (i * 9)) & enemyPieces) >> (i * 9); // top right
+        tlBishops ^= ((tlBishops << (i * 7)) & enemyPieces) >> (i * 7); // top left
+    }
+
+    // TODO: implement hyperbola quintessence
+
+    return draws;
+}
+
+/* ====================================================
+             K N I G H T    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL)
+{
+    // get bishops bitboard
+    Bitboard bitboard = bitboards[SIDE_OFFSET(side) + PIECE_OFFSET(Knight)] & drawing_pieces_filter;
+
+    // determine allied pieces to eliminate blocked draws
+    Bitboard alliedPieces = get_captured_fields(bitboards, side);
+
+    // compute all possible draws using bit-shift, moreover eliminate illegal overflow draws
+    Bitboard draws =
+          ((bitboard <<  6) & ~(ROW_1 | COL_H | COL_G | alliedPieces))  // top left  (1-2)
+        | ((bitboard << 10) & ~(ROW_1 | COL_A | COL_B | alliedPieces))  // top right (1-2)
+        | ((bitboard << 15) & ~(ROW_1 | COL_H | ROW_2 | alliedPieces))  // top left  (2-1)
+        | ((bitboard << 17) & ~(ROW_1 | COL_A | ROW_2 | alliedPieces))  // top right (2-1)
+        | ((bitboard >> 10) & ~(ROW_8 | COL_H | COL_G | alliedPieces))  // bottom left  (1-2)
+        | ((bitboard >>  6) & ~(ROW_8 | COL_A | COL_B | alliedPieces))  // bottom right (1-2)
+        | ((bitboard >> 17) & ~(ROW_8 | COL_H | ROW_7 | alliedPieces))  // bottom left  (2-1)
+        | ((bitboard >> 15) & ~(ROW_8 | COL_A | ROW_7 | alliedPieces)); // bottom right (2-1)
+
+    // TODO: cache draws to save computation
+
+    return draws;
+}
+
+/* ====================================================
+             P E A S A N T    D R A W - G E N
+   ==================================================== */
+
+Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL)
+{
+    Bitboard draws = 0x0uLL;
+
+    // get peasants bitboard
+    Bitboard bitboard = bitboards[SIDE_OFFSET(side) + PIECE_OFFSET(Peasant)] & drawing_pieces_filter;
+
+    // get all fields captured by enemy pieces as bitboard
+    Bitboard allied_pieces = get_captured_fields(bitboards, side);
+    Bitboard enemy_pieces = get_captured_fields(bitboards, OPPONENT(side));
+    Bitboard blocking_pieces = allied_pieces | enemy_pieces;
+    Bitboard enemy_peasants = bitboards[SIDE_OFFSET(OPPONENT(side)) + PIECE_OFFSET(Peasant)];
+    Bitboard was_moved_mask = bitboards[12];
+
+    // initialize white and black masks (-> calculate draws for both sides, but nullify draws of the wrong side using the mask)
+    Bitboard white_mask = WHITE_MASK(side);
+    Bitboard black_mask = ~white_mask;
+
+    // get one-foreward draws
+    draws |= 
+          (white_mask & (bitboard << 8) & ~blocking_pieces)
+        | (black_mask & (bitboard >> 8) & ~blocking_pieces);
+
+    // get two-foreward draws
+    draws |= 
+          (white_mask & ((((bitboard & ROW_2 & ~was_moved_mask) << 8) & ~blocking_pieces) << 8) & ~blocking_pieces)
+        | (black_mask & ((((bitboard & ROW_7 & ~was_moved_mask) >> 8) & ~blocking_pieces) >> 8) & ~blocking_pieces);
+
+    // handle en-passant (in case of en-passant, put an extra peasant that gets caught by the standard catch logic)
+    Bitboard lastDrawNewPos = 0x1uLL << (last_draw != DRAW_NULL ? get_new_position(last_draw) : -1);
+    Bitboard lastDrawOldPos = 0x1uLL << (last_draw != DRAW_NULL ? get_old_position(last_draw) : -1);
+    bitboard |=
+          (white_mask & ((lastDrawNewPos & enemy_peasants) >> 8) & ((ROW_2 & lastDrawOldPos) << 8))
+        | (black_mask & ((lastDrawNewPos & enemy_peasants) << 8) & ((ROW_2 & lastDrawOldPos) >> 8));
+
+    // get right / left catch draws
+    draws |= 
+          (white_mask & ((((bitboard & ~COL_H) << 9) & enemy_pieces) | (((bitboard & ~COL_A) << 7) & enemy_pieces)))
+        | (black_mask & ((((bitboard & ~COL_A) >> 9) & enemy_pieces) | (((bitboard & ~COL_H) >> 7) & enemy_pieces)));
+
+    return draws;
+}
+
+/* ====================================================
+             C H E S S    P O S I T I O N S    
+                 O N    B I T B O A R D
+   ==================================================== */
+
+Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side)
 {
     uint8_t offset = SIDE_OFFSET(side);
 
@@ -140,69 +425,56 @@ Bitboard getCapturedFields(Bitboard bitboards[], ChessColor side)
         | bitboards[offset + 3] | bitboards[offset + 4] | bitboards[offset + 5];
 }
 
-size_t get_positions(ChessPosition** out_pos, Bitboard bitboard)
+vector<ChessPosition> get_positions(Bitboard bitboard)
 {
     // init position cache for worst-case
     size_t count = 0;
-    *out_pos = malloc(32 * sizeof(ChessPosition));
+    vector<ChessPosition> temp_pos(28);
      
     // loop through all bits of the board
     for (uint8_t pos = 0; pos < 64; pos++)
     {
-        if ((bitboard & 0x1uLL << pos)) { (*out_pos)[count++] = (ChessPosition)pos; }
+        if ((bitboard & 0x1uLL << pos)) { temp_pos[count++] = (ChessPosition)pos; }
     }
 
     // return the resulting array (without empty entries)
-    return count;
+    vector<ChessPosition> out_pos(count);
+    out_pos.insert(out_pos.begin(), temp_pos.begin(), temp_pos.begin() + count);
+    return out_pos;
 }
 
-// this returns the numeric value of the highest bit set on the given bitboard
-// if the given bitboard has multiple bits set, only the position of the highest bit is returned
-// info: the result is mathematically equal to floor(log2(x))
-ChessPosition get_position(Bitboard bitboard)
-{
-    // code was taken from https://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
-
-#ifdef __GNUC__
-    // use built-in leading zeros function for GCC Linux build (this compiles to the very fast 'bsr' instruction on x86 AMD processors)
-    return (ChessPosition)((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll((X)) - 1))
-#else
-    // use abstract DeBruijn algorithm with table lookup
-    // TODO: think of implementing this as assembler code
-
-    const uint8_t tab64[64] = {
-        63,  0, 58,  1, 59, 47, 53,  2,
-        60, 39, 48, 27, 54, 33, 42,  3,
-        61, 51, 37, 40, 49, 18, 28, 20,
-        55, 30, 34, 11, 43, 14, 22,  4,
-        62, 57, 46, 52, 38, 26, 32, 41,
-        50, 36, 17, 19, 29, 10, 13, 21,
-        56, 45, 25, 31, 35, 16,  9, 12,
-        44, 24, 15,  8, 23,  7,  6,  5 
-    };
-
-    bitboard |= bitboard >> 1;
-    bitboard |= bitboard >> 2;
-    bitboard |= bitboard >> 4;
-    bitboard |= bitboard >> 8;
-    bitboard |= bitboard >> 16;
-    bitboard |= bitboard >> 32;
-
-    return (ChessPosition)tab64[((Bitboard)((bitboard - (bitboard >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
-#endif
-}
-
-size_t concat_draws(ChessDraw** out_draws, ChessDraw draws_a[], ChessDraw draws_b[])
-{
-    // TODO: check if this works
-
-    size_t len_a = sizeof(draws_a) / sizeof(ChessDraw);
-    size_t len_b = sizeof(draws_b) / sizeof(ChessDraw);
-
-    *out_draws = malloc(len_a * len_b * sizeof(ChessDraw));
-    memcpy(*out_draws, draws_a, len_a * sizeof(ChessDraw));
-    memcpy(*out_draws + len_a, draws_b, len_b * sizeof(ChessDraw));
-    // TODO: use secure memcpy instead
-
-    return len_a + len_b;
-}
+//// this returns the index of the highest bit set on the given bitboard.
+//// if the given bitboard has multiple bits set, only the position of the highest bit is returned.
+//// info: the result is mathematically equal to floor(log2(x))
+//ChessPosition get_position(Bitboard bitboard)
+//{
+//    // code was taken from https://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
+//
+//#ifdef __GNUC__
+//    // use built-in leading zeros function for GCC Linux build (this compiles to the very fast 'bsr' instruction on x86 AMD processors)
+//    return (ChessPosition)((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll((X)) - 1))
+//#else
+//    // use abstract DeBruijn algorithm with table lookup
+//    // TODO: think of implementing this as assembler code
+//
+//    const uint8_t tab64[64] = {
+//        63,  0, 58,  1, 59, 47, 53,  2,
+//        60, 39, 48, 27, 54, 33, 42,  3,
+//        61, 51, 37, 40, 49, 18, 28, 20,
+//        55, 30, 34, 11, 43, 14, 22,  4,
+//        62, 57, 46, 52, 38, 26, 32, 41,
+//        50, 36, 17, 19, 29, 10, 13, 21,
+//        56, 45, 25, 31, 35, 16,  9, 12,
+//        44, 24, 15,  8, 23,  7,  6,  5 
+//    };
+//
+//    bitboard |= bitboard >> 1;
+//    bitboard |= bitboard >> 2;
+//    bitboard |= bitboard >> 4;
+//    bitboard |= bitboard >> 8;
+//    bitboard |= bitboard >> 16;
+//    bitboard |= bitboard >> 32;
+//
+//    return (ChessPosition)tab64[((Bitboard)((bitboard - (bitboard >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
+//#endif
+//}
