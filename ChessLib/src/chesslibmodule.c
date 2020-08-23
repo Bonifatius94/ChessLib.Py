@@ -3,6 +3,7 @@
 
 static PyObject*
 
+/* TODO: implement python-lib interface here ... */
 
 chesslib_create(PyObject* self, PyObject* args)
 {

@@ -11,7 +11,7 @@ add_library(ChessLib
     "src/chessposition.c" 
     "src/chesslibmodule.c" 
     "src/chessdraw.c" 
-    "src/chessdrawgen.cpp" 
+    "src/chessdrawgen.c" 
     "src/chesspieceatpos.c")
 
 #add_library(ChessLib 

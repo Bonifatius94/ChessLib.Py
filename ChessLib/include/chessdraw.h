@@ -26,7 +26,6 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
-ChessDraw create_draw_from_hash(uint32_t hash);
 ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
 
 int get_is_first_move(ChessDraw draw);

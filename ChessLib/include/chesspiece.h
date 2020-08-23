@@ -22,7 +22,6 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
-ChessPiece create_piece_from_hash(uint8_t hash);
 ChessPiece create_piece(ChessPieceType type, ChessColor color, int was_moved);
 
 ChessColor get_piece_color(ChessPiece piece);
