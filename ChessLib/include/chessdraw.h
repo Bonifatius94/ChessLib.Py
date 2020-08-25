@@ -20,7 +20,7 @@
                D E F I N E    M A K R O S
    ==================================================== */
 
-#define DRAW_NULL create_draw_from_hash(0)
+#define DRAW_NULL ((ChessDraw)0)
 
 /* ====================================================
              D E F I N E    F U N C T I O N S

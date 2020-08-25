@@ -42,7 +42,7 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
     ChessDraw draw;
 
     /* get the drawing piece */
-    ChessPiece piece = get_piece_at(board, oldPos);
+    piece = get_piece_at(board, oldPos);
 
     /* determine all property values */
     is_first_move = get_was_piece_moved(piece) == 0 ? 1 : 0;

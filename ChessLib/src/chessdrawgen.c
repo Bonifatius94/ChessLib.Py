@@ -1,7 +1,5 @@
 #include "chessdrawgen.h"
 
-/* TODO: think about implementing this without vector<> struct in classic C manner with double array pointer ** and size_t* array size, etc. */
-
 /* ====================================================
             H E L P E R    F U N C T I O N S
    ==================================================== */
@@ -10,7 +8,7 @@
 vector<ChessDraw> eliminate_draws_into_check(ChessBoard board, vector<ChessDraw> draws, ChessColor drawing_side);*/
 
 void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw last_draw);
-void eliminate_draws_into_check(ChessDraw** out_draws, size_t* out_length, ChessBoard board, const ChessDraw draws[], ChessColor drawing_side);
+void eliminate_draws_into_check(ChessDraw** out_draws, size_t* out_length, ChessBoard board, ChessColor drawing_side);
 
 Bitboard get_king_draw_positions(const Bitboard bitboards[], ChessColor side, int rochade);
 Bitboard get_standard_king_draw_positions(const Bitboard bitboards[], ChessColor side);
@@ -23,8 +21,6 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side,
 
 void get_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
 ChessPosition get_position(Bitboard bitboard);
-void concat_draws(ChessDraw** draws, size_t* count, const ChessDraw append[], size_t append_length);
-
 Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
 Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
 
@@ -32,51 +28,66 @@ Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
                D R A W - G E N    M A I N
    ==================================================== */
 
+/*********************************************************************************************************
+  Retrieve all draws possible for the chess position represented by the given board (for the given side).
+
+  Usage: out_draws and out_length are expected to be empty. Any content there will be overwritten.
+
+  Options: When analyze_draw_into_check is set to TRUE, then there won't occur any draws on the output
+           that cause a draw-into-check.
+ *********************************************************************************************************/
 void get_all_draws(ChessDraw** out_draws, size_t* out_length, ChessBoard board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
     uint8_t side_offset;
     ChessColor opponent;
 
-    ChessDraw* temp_draws;
-    size_t temp_len;
+    ChessDraw *king_draws, *queen_draws, *rook_draws, *bishop_draws, *knight_draws, *peasant_draws;
+    size_t king_draws_len, queen_draws_len, rook_draws_len, bishop_draws_len, knight_draws_len, peasant_draws_len;
+    size_t i, offset = 0;
 
      /* determine the drawing side */
      side_offset = SIDE_OFFSET(drawing_side);
      opponent = OPPONENT(drawing_side);
 
-     /* compute the draws for the pieces of each type (for non-king pieces, check first if the bitboard actually contains pieces) */
-     king_draws    = get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, King, last_draw);
-     queen_draws   = (board.bitboards[side_offset + PIECE_OFFSET(Queen)]   != 0x0uLL) ? get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, Queen, last_draw)   : NULL;
-     rook_draws    = (board.bitboards[side_offset + PIECE_OFFSET(Rook)]    != 0x0uLL) ? get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, Rook, last_draw)    : NULL;
-     bishop_draws  = (board.bitboards[side_offset + PIECE_OFFSET(Bishop)]  != 0x0uLL) ? get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, Bishop, last_draw)  : NULL;
-     knight_draws  = (board.bitboards[side_offset + PIECE_OFFSET(Knight)]  != 0x0uLL) ? get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, Knight, last_draw)  : NULL;
-     peasant_draws = (board.bitboards[side_offset + PIECE_OFFSET(Peasant)] != 0x0uLL) ? get_draws(&temp_draws, &temp_len, board.bitboards, drawing_side, Peasant, last_draw) : NULL;
+     /* compute the draws for the pieces of each type */
+     get_draws(&king_draws,    &king_draws_len,    board.bitboards, drawing_side, King,    last_draw);
+     get_draws(&queen_draws,   &queen_draws_len,   board.bitboards, drawing_side, Queen,   last_draw);
+     get_draws(&rook_draws,    &rook_draws_len,    board.bitboards, drawing_side, Rook,    last_draw);
+     get_draws(&bishop_draws,  &bishop_draws_len,  board.bitboards, drawing_side, Bishop,  last_draw);
+     get_draws(&knight_draws,  &knight_draws_len,  board.bitboards, drawing_side, Knight,  last_draw);
+     get_draws(&peasant_draws, &peasant_draws_len, board.bitboards, drawing_side, Peasant, last_draw);
      
-     /* concatenate the draws as one vector */
-     draws = vector<ChessDraw>(king_draws.size() + queen_draws.size() + rook_draws.size() + bishop_draws.size() + knight_draws.size() + peasant_draws.size());
-     draws.insert(draws.end(), king_draws.begin(), king_draws.end());
-     draws.insert(draws.end(), queen_draws.begin(), queen_draws.end());
-     draws.insert(draws.end(), rook_draws.begin(), rook_draws.end());
-     draws.insert(draws.end(), bishop_draws.begin(), bishop_draws.end());
-     draws.insert(draws.end(), knight_draws.begin(), knight_draws.end());
-     draws.insert(draws.end(), peasant_draws.begin(), peasant_draws.end());
+     /* concatenate the draws of the different piece types */
+     *out_length = king_draws_len + queen_draws_len + rook_draws_len + bishop_draws_len + knight_draws_len + peasant_draws_len;
+     *out_draws = (ChessDraw*)malloc(*out_length * sizeof(ChessDraw));
+     for (i = 0; i < king_draws_len; i++)    { (*out_draws)[offset++] = king_draws[i];    }
+     for (i = 0; i < queen_draws_len; i++)   { (*out_draws)[offset++] = queen_draws[i];   }
+     for (i = 0; i < rook_draws_len; i++)    { (*out_draws)[offset++] = rook_draws[i];    }
+     for (i = 0; i < bishop_draws_len; i++)  { (*out_draws)[offset++] = bishop_draws[i];  }
+     for (i = 0; i < knight_draws_len; i++)  { (*out_draws)[offset++] = knight_draws[i];  }
+     for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
 
-     /* if flag is active, filter only draws that do not cause draws into check */
-     return analyze_draw_into_check ? eliminate_draws_into_check(board, draws, drawing_side) : draws;
+     /* free temporary draws */
+     free(king_draws); free(queen_draws); free(rook_draws); free(bishop_draws); free(knight_draws); free(peasant_draws);
+
+     /* if flag is active, only return draws that do not cause draw-into-check */
+     if (analyze_draw_into_check) { eliminate_draws_into_check(out_draws, out_length, board, drawing_side); }
 }
 
-void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoard board, ChessDraw draws_to_validate[], ChessColor drawing_side)
+void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoard board, ChessColor drawing_side)
 {
     uint8_t side_offset;
     size_t i, legal_draws_count;
     Bitboard sim_bitboards[13], king_mask, enemy_capturable_fields;
     ChessColor opponent;
 
+    /* init draws to validate */
+    ChessDraw* draws_to_validate = *out_draws;
+    legal_draws_count = *length;
+
     /* make a working copy of all local bitboards */
     for (i = 0; i < 13; i++) { sim_bitboards[i] = board.bitboards[i]; }
 
-    /* init legal draws count with the amount of all draws (unvalidated) */
-    legal_draws_count = sizeof(draws_to_validate) / sizeof(ChessDraw);
     side_offset = SIDE_OFFSET(drawing_side);
     opponent = OPPONENT(drawing_side);
 
@@ -90,16 +101,6 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoar
         /* calculate enemy answer draws (only fields that could be captured as one bitboard) */
         enemy_capturable_fields = get_capturable_fields(sim_bitboards, opponent, draws_to_validate[i]);
 
-        /*    old code
-           ========================================
-        Bitboard enemy_capturable_fields =
-              get_king_draw_positions(sim_bitboards, opponent, false)
-            | get_queen_draw_positions(sim_bitboards, opponent)
-            | getRookDrawBitboards(sim_bitboards, opponent)
-            | getBishopDrawBitboards(sim_bitboards, opponent)
-            | getKnightDrawBitboards(sim_bitboards, opponent)
-            | getPeasantDrawBitboards(sim_bitboards, opponent); */
-
         /* revert the simulated draw (flip the bits back) */
         apply_draw_to_bitboards(sim_bitboards, draws_to_validate[i]);
 
@@ -111,31 +112,33 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoar
         }
     }
 
-    /* remove illegal draws */
-    return vector<ChessDraw>(draws_to_validate.begin(), draws_to_validate.begin() + legal_draws_count);
+    /* remove illegal draws by shrinking the array length and ignoring them */
+    *length = legal_draws_count;
 }
 
 void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw last_draw)
 {
     uint8_t index, piece_type;
-    size_t count = 0, i, j, drawing_pieces_len;
+    size_t count = 0, i, j, drawing_pieces_len, capturable_positions_len;
     ChessPosition *drawing_pieces, *capturable_positions;
-    ChessDraw *draws;
 
     ChessPosition pos;
     Bitboard filter, draw_bitboard;
     ChessBoard board;
     int contains_peasant_promotion;
 
-    /* get drawing pieces */
+    /* determine board index and make sure that there are pieces to be drawn, otherwise quit */
     index = SIDE_OFFSET(side) + PIECE_OFFSET(type);
+    if (bitboards[index] == 0x0uLL) { *out_draws = NULL; *out_length = 0; return; }
+
+    /* get drawing pieces */
     get_positions(bitboards[index], &drawing_pieces, &drawing_pieces_len);
 
     /* init draws result set (max. draws) */
-    *draws = (ChessDraw*)malloc(drawing_pieces.size() * 28);
+    *out_draws = (ChessDraw*)malloc(drawing_pieces_len * 28 * sizeof(ChessDraw));
 
     /* loop through drawing pieces */
-    for (i = 0; i < drawing_pieces.size(); i++)
+    for (i = 0; i < drawing_pieces_len; i++)
     {
         pos = drawing_pieces[i];
 
@@ -156,7 +159,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
         }
 
         /* extract all capturable positions from the draws bitboard */
-        capturable_positions = get_positions(draw_bitboard);
+        get_positions(draw_bitboard, &capturable_positions, &capturable_positions_len);
 
         /* check for peasant promotion */
         contains_peasant_promotion = (type == Peasant && ((side == White && (draw_bitboard & ROW_8)) || (side == Black && (draw_bitboard & ROW_1))));
@@ -166,22 +169,17 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
         if (contains_peasant_promotion)
         {
             /* peasant will advance to level 8, all draws need to be peasant promotions */
-            for (j = 0; j < capturable_positions.size(); j++)
+            for (j = 0; j < capturable_positions_len; j++)
             {
                 /* add types that the piece can promote to (queen, rook, bishop, knight) */
-                for (piece_type = 2; piece_type < 6; piece_type++) { draws[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], (ChessPieceType)piece_type); }
+                for (piece_type = 2; piece_type < 6; piece_type++) { (*out_draws)[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], (ChessPieceType)piece_type); }
             }
         }
-        else { for (j = 0; j < capturable_positions.size(); j++) { draws[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], Invalid); } }
+        else { for (j = 0; j < capturable_positions_len; j++) { (*out_draws)[count++] = create_draw(board, drawing_pieces[i], capturable_positions[j], Invalid); } }
     }
 
-    /* cut trailing empty draws from draws array and return only the actual draws */
-    out_draws = vector<ChessDraw>(count);
-    out_draws.insert(out_draws.begin(), draws.begin(), draws.begin() + count);
-
-    /* TODO: free memory that is no longer required */
-
-    return out_draws;
+    /* assign results to output pointers */
+    *out_length = count;
 }
 
 Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw)
@@ -384,7 +382,7 @@ Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, 
              K N I G H T    D R A W - G E N
    ==================================================== */
 
-Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL)
+Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter)
 {
     Bitboard bitboard, allied_pieces, draws;
 
@@ -414,7 +412,7 @@ Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, 
              P E A S A N T    D R A W - G E N
    ==================================================== */
 
-Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter = 0xFFFFFFFFFFFFFFFFuLL)
+Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter)
 {
     Bitboard draws = 0x0uLL, bitboard, allied_pieces, enemy_pieces, blocking_pieces, enemy_peasants, 
         was_moved_mask, white_mask, black_mask, last_draw_new_pos, last_draw_old_pos;
@@ -527,29 +525,6 @@ ChessPosition get_position(Bitboard bitboard)
     bitboard |= bitboard >> 16;
     bitboard |= bitboard >> 32;
 
-    return (ChessPosition)tab64[((Bitboard)((bitboard - (bitboard >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
+    return (ChessPosition)tab64[((Bitboard)((bitboard - (bitboard >> 1)) * 0x07EDD5E59A4E28C2uLL)) >> 58];
 #endif
-}
-
-/* ====================================================
-                A R R A Y    C O N C A T
-   ==================================================== */
-
-void concat_draws(ChessDraw** draws, size_t* count, const ChessDraw append[], size_t append_length)
-{
-    size_t i;
-    ChessDraw* old_draws;
-
-    /* exit if there is nothing to be appended */
-    if (append == NULL) { return; }
-
-    /* extend memory by reallocation to fit the draws to be appended */
-    old_draws = *draws;
-    
-    *draws = (ChessDraw*)realloc(old_draws, *count * sizeof(ChessDraw));
-    /* TODO: check if the allocation is correct */
-    
-    /* copy the draws to the output array */
-    for (i = 0; i < append_length; i++) { (*draws)[*count + i] = append[i]; }
-    *count += append_length;
 }

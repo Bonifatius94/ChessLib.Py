@@ -15,7 +15,7 @@
                D E F I N E    M A K R O S
    ==================================================== */
 
-#define CHESS_PIECE_NULL create_piece_from_hash(0)
+#define CHESS_PIECE_NULL ((ChessPiece)0)
 #define OPPONENT(color) ((ChessColor)((uint8_t)(color) ^ 1))
 
 /* ====================================================
