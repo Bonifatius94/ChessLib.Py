@@ -9,6 +9,41 @@ ChessBoard create_board(const Bitboard bitboards[])
 	return board;
 }
 
+ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count)
+{
+    /* TODO: check if memory allocation works */
+    size_t i;
+    ChessBoard board;
+
+    uint8_t board_index;
+    Bitboard was_moved;
+    ChessPosition pos;
+    ChessPiece piece;
+
+    /* assume pieces as already moved */
+    board.bitboards[12] = 0xFFFFFFFFFFFFFFFFuL;
+
+    /* loop through the pieces@pos array */
+    for (i = 0; i < pieces_count; i++)
+    {
+        /* determine the piece and position */
+        piece = get_piece(pieces_at_pos[i]);
+        pos = get_position(pieces_at_pos[i]);
+
+        /* determine the board to apply the piece to */
+        board_index = SIDE_OFFSET(get_piece_color(piece)) + PIECE_OFFSET(get_piece_type(piece));
+
+        /* apply the piece to the bitboard */
+        board.bitboards[board_index] |= 0x1uLL << pos;
+
+        /* apply was_moved state of the chess piece to the bitboard */
+        /* the chess pieces are assumed to be already moved, so only flip the bit if the piece was not moved */
+        if (pos < 16 || pos > 47) { board.bitboards[12] ^= ((uint64_t)(get_was_piece_moved(piece) ^ 1)) << pos; }
+    }
+
+    return board;
+}
+
 Bitboard is_captured_at(ChessBoard board, ChessPosition pos)
 {
     Bitboard mask, all_pieces;

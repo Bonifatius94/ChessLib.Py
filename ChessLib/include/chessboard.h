@@ -9,6 +9,7 @@
 #include "chessposition.h"
 #include "chessdraw.h"
 #include "chesstypes.h"
+#include "chesspieceatpos.h"
 
 #include <stdint.h>
 
@@ -71,6 +72,7 @@
    ==================================================== */
 
 ChessBoard create_board(const Bitboard bitboards[]);
+ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count);
 
 Bitboard is_captured_at(ChessBoard board, ChessPosition pos);
 ChessPiece get_piece_at(ChessBoard board, ChessPosition pos);

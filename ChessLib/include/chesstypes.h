@@ -33,6 +33,10 @@ typedef uint8_t ChessPiece;
    |  xxx |    xxx | */
 typedef uint8_t ChessPosition;
 
+/* | position | piece |
+   |   xxxxxx | xxxxx | */
+typedef uint16_t ChessPieceAtPos;
+
 /* |  position | piece |
    |    xxxxxx | xxxxx | */
 /*typedef uint16_t ChessPieceAtPos;*/
