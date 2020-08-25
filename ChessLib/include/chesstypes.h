@@ -59,4 +59,6 @@ typedef struct _CHESS_BITBOARD {
     Bitboard bitboards[13];
 } ChessBoard;
 
+/*typedef Bitboard * ChessBoard;*/
+
 #endif

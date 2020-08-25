@@ -16,7 +16,6 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
     ChessBoard board;
 
     uint8_t board_index;
-    Bitboard was_moved;
     ChessPosition pos;
     ChessPiece piece;
 
@@ -27,8 +26,8 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
     for (i = 0; i < pieces_count; i++)
     {
         /* determine the piece and position */
-        piece = get_piece(pieces_at_pos[i]);
-        pos = get_position(pieces_at_pos[i]);
+        piece = get_pieceatpos_piece(pieces_at_pos[i]);
+        pos = get_pieceatpos_position(pieces_at_pos[i]);
 
         /* determine the board to apply the piece to */
         board_index = SIDE_OFFSET(get_piece_color(piece)) + PIECE_OFFSET(get_piece_type(piece));

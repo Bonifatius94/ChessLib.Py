@@ -3,6 +3,9 @@
 #
 cmake_minimum_required(VERSION 3.8)
 
+# set compilter flags (C89 standard)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -werror -wall -ansi -pedantic")
+
 # define the chesslib api library
 include_directories("include")
 add_library(ChessLib 

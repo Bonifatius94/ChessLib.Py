@@ -7,7 +7,7 @@
 
 ChessPieceAtPos create_pieceatpos(ChessPosition pos, ChessPiece piece);
 
-ChessPiece get_piece(ChessPieceAtPos pieceAtPos);
-ChessPosition get_position(ChessPieceAtPos pieceAtPos);
+ChessPiece get_pieceatpos_piece(ChessPieceAtPos pieceAtPos);
+ChessPosition get_pieceatpos_position(ChessPieceAtPos pieceAtPos);
 
 #endif

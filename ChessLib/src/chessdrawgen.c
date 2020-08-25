@@ -19,8 +19,8 @@ Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, 
 Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter);
 Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter);
 
-void get_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
-ChessPosition get_position(Bitboard bitboard);
+void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
+ChessPosition get_board_position(Bitboard bitboard);
 Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
 Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
 
@@ -119,7 +119,7 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoar
 void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboards[], ChessColor side, ChessPieceType type, ChessDraw last_draw)
 {
     uint8_t index, piece_type;
-    size_t count = 0, i, j, drawing_pieces_len, capturable_positions_len;
+    size_t count = 0, i, j, drawing_pieces_len = 0, capturable_positions_len = 0;
     ChessPosition *drawing_pieces, *capturable_positions;
 
     ChessPosition pos;
@@ -132,7 +132,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
     if (bitboards[index] == 0x0uLL) { *out_draws = NULL; *out_length = 0; return; }
 
     /* get drawing pieces */
-    get_positions(bitboards[index], &drawing_pieces, &drawing_pieces_len);
+    get_board_positions(bitboards[index], &drawing_pieces, &drawing_pieces_len);
 
     /* init draws result set (max. draws) */
     *out_draws = (ChessDraw*)malloc(drawing_pieces_len * 28 * sizeof(ChessDraw));
@@ -159,7 +159,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
         }
 
         /* extract all capturable positions from the draws bitboard */
-        get_positions(draw_bitboard, &capturable_positions, &capturable_positions_len);
+        get_board_positions(draw_bitboard, &capturable_positions, &capturable_positions_len);
 
         /* check for peasant promotion */
         contains_peasant_promotion = (type == Peasant && ((side == White && (draw_bitboard & ROW_8)) || (side == Black && (draw_bitboard & ROW_1))));
@@ -469,7 +469,7 @@ Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side)
         | bitboards[offset + 3] | bitboards[offset + 4] | bitboards[offset + 5];
 }
 
-void get_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length)
+void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length)
 {
     uint8_t pos;
     size_t count = 0, i;
@@ -496,7 +496,7 @@ void get_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out
    if the given bitboard has multiple bits set, only the position of the highest bit is returned.
    info: the result is mathematically equal to floor(log2(x)) 
  **************************************************************************************************/
-ChessPosition get_position(Bitboard bitboard)
+ChessPosition get_board_position(Bitboard bitboard)
 {
     /* code was taken from https://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers */
 

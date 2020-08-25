@@ -6,12 +6,12 @@ ChessPieceAtPos create_pieceatpos(ChessPosition pos, ChessPiece piece)
 	return pieceAtPos;
 }
 
-ChessPiece get_piece(ChessPieceAtPos pieceAtPos)
+ChessPiece get_pieceatpos_piece(ChessPieceAtPos pieceAtPos)
 {
-	return create_piece_from_hash((uint8_t)(pieceAtPos & 0x1F));
+	return (uint8_t)(pieceAtPos & 0x1F);
 }
 
-ChessPosition get_position(ChessPieceAtPos pieceAtPos)
+ChessPosition get_pieceatpos_position(ChessPieceAtPos pieceAtPos)
 {
-	return create_position_from_hash((uint8_t)(pieceAtPos >> 5));
+	return (uint8_t)(pieceAtPos >> 5);
 }

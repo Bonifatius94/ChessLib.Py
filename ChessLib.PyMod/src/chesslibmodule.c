@@ -1,18 +1,21 @@
 
 #include "chesslibmodule.h"
-#include <numpy/arrayobject.h>
 
-/* TODO: implement python-lib interface here ... */
+/* =================================================
+      H E L P E R    F U N C T I O N    S T U B S
+   ================================================= */
+
+PyObject* serialize_chessboard(ChessBoard board);
+ChessBoard deserialize_chessboard(PyObject* board);
 
 /* =================================================
                  I N I T I A L I Z E    
               P Y T H O N    M O D U L E
    ================================================= */
 
-PyObject* PyInit_chesslib()
+PyMODINIT_FUNC PyInit_chesslib(void)
 {
-    /* TODO: implement logic here ... */
-    return NULL;
+    return PyModule_Create(&chesslib_module);
 }
 
 /* ================================================= 
@@ -97,8 +100,6 @@ PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args)
     return PyLong_FromUnsignedLong(create_pieceatpos(pos, piece));
 }
 
-PyObject* serialize_chessboard(ChessBoard board);
-
 PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
 {
     PyObject *pieces_list = NULL, *temp_obj, *iterator;
@@ -134,19 +135,18 @@ PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* ar
     return serialize_chessboard(board);
 }
 
-PyObject* serialize_chessboard(ChessBoard board)
-{
-    int dims[1];
-
-    /* init a one-dimensional 64-bit integer array with 13 elements */
-    dims[0] = 13;
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board.bitboards);
-}
-
 PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
 {
+    PyObject* bitboards;
+    ChessBoard board = BOARD_NULL;
+    ChessPosition oldPos, newPos;
+    ChessPieceType peasantPromotionType = Invalid;
+    
+    if (!PyArg_ParseTuple(args, "Oiii", &bitboards, &oldPos, &newPos, &peasantPromotionType) 
+        || !PyArg_ParseTuple(args, "Oii", &bitboards, &oldPos, &newPos)) { return NULL; }
+
     /* TODO: implement the creation of chessdraws */
-    return NULL;
+    return PyLong_FromUnsignedLong(create_draw(board, oldPos, newPos, peasantPromotionType));
 }
 
 /* =================================================
@@ -155,17 +155,53 @@ PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
 
 PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
-    ChessDraw* out_draws, last_draw;
+    PyObject* bitboards;
+    ChessDraw *out_draws, last_draw;
     size_t dims[1];
     ChessBoard board;
     ChessColor drawing_side;
     int analyze_draw_into_check;
-
-    /* TODO: parse args (board, drawing_side, last_draw, analyze_draw_into_check) */
+    
+    /* parse args as object */
+    if (!PyArg_ParseTuple(args, "Oiii", &bitboards, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
+    board = deserialize_chessboard(bitboards);
 
     /* compute possible draws */
     get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);
 
     /* serialize draws as numpy list */
     return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);
+}
+
+/* =================================================
+           H E L P E R    F U N C T I O N S
+   ================================================= */
+
+PyObject* serialize_chessboard(ChessBoard board)
+{
+    /* init a one-dimensional 64-bit integer array with 13 elements */
+    npy_intp dims[1] = { 13 };
+    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board.bitboards);
+}
+
+ChessBoard deserialize_chessboard(PyObject* bitboards)
+{
+    PyObject* iterator, * temp_obj;
+    size_t offset = 0;
+    ChessBoard board = BOARD_NULL;
+
+    /* get an iterator of the list to parse */
+    iterator = PyObject_GetIter(bitboards);
+
+    /* make sure that the iterator is valid */
+    if (!iterator) { return BOARD_NULL; }
+
+    /* loop through the list using the iterator */
+    while (temp_obj = PyIter_Next(iterator))
+    {
+        if (!PyLong_Check(temp_obj)) { return BOARD_NULL; }
+        board.bitboards[offset++] = PyLong_AsUnsignedLongLong(temp_obj);
+    }
+
+    return board;
 }
