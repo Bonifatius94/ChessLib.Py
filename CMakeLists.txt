@@ -1,8 +1,11 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
+﻿# =========================================
+#        MAIN PROJECT    CHESS LIB
+# =========================================
+
+# set cmake tool version
 cmake_minimum_required(VERSION 3.8)
 
+# declare project
 project("ChessLib")
 
 # include sub-projects
