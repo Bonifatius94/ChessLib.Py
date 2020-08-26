@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+/* include size_t type for gcc */
+#ifdef __GNUC__
+    #include <stddef.h>
+#endif
+
 typedef enum _CHESS_PIECE_TYPE {
     Invalid = 0,
     King = 1,

@@ -502,7 +502,7 @@ ChessPosition get_board_position(Bitboard bitboard)
 
 #ifdef __GNUC__
     /* use built-in leading zeros function for GCC Linux build (this compiles to the very fast 'bsr' instruction on x86 AMD processors) */
-    return (ChessPosition)((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll((X)) - 1))
+    return (ChessPosition)((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll(bitboard) - 1));
 #else
     /* use abstract DeBruijn algorithm with table lookup */
     /* TODO: think of implementing this as assembler code */
