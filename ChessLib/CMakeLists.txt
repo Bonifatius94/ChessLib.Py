@@ -1,9 +1,12 @@
 ﻿# =========================================
-#      SUB - PROJECT    CHESS LIB
+#          PROJECT    CHESS LIB
 # =========================================
 
 # set cmake tool version
 cmake_minimum_required(VERSION 3.8)
+
+# declare the project
+project("ChessLib")
 
 # include local header files
 include_directories("include")
@@ -21,7 +24,7 @@ endif()
 
 # create library with python module code
 set(ChessLib "ChessLib")
-add_library(${ChessLib}
+add_library(${ChessLib} SHARED
     "src/chesslibmodule.c"
     "src/chessboard.c"
     "src/chesspiece.c"
@@ -29,7 +32,17 @@ add_library(${ChessLib}
     "src/chessdraw.c"
     "src/chessdrawgen.c"
     "src/chesspieceatpos.c")
-
 target_link_libraries(${ChessLib}  ${Python3_LIBRARIES})
+# TODO: disable CMake debug mode, only use release by default (otherwise the build will run into an error with missing python debug components)
+
+# install the library properly, so it can be used
+install(TARGETS ${ChessLib}
+        LIBRARY
+          DESTINATION lib
+          COMPONENT Libraries
+          NAMELINK_COMPONENT Development
+        PUBLIC_HEADER
+          DESTINATION include
+          COMPONENT Development)
 
 # TODO: add unit tests
