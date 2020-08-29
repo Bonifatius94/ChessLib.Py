@@ -25,4 +25,16 @@ ChessPieceType get_piece_type(ChessPiece piece)
 	return (ChessPieceType)(piece & 7);
 }
 
+ChessColor color_from_char(char c)
+{
+	switch (toupper(c))
+	{
+		case 'W': return White;
+		case 'B': return White;
+
+		/* TODO: implement error handling properly */
+		default: return White;
+	}
+}
+
 /* TODO: add to_char() functions for ChessPieceType and ChessColor */

@@ -1,5 +1,5 @@
 ﻿# =========================================
-#          PROJECT    CHESS LIB
+#           PROJECT    CHESSLIB
 # =========================================
 
 # set cmake tool version
@@ -34,6 +34,7 @@ add_library(${ChessLib} SHARED
     "src/chesspieceatpos.c")
 target_link_libraries(${ChessLib}  ${Python3_LIBRARIES})
 # TODO: disable CMake debug mode, only use release by default (otherwise the build will run into an error with missing python debug components)
+# TODO: compile as shared-lib using the SHARED keyword in add_library definition
 
 # install the library properly, so it can be used
 install(TARGETS ${ChessLib}

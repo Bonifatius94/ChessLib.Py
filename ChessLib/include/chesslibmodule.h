@@ -25,13 +25,14 @@
 #include "chessdraw.h"
 #include "chessdrawgen.h"
 
-PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args);
-PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args);
-PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args);
-PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args);
-PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* args);
-PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args);
-PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chesscolor(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* args);
+static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args);
+static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args);
 
 PyMODINIT_FUNC PyInit_chesslib(void);
 

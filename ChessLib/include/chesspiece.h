@@ -10,6 +10,7 @@
 
 #include "chesstypes.h"
 #include <stdint.h>
+#include <ctype.h>
 
 /* ====================================================
                D E F I N E    M A K R O S
@@ -27,5 +28,6 @@ ChessPiece create_piece(ChessPieceType type, ChessColor color, int was_moved);
 ChessColor get_piece_color(ChessPiece piece);
 int get_was_piece_moved(ChessPiece piece);
 ChessPieceType get_piece_type(ChessPiece piece);
+ChessColor color_from_char(char c);
 
 #endif
