@@ -5,7 +5,7 @@
 
 
 # import python C-lib extension tools
-from distutils.core import setup, Extension
+from numpy.distutils.core import setup, Extension
 # TODO: try the alternative scikit build tools allowing for the integration of CMake builds
 
 
@@ -33,7 +33,7 @@ def main():
     setup(name = "chesslib",
           version = "1.0.0",
           description = "Python interface for efficient chess draw-gen C library functions",
-          author = "Marco Tröster",
+          author = "Marco TrÃ¶ster",
           author_email = "marco@troester-gmbh.de",
           ext_modules = [chesslib_module])
 
@@ -44,5 +44,5 @@ if __name__ == "__main__":
 
 
 # =============================================
-#         Marco Tröster, 2020-08-29
+#         Marco TrÃ¶ster, 2020-08-29
 # =============================================

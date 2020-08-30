@@ -4,11 +4,11 @@
       H E L P E R    F U N C T I O N    S T U B S
    ================================================= */
 
-PyObject* serialize_chessboard(ChessBoard board);
-ChessBoard deserialize_chessboard(PyObject* board);
+static PyObject* serialize_chessboard(ChessBoard board);
+static ChessBoard deserialize_chessboard(PyObject* board);
 
 /* =================================================
-                 I N I T I A L I Z E    
+                 I N I T I A L I Z E
               P Y T H O N    M O D U L E
    ================================================= */
 
@@ -18,10 +18,13 @@ ChessBoard deserialize_chessboard(PyObject* board);
 
 /* Define all functions exposed to python. */
 static PyMethodDef chesslib_methods[] = {
+    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, "Python interface for generating all possible draws for the given position using a C library function"},
     {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, "Python interface for creating a new chess board using a C library function"},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_VARARGS, "Python interface for creating a new chess board in start formation using a C library function"},
-    {"ChessColor", chesslib_create_chesscolor, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
+    {"ChessColor_White", chesslib_create_chesscolor_white, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
+    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
     {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
+    {"ChessDraw_Null", chesslib_create_chessdraw_null, METH_VARARGS, "Python interface for creating a null-value chess draw using a C library function"},
     {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, "Python interface for creating a new chess piece using a C library function"},
     {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, "Python interface for creating a new chess position using a C library function"},
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Python interface for creating a new chess piece including its' position using a C library function"},
@@ -43,7 +46,7 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     return PyModule_Create(&chesslib_module);
 }
 
-/* ================================================= 
+/* =================================================
        C R E A T E    D A T A    O B J E C T S
 
          -    C H E S S    C O L O R
@@ -54,20 +57,21 @@ PyMODINIT_FUNC PyInit_chesslib(void)
          -    C H E S S    D R A W
    ================================================= */
 
-static PyObject* chesslib_create_chesscolor(PyObject* self, PyObject* args)
+static PyObject* chesslib_create_chesscolor_white(PyObject* self, PyObject* args)
 {
-    const char color_as_char;
-
-    /* read position string, quit if the parameter does not exist */
-    if (!PyArg_ParseTuple(args, "c", &color_as_char)) { return NULL; }
-
     /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong(color_from_char(color_as_char));
+    return PyLong_FromUnsignedLong((uint8_t)White);
+}
+
+static PyObject* chesslib_create_chesscolor_black(PyObject* self, PyObject* args)
+{
+    /* create uint32 python object and return it */
+    return PyLong_FromUnsignedLong((uint8_t)Black);
 }
 
 /**************************************************************************
-  Create an instance of the ChessPosition type given the position as string 
-  (e.g. 'A2' for row=1, column=0). The value of the ChessPosition is equal to 
+  Create an instance of the ChessPosition type given the position as string
+  (e.g. 'A2' for row=1, column=0). The value of the ChessPosition is equal to
   an uint32 object within value range of 0-63 (both bounds included).
  **************************************************************************/
 static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
@@ -79,7 +83,7 @@ static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "s", &pos_as_string)) { return NULL; }
 
     /* make sure that the overloaded string is of the correct format */
-    if (strlen(pos_as_string) != 2 
+    if (strlen(pos_as_string) != 2
         || (!isalpha(pos_as_string[0]) || toupper(pos_as_string[0]) - 'A' >= 8 || toupper(pos_as_string[0]) - 'A' < 0)
         || (!isdigit(pos_as_string[1]) || pos_as_string[1] - '1' >= 8)) { return NULL; }
     /* TODO: implement throwing an invalid argument exception instead */
@@ -98,7 +102,7 @@ static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
 /**************************************************************************
   Create an instance of the ChessPiece type given the color and piece type
   as a single character and the boolean was_moved as integer (0=FALSE, else TRUE).
-  The value of the ChessPiece is equal to an uint32 object with the lowest 3 bits 
+  The value of the ChessPiece is equal to an uint32 object with the lowest 3 bits
   as piece type enum, the next higher bit as color and the highest bit as was_moved.
   For further details see the documentation of the ChessPiece type.
  **************************************************************************/
@@ -124,7 +128,7 @@ static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
     /* parse the chess piece type */
     switch (toupper(type_as_char))
     {
-        case 'K': type = King;     break;
+        case 'K': type = King;    break;
         case 'Q': type = Queen;   break;
         case 'R': type = Rook;    break;
         case 'B': type = Bishop;  break;
@@ -138,9 +142,9 @@ static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
 }
 
 /**************************************************************************
-  Create an instance of the ChessPieceAtPos type given the ChessPiece 
-  and ChessPosition as integers. The value of the ChessPieceAtPos 
-  instance equals an uint32 object with lowest 5 bits as ChessPiece and 
+  Create an instance of the ChessPieceAtPos type given the ChessPiece
+  and ChessPosition as integers. The value of the ChessPieceAtPos
+  instance equals an uint32 object with lowest 5 bits as ChessPiece and
   the next higher 6 bits as ChessPosition.
   For further details see the documentation of the ChessPieceAtPos type.
  **************************************************************************/
@@ -181,7 +185,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
     if (!iterator) { return NULL; }
 
     /* loop through the list using the iterator */
-    while (temp_obj = PyIter_Next(iterator))
+    while ((temp_obj = PyIter_Next(iterator)))
     {
         if (!PyLong_Check(temp_obj)) { return NULL; }
         pieces_at_pos[offset++] = (ChessPieceAtPos)PyLong_AsLong(temp_obj);
@@ -193,7 +197,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
 }
 
 /**************************************************************************
-  Create an instance of the ChessBoard struct with all chess pieces in 
+  Create an instance of the ChessBoard struct with all chess pieces in
   start formation.
  **************************************************************************/
 static PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* args)
@@ -215,45 +219,58 @@ static PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObj
  **************************************************************************/
 static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
 {
-    PyObject* bitboards;
+    PyObject *bitboards, *old_pos_obj, *new_pos_obj, *prom_type_obj;
     ChessBoard board = BOARD_NULL;
-    ChessPosition old_pos, new_pos;
-    ChessPieceType peasantPromotionType = Invalid;
-    
-    /* TODO: make sure that both overloads work correctly */
-    if (!PyArg_ParseTuple(args, "Oiii", &bitboards, &old_pos, &new_pos, &peasantPromotionType)
-        || !PyArg_ParseTuple(args, "Oii", &bitboards, &old_pos, &new_pos)) { return NULL; }
+    ChessPosition old_pos = 0, new_pos = 0;
+    ChessPieceType peasant_promotion_type = Invalid;
 
-    /* TODO: implement the creation of chessdraws */
-    return PyLong_FromUnsignedLong(create_draw(board, old_pos, new_pos, peasantPromotionType));
+    /* TODO: make sure that both overloads work correctly */
+    if (!PyArg_ParseTuple(args, "OOOO", &bitboards, &old_pos_obj, &new_pos_obj, &prom_type_obj)
+        || !PyArg_ParseTuple(args, "OOO", &bitboards, &old_pos_obj, &new_pos_obj)) { return NULL; }
+
+    /* convert parsed python objects */
+    if (!PyLong_Check(old_pos_obj) || !PyLong_Check(new_pos_obj) || !PyLong_Check(prom_type_obj)) { return NULL; }
+    old_pos = (ChessPosition)PyLong_AsUnsignedLong(old_pos_obj);
+    new_pos = (ChessPosition)PyLong_AsUnsignedLong(new_pos_obj);
+    peasant_promotion_type = (ChessPieceType)PyLong_AsUnsignedLong(prom_type_obj);
+
+    return PyLong_FromUnsignedLong(create_draw(board, old_pos, new_pos, peasant_promotion_type));
 }
+
+static PyObject* chesslib_create_chessdraw_null(PyObject* self, PyObject* args)
+{
+    return PyLong_FromUnsignedLong(DRAW_NULL);
+}
+
 
 /* =================================================
             G E N E R A T E    D R A W S
    ================================================= */
 
 /**************************************************************************
-  Retrive a list of all possible chess draws for the current chess position 
+  Retrive a list of all possible chess draws for the current chess position
   given following arguments:
     1) An instance of ChessBoard representing the position before the draws
     2) The drawing side as ChessColor enum (White=0, Black=1)
     3) The last draw or DRAW_NULL on first draw (only relevant for en-passant rule, default: DRAW_NULL)
     4) A boolean indicating whether draw-into-check should be analyzed or not (default: FALSE)
-  
+
  **************************************************************************/
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
-    PyObject* bitboards;
+    PyObject *bitboards, *drawing_side_obj, *last_draw_obj;
     ChessDraw *out_draws, last_draw = DRAW_NULL;
-    size_t dims[1];
+    const size_t dims[1];
     ChessBoard board;
     ChessColor drawing_side;
     int analyze_draw_into_check;
-    
+
     /* parse args as object */
-    if (!PyArg_ParseTuple(args, "Oiii", &bitboards, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "OOOi", &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }
     /* TODO: add overloads without last_draw and/or analyze_draw_into_check */
 
+    drawing_side = (ChessColor)PyLong_AsUnsignedLong(drawing_side_obj);
+    last_draw = (ChessDraw)PyLong_AsUnsignedLong(last_draw_obj);
     board = deserialize_chessboard(bitboards);
 
     /* compute possible draws */
@@ -270,7 +287,7 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 static PyObject* serialize_chessboard(ChessBoard board)
 {
     /* init a one-dimensional 64-bit integer numpy array with 13 elements */
-    npy_intp dims[1] = { 13 };
+    const npy_intp dims[1] = { 13 };
     return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board.bitboards);
 }
 
@@ -287,7 +304,7 @@ static ChessBoard deserialize_chessboard(PyObject* bitboards)
     if (!iterator) { return BOARD_NULL; }
 
     /* loop through the list using the iterator */
-    while (temp_obj = PyIter_Next(iterator))
+    while ((temp_obj = PyIter_Next(iterator)))
     {
         /* TODO: make sure that the PyLong_Check() makro works correctly! */
         if (!PyLong_Check(temp_obj)) { return BOARD_NULL; }
