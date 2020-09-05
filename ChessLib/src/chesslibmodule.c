@@ -60,13 +60,13 @@ PyMODINIT_FUNC PyInit_chesslib(void)
 static PyObject* chesslib_create_chesscolor_white(PyObject* self)
 {
     /* create uint32 python object and return it */
-    return PyLong_FromLong((uint8_t)White);
+    return PyLong_FromUnsignedLong((uint8_t)White);
 }
 
 static PyObject* chesslib_create_chesscolor_black(PyObject* self)
 {
     /* create uint32 python object and return it */
-    return PyLong_FromLong((uint8_t)Black);
+    return PyLong_FromUnsignedLong((uint8_t)Black);
 }
 
 /**************************************************************************
@@ -89,11 +89,8 @@ static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
     /* TODO: implement throwing an invalid argument exception instead */
 
     /* parse position from position string */
-    if (strlen(pos_as_string) == 2)
-    {
-        row = pos_as_string[1] - '1';
-        column = toupper(pos_as_string[0]) - 'A';
-    }
+    row = pos_as_string[1] - '1';
+    column = toupper(pos_as_string[0]) - 'A';
 
     /* create uint32 python object and return it */
     return PyLong_FromUnsignedLong(create_position(row, column));
