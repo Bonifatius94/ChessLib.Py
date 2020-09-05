@@ -1,20 +1,35 @@
+# ================================================ #
+#     Build Engine for Python Extension C-Libs     #
+# ================================================ #
+
+# use the Ubuntu 18.04 LTS image as base
 FROM ubuntu:18.04
 
-# configure build settings
-ARG GITHUB_REPO=ChessAI.Py
-ARG SRC_DIR=/home/src/$GITHUB_REPO
-ARG BUILD_DIR=/home/build/
-
-# install build dependencies
+# install build dependencies: c/c++ pyhton3 numpy
 RUN apt-get update && \
-    apt-get install -y git build-essential cmake python3 python3-dev python3-pip && \
+    apt-get install -y build-essential python3 python3-dev python3-pip && \
     pip3 install numpy && \
     rm -rf /var/lib/apt/lists/*
 
-# download and build source code
-RUN git clone https://github.com/Bonifatius94/$GITHUB_REPO /home/src/ && \
-    cd $BUILD_DIR && cmake ../src/$GITHUB_REPO && \
-    make -j4 && \
-    rm -rf $SRC_DIR
+# configure build settings
+ARG SRC_FOLDER=ChessLib
+ARG SRC_ROOT=/home/src/$SRC_FOLDER
+
+# copy the source code
+ADD ./$SRC_FOLDER $SRC_ROOT
+
+# move inside sources folder
+WORKDIR $SRC_ROOT
+
+# build and install the Python extension
+# user-only installation, no system installation -> fixes privileges issues
+RUN python3 setup.py install --user
+
+# run unit test of Python extension
+RUN python3 test.py
 
 # TODO: add deployment commands
+
+# ================================================ #
+#            Marco Tröster, 2020-09-04             #
+# ================================================ #
