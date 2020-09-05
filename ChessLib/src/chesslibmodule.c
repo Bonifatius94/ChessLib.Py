@@ -20,11 +20,11 @@ static ChessBoard deserialize_chessboard(PyObject* board);
 static PyMethodDef chesslib_methods[] = {
     {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, "Python interface for generating all possible draws for the given position using a C library function"},
     {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, "Python interface for creating a new chess board using a C library function"},
-    {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_VARARGS, "Python interface for creating a new chess board in start formation using a C library function"},
-    {"ChessColor_White", chesslib_create_chesscolor_white, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
-    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
+    {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Python interface for creating a new chess board in start formation using a C library function"},
+    {"ChessColor_White", chesslib_create_chesscolor_white, METH_NOARGS, "Python interface for creating a new chess draw using a C library function"},
+    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_NOARGS, "Python interface for creating a new chess draw using a C library function"},
     {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, "Python interface for creating a new chess draw using a C library function"},
-    {"ChessDraw_Null", chesslib_create_chessdraw_null, METH_VARARGS, "Python interface for creating a null-value chess draw using a C library function"},
+    {"ChessDraw_Null", chesslib_create_chessdraw_null, METH_NOARGS, "Python interface for creating a null-value chess draw using a C library function"},
     {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, "Python interface for creating a new chess piece using a C library function"},
     {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, "Python interface for creating a new chess position using a C library function"},
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Python interface for creating a new chess piece including its' position using a C library function"},
@@ -57,16 +57,16 @@ PyMODINIT_FUNC PyInit_chesslib(void)
          -    C H E S S    D R A W
    ================================================= */
 
-static PyObject* chesslib_create_chesscolor_white(PyObject* self, PyObject* args)
+static PyObject* chesslib_create_chesscolor_white(PyObject* self)
 {
     /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong((uint8_t)White);
+    return PyLong_FromLong((uint8_t)White);
 }
 
-static PyObject* chesslib_create_chesscolor_black(PyObject* self, PyObject* args)
+static PyObject* chesslib_create_chesscolor_black(PyObject* self)
 {
     /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong((uint8_t)Black);
+    return PyLong_FromLong((uint8_t)Black);
 }
 
 /**************************************************************************
@@ -200,7 +200,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
   Create an instance of the ChessBoard struct with all chess pieces in
   start formation.
  **************************************************************************/
-static PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* args)
+static PyObject* chesslib_create_chessboard_startformation(PyObject* self)
 {
     /* create the chess board */
     ChessBoard board = START_FORMATION;
@@ -225,8 +225,8 @@ static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
     ChessPieceType peasant_promotion_type = Invalid;
 
     /* TODO: make sure that both overloads work correctly */
-    if (!PyArg_ParseTuple(args, "OOOO", &bitboards, &old_pos_obj, &new_pos_obj, &prom_type_obj)
-        || !PyArg_ParseTuple(args, "OOO", &bitboards, &old_pos_obj, &new_pos_obj)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "Okkk", &bitboards, &old_pos_obj, &new_pos_obj, &prom_type_obj)
+        || !PyArg_ParseTuple(args, "Okk", &bitboards, &old_pos_obj, &new_pos_obj)) { return NULL; }
 
     /* convert parsed python objects */
     if (!PyLong_Check(old_pos_obj) || !PyLong_Check(new_pos_obj) || !PyLong_Check(prom_type_obj)) { return NULL; }
@@ -237,7 +237,7 @@ static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
     return PyLong_FromUnsignedLong(create_draw(board, old_pos, new_pos, peasant_promotion_type));
 }
 
-static PyObject* chesslib_create_chessdraw_null(PyObject* self, PyObject* args)
+static PyObject* chesslib_create_chessdraw_null(PyObject* self)
 {
     return PyLong_FromUnsignedLong(DRAW_NULL);
 }
@@ -266,7 +266,7 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
     int analyze_draw_into_check;
 
     /* parse args as object */
-    if (!PyArg_ParseTuple(args, "OOOi", &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "Okki", &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }
     /* TODO: add overloads without last_draw and/or analyze_draw_into_check */
 
     drawing_side = (ChessColor)PyLong_AsUnsignedLong(drawing_side_obj);
