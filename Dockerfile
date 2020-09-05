@@ -28,7 +28,7 @@ RUN python3 setup.py install --user
 # run unit test of Python extension
 RUN python3 test.py
 
-# TODO: add deployment commands
+# TODO: add deployment commands (packaging binaries, uploading to artifactory, ...)
 
 # ================================================ #
 #            Marco Tröster, 2020-09-04             #
