@@ -105,17 +105,17 @@ static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
  **************************************************************************/
 static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
 {
-    const char color_as_char, type_as_char;
+    const char *color_as_char, *type_as_char;
     ChessColor color;
     ChessPieceType type;
     int was_moved;
 
     /* read chess color and chess piece type string, quit if the parameter does not exist */
     /* read was moved boolean, quit if the parameter does not exist */
-    if (!PyArg_ParseTuple(args, "cci", &color_as_char, &type_as_char, &was_moved)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "ssi", &color_as_char, &type_as_char, &was_moved)) { return NULL; }
 
     /* parse the chess piece color */
-    switch (toupper(color_as_char))
+    switch (toupper(*color_as_char))
     {
         case 'W': color = White; break;
         case 'B': color = Black; break;
@@ -123,7 +123,7 @@ static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
     }
 
     /* parse the chess piece type */
-    switch (toupper(type_as_char))
+    switch (toupper(*type_as_char))
     {
         case 'K': type = King;    break;
         case 'Q': type = Queen;   break;
