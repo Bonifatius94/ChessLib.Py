@@ -11,7 +11,7 @@ def test_module():
     #test_chesspieceatpos()
     test_chessdraw_null()
     test_chessboard()
-    #test_chessboard_start()
+    test_chessboard_start()
 
     # test draw-gen
     test_drawgen()

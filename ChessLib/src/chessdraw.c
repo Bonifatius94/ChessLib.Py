@@ -2,14 +2,14 @@
 
 ChessDraw create_draw_from_hash(uint32_t hash)
 {
-	return (ChessDraw)hash;
+    return (ChessDraw)hash;
 }
 
 ChessDrawType determine_draw_type(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
 {
     ChessDrawType type = Standard;
     ChessPiece piece = get_piece_at(board, oldPos);
-    
+
     /* check for a peasant promotion */
     if (peasantPromotionType != Invalid && get_piece_type(piece) == Peasant
         && ((get_row(newPos) == 7 && get_piece_color(piece) == White)
@@ -49,9 +49,9 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
     draw_type = determine_draw_type(board, oldPos, newPos, peasantPromotionType);
     drawing_side = get_piece_color(piece);
     drawing_piece_type = get_piece_type(piece);
-    taken_piece_type = 
+    taken_piece_type =
         (draw_type == EnPassant) ? Peasant : (is_captured_at(board, newPos) ? get_piece_type(get_piece_at(board, newPos)) : Invalid);
-    
+
     /* transform property values to a hash code */
     draw = (ChessDraw)(
           (is_first_move << 24)
@@ -68,40 +68,40 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
 
 int get_is_first_move(ChessDraw draw)
 {
-	return (int)((draw >> 24) & 0x1);
+    return (int)((draw >> 24) & 0x1);
 }
 
 ChessColor get_drawing_side(ChessDraw draw)
 {
-	return (ChessColor)((draw >> 23) & 0x1);
+    return (ChessColor)((draw >> 23) & 0x1);
 }
 
 ChessDrawType get_draw_type(ChessDraw draw)
 {
-	return (ChessColor)((draw >> 21) & 0x3);
+    return (ChessColor)((draw >> 21) & 0x3);
 }
 
 ChessPieceType get_drawing_piece_type(ChessDraw draw)
 {
-	return (ChessPieceType)((draw >> 18) & 0x7);
+    return (ChessPieceType)((draw >> 18) & 0x7);
 }
 
 ChessPieceType get_taken_piece_type(ChessDraw draw)
 {
-	return (ChessPieceType)((draw >> 15) & 0x7);
+    return (ChessPieceType)((draw >> 15) & 0x7);
 }
 
 ChessPieceType get_peasant_promotion_piece_type(ChessDraw draw)
 {
-	return (ChessPieceType)((draw >> 12) & 0x7);
+    return (ChessPieceType)((draw >> 12) & 0x7);
 }
 
 ChessPosition get_old_position(ChessDraw draw)
 {
-	return (ChessPosition)((draw >> 6) & 0x3F);
+    return (ChessPosition)((draw >> 6) & 0x3F);
 }
 
 ChessPosition get_new_position(ChessDraw draw)
 {
-	return (ChessPosition)(draw & 0x3F);
+    return (ChessPosition)(draw & 0x3F);
 }

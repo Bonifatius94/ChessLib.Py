@@ -59,11 +59,10 @@ typedef uint64_t Bitboard;
    The boards holding information on chess pieces are ordered by the occurance of the piece in the ChessPieceType enum (King=0, Queens=1, Rooks=2, Bishops=3, Knights=4, Peasants=5).
    All boards with indices 0-5 belong to the white side, the next 6 boards with indices 6-11 belong to the black side.
 */
-typedef struct _CHESS_BITBOARD {
-    /* the bitboards for each  */
+/*typedef struct _CHESS_BITBOARD {
     Bitboard bitboards[13];
-} ChessBoard;
+} ChessBoard;*/
 
-/*typedef Bitboard * ChessBoard;*/
+typedef Bitboard * ChessBoard;
 
 #endif

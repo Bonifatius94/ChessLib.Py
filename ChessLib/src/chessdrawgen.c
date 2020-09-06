@@ -45,33 +45,33 @@ void get_all_draws(ChessDraw** out_draws, size_t* out_length, ChessBoard board, 
     size_t king_draws_len, queen_draws_len, rook_draws_len, bishop_draws_len, knight_draws_len, peasant_draws_len;
     size_t i, offset = 0;
 
-     /* determine the drawing side */
-     side_offset = SIDE_OFFSET(drawing_side);
-     opponent = OPPONENT(drawing_side);
+    /* determine the drawing side */
+    side_offset = SIDE_OFFSET(drawing_side);
+    opponent = OPPONENT(drawing_side);
 
-     /* compute the draws for the pieces of each type */
-     get_draws(&king_draws,    &king_draws_len,    board.bitboards, drawing_side, King,    last_draw);
-     get_draws(&queen_draws,   &queen_draws_len,   board.bitboards, drawing_side, Queen,   last_draw);
-     get_draws(&rook_draws,    &rook_draws_len,    board.bitboards, drawing_side, Rook,    last_draw);
-     get_draws(&bishop_draws,  &bishop_draws_len,  board.bitboards, drawing_side, Bishop,  last_draw);
-     get_draws(&knight_draws,  &knight_draws_len,  board.bitboards, drawing_side, Knight,  last_draw);
-     get_draws(&peasant_draws, &peasant_draws_len, board.bitboards, drawing_side, Peasant, last_draw);
-     
-     /* concatenate the draws of the different piece types */
-     *out_length = king_draws_len + queen_draws_len + rook_draws_len + bishop_draws_len + knight_draws_len + peasant_draws_len;
-     *out_draws = (ChessDraw*)malloc(*out_length * sizeof(ChessDraw));
-     for (i = 0; i < king_draws_len; i++)    { (*out_draws)[offset++] = king_draws[i];    }
-     for (i = 0; i < queen_draws_len; i++)   { (*out_draws)[offset++] = queen_draws[i];   }
-     for (i = 0; i < rook_draws_len; i++)    { (*out_draws)[offset++] = rook_draws[i];    }
-     for (i = 0; i < bishop_draws_len; i++)  { (*out_draws)[offset++] = bishop_draws[i];  }
-     for (i = 0; i < knight_draws_len; i++)  { (*out_draws)[offset++] = knight_draws[i];  }
-     for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
+    /* compute the draws for the pieces of each type */
+    get_draws(&king_draws,    &king_draws_len,    board, drawing_side, King,    last_draw);
+    get_draws(&queen_draws,   &queen_draws_len,   board, drawing_side, Queen,   last_draw);
+    get_draws(&rook_draws,    &rook_draws_len,    board, drawing_side, Rook,    last_draw);
+    get_draws(&bishop_draws,  &bishop_draws_len,  board, drawing_side, Bishop,  last_draw);
+    get_draws(&knight_draws,  &knight_draws_len,  board, drawing_side, Knight,  last_draw);
+    get_draws(&peasant_draws, &peasant_draws_len, board, drawing_side, Peasant, last_draw);
 
-     /* free temporary draws */
-     free(king_draws); free(queen_draws); free(rook_draws); free(bishop_draws); free(knight_draws); free(peasant_draws);
+    /* concatenate the draws of the different piece types */
+    *out_length = king_draws_len + queen_draws_len + rook_draws_len + bishop_draws_len + knight_draws_len + peasant_draws_len;
+    *out_draws = (ChessDraw*)malloc(*out_length * sizeof(ChessDraw));
+    for (i = 0; i < king_draws_len; i++)    { (*out_draws)[offset++] = king_draws[i];    }
+    for (i = 0; i < queen_draws_len; i++)   { (*out_draws)[offset++] = queen_draws[i];   }
+    for (i = 0; i < rook_draws_len; i++)    { (*out_draws)[offset++] = rook_draws[i];    }
+    for (i = 0; i < bishop_draws_len; i++)  { (*out_draws)[offset++] = bishop_draws[i];  }
+    for (i = 0; i < knight_draws_len; i++)  { (*out_draws)[offset++] = knight_draws[i];  }
+    for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
 
-     /* if flag is active, only return draws that do not cause draw-into-check */
-     if (analyze_draw_into_check) { eliminate_draws_into_check(out_draws, out_length, board, drawing_side); }
+    /* free temporary draws */
+    free(king_draws); free(queen_draws); free(rook_draws); free(bishop_draws); free(knight_draws); free(peasant_draws);
+
+    /* if flag is active, only return draws that do not cause draw-into-check */
+    if (analyze_draw_into_check) { eliminate_draws_into_check(out_draws, out_length, board, drawing_side); }
 }
 
 void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoard board, ChessColor drawing_side)
@@ -86,7 +86,7 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length, ChessBoar
     legal_draws_count = *length;
 
     /* make a working copy of all local bitboards */
-    for (i = 0; i < 13; i++) { sim_bitboards[i] = board.bitboards[i]; }
+    for (i = 0; i < 13; i++) { sim_bitboards[i] = board[i]; }
 
     side_offset = SIDE_OFFSET(drawing_side);
     opponent = OPPONENT(drawing_side);
@@ -432,12 +432,12 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side,
     black_mask = ~white_mask;
 
     /* get one-foreward draws */
-    draws |= 
+    draws |=
           (white_mask & (bitboard << 8) & ~blocking_pieces)
         | (black_mask & (bitboard >> 8) & ~blocking_pieces);
 
     /* get two-foreward draws */
-    draws |= 
+    draws |=
           (white_mask & ((((bitboard & ROW_2 & ~was_moved_mask) << 8) & ~blocking_pieces) << 8) & ~blocking_pieces)
         | (black_mask & ((((bitboard & ROW_7 & ~was_moved_mask) >> 8) & ~blocking_pieces) >> 8) & ~blocking_pieces);
 
@@ -449,7 +449,7 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side,
         | (black_mask & ((last_draw_new_pos & enemy_peasants) << 8) & ((ROW_2 & last_draw_old_pos) >> 8));
 
     /* get right / left catch draws */
-    draws |= 
+    draws |=
           (white_mask & ((((bitboard & ~COL_H) << 9) & enemy_pieces) | (((bitboard & ~COL_A) << 7) & enemy_pieces)))
         | (black_mask & ((((bitboard & ~COL_A) >> 9) & enemy_pieces) | (((bitboard & ~COL_H) >> 7) & enemy_pieces)));
 
@@ -476,7 +476,7 @@ void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_
 
     /* init position cache for worst-case */
     ChessPosition temp_pos[28];
-     
+
     /* loop through all bits of the board */
     for (pos = 0; pos < 64; pos++)
     {
@@ -494,7 +494,7 @@ void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_
 /**************************************************************************************************
    this returns the index of the highest bit set on the given bitboard.
    if the given bitboard has multiple bits set, only the position of the highest bit is returned.
-   info: the result is mathematically equal to floor(log2(x)) 
+   info: the result is mathematically equal to floor(log2(x))
  **************************************************************************************************/
 ChessPosition get_board_position(Bitboard bitboard)
 {
@@ -515,7 +515,7 @@ ChessPosition get_board_position(Bitboard bitboard)
         62, 57, 46, 52, 38, 26, 32, 41,
         50, 36, 17, 19, 29, 10, 13, 21,
         56, 45, 25, 31, 35, 16,  9, 12,
-        44, 24, 15,  8, 23,  7,  6,  5 
+        44, 24, 15,  8, 23,  7,  6,  5
     };
 
     bitboard |= bitboard >> 1;

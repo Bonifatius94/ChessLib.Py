@@ -285,13 +285,13 @@ static PyObject* serialize_chessboard(ChessBoard board)
 {
     /* init a one-dimensional 64-bit integer numpy array with 13 elements */
     const npy_intp dims[1] = { 13 };
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board.bitboards);
+    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board);
 }
 
 static ChessBoard deserialize_chessboard(PyObject* bitboards)
 {
     PyObject* iterator, * temp_obj;
-    size_t offset = 0;
+    size_t i;
     ChessBoard board = BOARD_NULL;
 
     /* get an iterator of the list to parse */
@@ -301,11 +301,12 @@ static ChessBoard deserialize_chessboard(PyObject* bitboards)
     if (!iterator) { return BOARD_NULL; }
 
     /* loop through the list using the iterator */
-    while ((temp_obj = PyIter_Next(iterator)))
+    /*while ((temp_obj = PyIter_Next(iterator)))*/
+    for (i = 0; i < 13; i++)
     {
         /* TODO: make sure that the PyLong_Check() makro works correctly! */
         if (!PyLong_Check(temp_obj)) { return BOARD_NULL; }
-        board.bitboards[offset++] = PyLong_AsUnsignedLongLong(temp_obj);
+        board[i] = PyLong_AsUnsignedLongLong(temp_obj);
     }
 
     return board;

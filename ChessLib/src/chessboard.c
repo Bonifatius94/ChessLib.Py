@@ -2,25 +2,25 @@
 
 ChessBoard create_board(const Bitboard bitboards[])
 {
-	/* TODO: check if memory allocation works */
+    /* TODO: check if memory allocation works */
     size_t i;
-    ChessBoard board;
-    for (i = 0; i < 13; i++) { board.bitboards[i] = bitboards[i]; }
-	return board;
+    ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    for (i = 0; i < 13; i++) { board[i] = bitboards[i]; }
+    return board;
 }
 
 ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count)
 {
     /* TODO: check if memory allocation works */
     size_t i;
-    ChessBoard board;
+    ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
 
     uint8_t board_index;
     ChessPosition pos;
     ChessPiece piece;
 
     /* assume pieces as already moved */
-    board.bitboards[12] = 0xFFFFFFFFFFFFFFFFuL;
+    board[12] = 0xFFFFFFFFFFFFFFFFuL;
 
     /* loop through the pieces@pos array */
     for (i = 0; i < pieces_count; i++)
@@ -33,11 +33,11 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
         board_index = SIDE_OFFSET(get_piece_color(piece)) + PIECE_OFFSET(get_piece_type(piece));
 
         /* apply the piece to the bitboard */
-        board.bitboards[board_index] |= 0x1uLL << pos;
+        board[board_index] |= 0x1uLL << pos;
 
         /* apply was_moved state of the chess piece to the bitboard */
         /* the chess pieces are assumed to be already moved, so only flip the bit if the piece was not moved */
-        if (pos < 16 || pos > 47) { board.bitboards[12] ^= ((uint64_t)(get_was_piece_moved(piece) ^ 1)) << pos; }
+        if (pos < 16 || pos > 47) { board[12] ^= ((uint64_t)(get_was_piece_moved(piece) ^ 1)) << pos; }
     }
 
     return board;
@@ -50,66 +50,64 @@ Bitboard is_captured_at(ChessBoard board, ChessPosition pos)
     mask = 0x1uLL << pos;
 
 	/* combine all bitboards to one bitboard by bitwise OR */
-    all_pieces = board.bitboards[0] | board.bitboards[1] | board.bitboards[2]
-		| board.bitboards[3] | board.bitboards[4] | board.bitboards[5]
-		| board.bitboards[6] | board.bitboards[7] | board.bitboards[8] 
-		| board.bitboards[9] | board.bitboards[10] | board.bitboards[11];
+    all_pieces = board[0] | board[1] | board[2] | board[3] | board[4] | board[5]
+        | board[6] | board[7] | board[8] | board[9] | board[10] | board[11];
 
-	return (all_pieces & mask);
+    return (all_pieces & mask);
 }
 
 ChessPiece get_piece_at(ChessBoard board, ChessPosition pos)
 {
-	int i;
-	ChessPiece piece = CHESS_PIECE_NULL;
+    int i;
+    ChessPiece piece = CHESS_PIECE_NULL;
     ChessPieceType type;
     ChessColor color;
 
-	/* only create a chess piece if the board is captured at the given position */
-	if (is_captured_at(board, pos))
-	{
-		type = Invalid;
-		color = White;
+    /* only create a chess piece if the board is captured at the given position */
+    if (is_captured_at(board, pos))
+    {
+        type = Invalid;
+        color = White;
 
-		/* determine the piece type and color */
-		for (i = 0; i < 12; i++)
-		{
-			if (board.bitboards[i] & (0x1uLL << pos))
-			{
-				type = (ChessPieceType)((i % 6) + 1);
-				color = (ChessColor)(i / 6);
-				break;
-			}
-		}
+        /* determine the piece type and color */
+        for (i = 0; i < 12; i++)
+        {
+            if (board[i] & (0x1uLL << pos))
+            {
+                 type = (ChessPieceType)((i % 6) + 1);
+                 color = (ChessColor)(i / 6);
+                 break;
+            }
+        }
 
-		piece = create_piece(type, color, was_piece_moved(board, pos) == 0 ? 0 : 1);
-	}
+        piece = create_piece(type, color, was_piece_moved(board, pos) == 0 ? 0 : 1);
+    }
 
-	return piece;
+    return piece;
 }
 
 Bitboard was_piece_moved(ChessBoard board, ChessPosition pos)
 {
-	return ((~START_POSITIONS | board.bitboards[12]) & (0x1uLL << pos));
+    return ((~START_POSITIONS | board[12]) & (0x1uLL << pos));
 }
 
 ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 {
-	uint8_t i;
-	ChessBoard new_board;
+    uint8_t i;
+    ChessBoard new_board = (ChessBoard)malloc(13 * sizeof(Bitboard));
 
-	for (i = 0; i < 13; i++)
-	{
-        new_board.bitboards[i] = board.bitboards[i];
-	}
+    for (i = 0; i < 13; i++)
+    {
+        new_board[i] = board[i];
+    }
 
-	apply_draw_to_bitboards(new_board.bitboards, draw);
-	return new_board;
+    apply_draw_to_bitboards(new_board, draw);
+    return new_board;
 
-	/* TODO: check if the memory allocation actually works */
+    /* TODO: check if the memory allocation actually works */
 }
 
-void apply_draw_to_bitboards(Bitboard* bitboards, ChessDraw draw)
+void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
 {
     Bitboard old_pos, new_pos, white_mask, black_mask, targetColumn;
     uint8_t rooks_board_index, side_offset, drawing_board_index, taken_piece_bitboard_index, promotion_board_index;
