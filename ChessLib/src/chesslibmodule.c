@@ -25,12 +25,11 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, "Create a new chess position."},
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
-    PY_METHODS_SENTINEL,
-    /* TODO: refactor those functions as global module attributes */
-    {"ChessDraw_Null", chesslib_create_chessdraw_null, METH_NOARGS, "Create a null-value chess draw."},
-    {"ChessColor_White", chesslib_create_chesscolor_white, METH_NOARGS, "Create a new white chess color."},
-    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_NOARGS, "Create a new black chess color."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
+    PY_METHODS_SENTINEL,
+    /*{"ChessDraw_Null", chesslib_create_chessdraw_null, METH_NOARGS, "Create a null-value chess draw."},
+    {"ChessColor_White", chesslib_create_chesscolor_white, METH_NOARGS, "Create a new white chess color."},
+    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_NOARGS, "Create a new black chess color."},*/
 };
 
 /* Define the chesslib python module. */
@@ -51,10 +50,11 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     module = PyModule_Create(&chesslib_module);
 
     /* add integer constants 'White' and 'Black' for enum ChessColor */
-    PyModule_AddIntConstant(module, "White", (int8_t)White);
-    PyModule_AddIntConstant(module, "Black", (int8_t)Black);
+    PyModule_AddIntConstant(module, "ChessColor_White", (int8_t)White);
+    PyModule_AddIntConstant(module, "ChessColor_Black", (int8_t)Black);
 
-    /* TODO: add ChessBoard_StartFormation and ChessDraw_Null as PyObject using PyModule_AddObject() */
+    /* add integer constant for enum ChessDraw NULL */
+    PyModule_AddIntConstant(module, "ChessDraw_Null", (int32_t)DRAW_NULL);
 
     return module;
 }
