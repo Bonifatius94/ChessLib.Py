@@ -5,6 +5,7 @@ ChessBoard create_board(const Bitboard bitboards[])
     /* TODO: check if memory allocation works */
     size_t i;
     ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    if (!board) { return NULL; }
     for (i = 0; i < 13; i++) { board[i] = bitboards[i]; }
     return board;
 }
@@ -14,6 +15,7 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
     /* TODO: check if memory allocation works */
     size_t i;
     ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    if (!board) { return NULL; }
 
     uint8_t board_index;
     ChessPosition pos;
@@ -94,12 +96,12 @@ Bitboard was_piece_moved(ChessBoard board, ChessPosition pos)
 ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 {
     uint8_t i;
-    ChessBoard new_board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    ChessBoard new_board;
+        
+    new_board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    if (!new_board) { return NULL; }
 
-    for (i = 0; i < 13; i++)
-    {
-        new_board[i] = board[i];
-    }
+    for (i = 0; i < 13; i++) { new_board[i] = board[i]; }
 
     apply_draw_to_bitboards(new_board, draw);
     return new_board;

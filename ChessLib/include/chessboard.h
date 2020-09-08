@@ -60,13 +60,21 @@
 #define FIELD_G8 0x4000000000000000uLL
 #define FIELD_H8 0x8000000000000000uLL
 
-#define START_FORMATION (Bitboard[]){ FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS }
-#define BOARD_NULL (Bitboard[]){ 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL }
+/*#define START_FORMATION (Bitboard[]){ FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS }
+#define BOARD_NULL (Bitboard[]){ 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL }*/
 
 #define SIDE_OFFSET(color) (((uint8_t)(color)) * 6)
 #define PIECE_OFFSET(piece) (((uint8_t)(piece)) - 1)
 #define WHITE_MASK(color) (((Bitboard)(((int64_t)(color)) - 1)))
 #define BLACK_MASK(color) (~WHITE_MASK((color)))
+
+/* ====================================================
+            D E F I N E    C O N  S T A N T S
+   ==================================================== */
+
+   /* global array representing an empty ChessBoard */
+/*ChessBoard BOARD_NULL = (Bitboard[]){ 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL };*/
+/*ChessBoard START_FORMATION = (Bitboard[]){ FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS };*/
 
 /* ====================================================
             D E F I N E     F U N C T I O N S
