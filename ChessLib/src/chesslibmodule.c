@@ -8,10 +8,15 @@ static PyObject* serialize_chessboard(ChessBoard board);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 
+static PyObject* cos_func_np(PyObject* self, PyObject* args);
+
 /* =================================================
                  I N I T I A L I Z E
               P Y T H O N    M O D U L E
    ================================================= */
+
+/* enforce Python 3 or higher */
+#if PY_MAJOR_VERSION >= 3
 
 /* info: module extension code taken from following tutorial: https://realpython.com/build-python-c-extension-module/ */
 
@@ -27,6 +32,7 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
+    {"cos_custom", cos_func_np, METH_VARARGS, "A custom implementation of math. cos(x) function."},
     PY_METHODS_SENTINEL,
     /*{"ChessDraw_Null", chesslib_create_chessdraw_null, METH_NOARGS, "Create a null-value chess draw."},
     {"ChessColor_White", chesslib_create_chesscolor_white, METH_NOARGS, "Create a new white chess color."},
@@ -49,6 +55,7 @@ PyMODINIT_FUNC PyInit_chesslib(void)
 
     /* create module from definition */
     module = PyModule_Create(&chesslib_module);
+    if (!module) { return NULL; }
 
     /* add integer constants 'White' and 'Black' for enum ChessColor */
     PyModule_AddIntConstant(module, "ChessColor_White", (int8_t)White);
@@ -57,7 +64,93 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     /* add integer constant for enum ChessDraw NULL */
     PyModule_AddIntConstant(module, "ChessDraw_Null", (int32_t)DRAW_NULL);
 
+    /* init numpy array tools */
+    import_array();
+    if (PyErr_Occurred()) { return NULL; }
+
     return module;
+}
+
+#endif
+
+/*  wrapped cosine function */
+static PyObject* cos_func_np(PyObject* self, PyObject* args)
+{
+    /* input args / return values */
+    PyArrayObject *arrays[2];  /* holds input and output array */
+    int foo = 1;
+    PyObject *ret;
+    
+    /* temporary variables */
+    NpyIter *iter;
+    npy_uint32 op_flags[2];
+    npy_uint32 iterator_flags;
+    PyArray_Descr *op_dtypes[2];
+    char **dataptr, *in;
+    double *out;
+    npy_intp *strideptr, *innersizeptr, stride, count;
+    NpyIter_IterNextFunc *iternext;
+
+    /*  parse function arguments: np.array and int */
+    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &arrays[0], &foo)) { return NULL; }
+    
+    /* Init result with NULL. (the result will be allocated by the iterator) */
+    arrays[1] = NULL;
+
+    /* Set up and create the iterator */
+    iterator_flags = (NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER);
+    op_flags[0] = (NPY_ITER_READONLY | NPY_ITER_NBO | NPY_ITER_ALIGNED);
+
+    /* Ask the iterator to allocate an array to write the output to */
+    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+
+    /* Ensure the iteration has the correct type, could be checked specifically here. */
+    op_dtypes[0] = PyArray_DescrFromType(NPY_UINT64);
+    op_dtypes[1] = op_dtypes[0];
+
+    /* Create the numpy iterator object */
+    iter = NpyIter_MultiNew(2, arrays, iterator_flags, NPY_KEEPORDER, NPY_EQUIV_CASTING, op_flags, op_dtypes);
+    Py_DECREF(op_dtypes[0]);
+    if (iter == NULL) { return NULL; }
+
+    /* prepare a function reference to retrieve the next element from when called */
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) { NpyIter_Deallocate(iter); return NULL; }
+
+    /* Fetch the output array which was allocated by the iterator */
+    ret = (PyObject *)NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+    if (NpyIter_GetIterSize(iter) == 0) { NpyIter_Deallocate(iter); return ret; }
+
+    /* The location of the data pointer which the iterator may update */
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    strideptr = NpyIter_GetInnerStrideArray(iter);
+    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    /* iterate over the arrays */
+    do
+    {
+        stride = strideptr[0];
+        count = *innersizeptr;
+        /* out is always contiguous, so use double */
+        out = (double *)dataptr[1];
+        in = dataptr[0];
+
+        /* The output is allocated and guaranteed contiguous (out++ works): */
+        assert(strideptr[1] == sizeof(double));
+
+        /* For optimization it can make sense to add a check for stride == sizeof(double). */
+        while (count--)
+        {
+            *out = cos(*(double *)in) * foo;
+            out++;
+            in += stride;
+        }
+    } while (iternext(iter));
+
+    /* Clean up and return the result */
+    NpyIter_Deallocate(iter);
+    return ret;
 }
 
 /* =================================================
@@ -284,26 +377,29 @@ static PyObject* chesslib_create_chessdraw_null(PyObject* self)
  **************************************************************************/
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
-    PyObject *bitboards, *drawing_side_obj, *last_draw_obj;
+    PyArrayObject* bitboards[1];
+    PyObject *drawing_side_obj, *last_draw_obj;
     ChessDraw *out_draws, last_draw = DRAW_NULL;
     const size_t dims[1];
     ChessBoard board;
     ChessColor drawing_side;
     int analyze_draw_into_check;
 
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &bitboards[0])) { return NULL; }/*, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }*/
+
     /* parse args as object */
-    if (!PyArg_ParseTuple(args, "Okki", &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }
+    /*if (!PyArg_ParseTuple(args, "Okki", &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }*/
     /* TODO: add overloads without last_draw and/or analyze_draw_into_check */
 
-    drawing_side = (ChessColor)PyLong_AsUnsignedLong(drawing_side_obj);
+    /*drawing_side = (ChessColor)PyLong_AsUnsignedLong(drawing_side_obj);
     last_draw = (ChessDraw)PyLong_AsUnsignedLong(last_draw_obj);
-    board = deserialize_chessboard(bitboards);
+    board = deserialize_chessboard(bitboards);*/
 
     /* compute possible draws */
-    get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);
+    /*get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);*/
 
     /* serialize draws as numpy list */
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);
+    /*return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);*/
 }
 
 /* =================================================
@@ -381,34 +477,120 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 static PyObject* serialize_chessboard(const ChessBoard board)
 {
     /* init a one-dimensional 64-bit integer numpy array with 13 elements */
-    const npy_intp dims[1] = { 13 };
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board);
+    npy_intp dims[1] = { 13 };
+
+    /*uint8_t i;
+    uint64_t *data_copy = (uint64_t*)malloc(13 * sizeof(uint64_t));
+    if (data_copy == NULL) { return NULL; }
+    for (i = 0; i < 13; i++) { data_copy[i] = board[i]; }*/
+
+    return PyArray_SimpleNew(1, &dims[0], NPY_UINT64);
+    /*return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board);*/
 }
 
-static ChessBoard deserialize_chessboard(PyObject* bitboards)
+//static ChessBoard deserialize_chessboard(PyObject* bitboards)
+//{
+//    PyObject *iterator, *temp_obj;
+//    size_t i;
+//    ChessBoard board;
+//
+//    board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+//    if(!board) { return NULL; }
+
+//    /* get an iterator of the list to parse (and make sure that the iterator is valid) */
+//    /*iterator = PyObject_GetIter(bitboards);
+//    if (!iterator) { return NULL; }*/
+//
+//    /* loop through the list using the iterator */
+//    /*for (i = 0; i < 13; i++)
+//    {
+//        temp_obj = PyIter_Next(iterator);
+//        if (!PyLong_Check(temp_obj)) { return NULL; }
+//        board[i] = PyLong_AsUnsignedLongLong(temp_obj);
+//    }*/
+//
+//    return board;
+//}
+
+static ChessBoard deserialize_chessboard(PyObject* self, PyObject* args)
 {
-    PyObject *iterator, *temp_obj;
-    size_t i;
-    ChessBoard board;
+    /* input args / return values */
+    PyArrayObject *arrays[2];  /* holds input and output array */
+    int foo = 1;
+    PyObject *ret;
     
-    board = (ChessBoard)malloc(13 * sizeof(Bitboard));
-    if(!board) { return NULL; }
+    /* temporary variables */
+    NpyIter *iter;
+    npy_uint32 op_flags[2];
+    npy_uint32 iterator_flags;
+    PyArray_Descr *op_dtypes[2];
+    char **dataptr, *in;
+    double *out;
+    npy_intp *strideptr, *innersizeptr, stride, count;
+    NpyIter_IterNextFunc *iternext;
 
-    /* get an iterator of the list to parse */
-    iterator = PyObject_GetIter(bitboards);
+    /*  parse single numpy array argument */
+    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &arrays[0], &foo)) { return NULL; }
+    
+    /* Init result with NULL. (the result will be allocated by the iterator) */
+    arrays[1] = NULL;
 
-    /* make sure that the iterator is valid */
-    if (!iterator) { return NULL; }
+    /* Set up and create the iterator */
+    iterator_flags = (NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER);
+    op_flags[0] = (NPY_ITER_READONLY | NPY_ITER_NBO | NPY_ITER_ALIGNED);
 
-    /* loop through the list using the iterator */
-    for (i = 0; i < 13; i++)
+    /* Ask the iterator to allocate an array to write the output to */
+    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+
+    /* Ensure the iteration has the correct type, could be checked specifically here. */
+    op_dtypes[0] = PyArray_DescrFromType(NPY_UINT64);
+    op_dtypes[1] = op_dtypes[0];
+
+    /* Create the numpy iterator object: */
+    iter = NpyIter_MultiNew(2, arrays, iterator_flags, NPY_KEEPORDER, NPY_EQUIV_CASTING, op_flags, op_dtypes);
+    Py_DECREF(op_dtypes[0]);
+    if (iter == NULL) { return NULL; }
+
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) { NpyIter_Deallocate(iter); return NULL; }
+
+    /* Fetch the output array which was allocated by the iterator: */
+    ret = (PyObject *)NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+    if (NpyIter_GetIterSize(iter) == 0) { NpyIter_Deallocate(iter); return ret; }
+
+    /* The location of the data pointer which the iterator may update */
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    strideptr = NpyIter_GetInnerStrideArray(iter);
+    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    /* iterate over the arrays */
+    do
     {
-        temp_obj = PyIter_Next(iterator);
-        if (!PyLong_Check(temp_obj)) { return NULL; }
-        board[i] = PyLong_AsUnsignedLongLong(temp_obj);
-    }
+        stride = strideptr[0];
+        count = *innersizeptr;
+        /* out is always contiguous, so use double */
+        out = (double *)dataptr[1];
+        in = dataptr[0];
 
-    return board;
+        /* The output is allocated and guaranteed contiguous (out++ works): */
+        assert(strideptr[1] == sizeof(double));
+
+        /*
+         * For optimization it can make sense to add a check for
+         * stride == sizeof(double) to allow the compiler to optimize for that.
+         */
+        while (count--)
+        {
+            *out = cos(*(double *)in) * foo;
+            out++;
+            in += stride;
+        }
+    } while (iternext(iter));
+
+    /* Clean up and return the result */
+    NpyIter_Deallocate(iter);
+    return ret;
 }
 
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)

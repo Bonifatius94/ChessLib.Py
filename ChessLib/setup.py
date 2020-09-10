@@ -5,7 +5,8 @@
 
 
 # import python C-lib extension tools
-from numpy.distutils.core import setup, Extension
+from distutils.core import setup, Extension
+import numpy as np
 # TODO: try the alternative scikit build tools allowing for the integration of CMake builds
 
 
@@ -25,7 +26,7 @@ def main():
 
     # define extension module settings (for cross-plattform builds)
     chesslib_module = Extension("chesslib", 
-                                include_dirs = ["include"],
+                                include_dirs = ["include", np.get_include()],
                                 sources = source_files,
                                 language = 'c')
 
