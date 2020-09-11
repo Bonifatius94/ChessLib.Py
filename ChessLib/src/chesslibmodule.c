@@ -8,7 +8,7 @@ static PyObject* serialize_chessboard(ChessBoard board);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 
-static PyObject* cos_func_np(PyObject* self, PyObject* args);
+/*static PyObject* cos_func_np(PyObject* self, PyObject* args);*/
 
 /* =================================================
                  I N I T I A L I Z E
@@ -32,11 +32,8 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
-    {"cos_custom", cos_func_np, METH_VARARGS, "A custom implementation of math. cos(x) function."},
+    /*{"cos_custom", cos_func_np, METH_VARARGS, "A custom implementation of math. cos(x) function."},*/
     PY_METHODS_SENTINEL,
-    /*{"ChessDraw_Null", chesslib_create_chessdraw_null, METH_NOARGS, "Create a null-value chess draw."},
-    {"ChessColor_White", chesslib_create_chesscolor_white, METH_NOARGS, "Create a new white chess color."},
-    {"ChessColor_Black", chesslib_create_chesscolor_black, METH_NOARGS, "Create a new black chess color."},*/
 };
 
 /* Define the chesslib python module. */
@@ -488,6 +485,71 @@ static PyObject* serialize_chessboard(const ChessBoard board)
     /*return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board);*/
 }
 
+static ChessBoard deserialize_chessboard(PyObject* args)
+{
+    /* input args / return values */
+    PyArrayObject* arrays[1];  /* holds input and output array */
+    ChessBoard ret;
+
+    /* temporary variables */
+    NpyIter* iter;
+    npy_uint32 op_flags[1];
+    npy_uint32 iterator_flags;
+    PyArray_Descr* op_dtypes[1];
+    char** dataptr, * in;
+    double* out;
+    npy_intp* strideptr, * innersizeptr, stride, count;
+    NpyIter_IterNextFunc* iternext;
+    uint8_t i = 0;
+    Bitboard value;
+
+    /*  parse function arguments: np.array and int */
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &arrays[0])) { return NULL; }
+
+    /* Set up and create the iterator */
+    iterator_flags = (NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER);
+    op_flags[0] = (NPY_ITER_READONLY | NPY_ITER_NBO | NPY_ITER_ALIGNED);
+    op_dtypes[0] = PyArray_DescrFromType(NPY_UINT64);
+
+    /* Create the numpy iterator object */
+    iter = NpyIter_MultiNew(1, arrays, iterator_flags, NPY_KEEPORDER, NPY_EQUIV_CASTING, op_flags, op_dtypes);
+    Py_DECREF(op_dtypes[0]);
+    if (iter == NULL) { return NULL; }
+
+    /* prepare a function reference to retrieve the next element from when called */
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) { NpyIter_Deallocate(iter); return NULL; }
+
+    /* The location of the data pointer which the iterator may update */
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    strideptr = NpyIter_GetInnerStrideArray(iter);
+    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    ret = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    if (!ret) { return NULL; }
+
+    /* iterate over the arrays */
+    do
+    {
+        stride = strideptr[0];
+        count = *innersizeptr;
+        in = dataptr[0];
+
+        /* For optimization it can make sense to add a check for stride == sizeof(double). */
+        while (count--)
+        {
+            Bitboard value = *(Bitboard*)in;
+            ret[i++] = value;
+            in += stride;
+        }
+    } while (iternext(iter));
+
+    /* Clean up and return the result */
+    NpyIter_Deallocate(iter);
+
+    return ret;
+}
+
 //static ChessBoard deserialize_chessboard(PyObject* bitboards)
 //{
 //    PyObject *iterator, *temp_obj;
@@ -512,86 +574,86 @@ static PyObject* serialize_chessboard(const ChessBoard board)
 //    return board;
 //}
 
-static ChessBoard deserialize_chessboard(PyObject* self, PyObject* args)
-{
-    /* input args / return values */
-    PyArrayObject *arrays[2];  /* holds input and output array */
-    int foo = 1;
-    PyObject *ret;
-    
-    /* temporary variables */
-    NpyIter *iter;
-    npy_uint32 op_flags[2];
-    npy_uint32 iterator_flags;
-    PyArray_Descr *op_dtypes[2];
-    char **dataptr, *in;
-    double *out;
-    npy_intp *strideptr, *innersizeptr, stride, count;
-    NpyIter_IterNextFunc *iternext;
-
-    /*  parse single numpy array argument */
-    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &arrays[0], &foo)) { return NULL; }
-    
-    /* Init result with NULL. (the result will be allocated by the iterator) */
-    arrays[1] = NULL;
-
-    /* Set up and create the iterator */
-    iterator_flags = (NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER);
-    op_flags[0] = (NPY_ITER_READONLY | NPY_ITER_NBO | NPY_ITER_ALIGNED);
-
-    /* Ask the iterator to allocate an array to write the output to */
-    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
-
-    /* Ensure the iteration has the correct type, could be checked specifically here. */
-    op_dtypes[0] = PyArray_DescrFromType(NPY_UINT64);
-    op_dtypes[1] = op_dtypes[0];
-
-    /* Create the numpy iterator object: */
-    iter = NpyIter_MultiNew(2, arrays, iterator_flags, NPY_KEEPORDER, NPY_EQUIV_CASTING, op_flags, op_dtypes);
-    Py_DECREF(op_dtypes[0]);
-    if (iter == NULL) { return NULL; }
-
-    iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) { NpyIter_Deallocate(iter); return NULL; }
-
-    /* Fetch the output array which was allocated by the iterator: */
-    ret = (PyObject *)NpyIter_GetOperandArray(iter)[1];
-    Py_INCREF(ret);
-    if (NpyIter_GetIterSize(iter) == 0) { NpyIter_Deallocate(iter); return ret; }
-
-    /* The location of the data pointer which the iterator may update */
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    strideptr = NpyIter_GetInnerStrideArray(iter);
-    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-    /* iterate over the arrays */
-    do
-    {
-        stride = strideptr[0];
-        count = *innersizeptr;
-        /* out is always contiguous, so use double */
-        out = (double *)dataptr[1];
-        in = dataptr[0];
-
-        /* The output is allocated and guaranteed contiguous (out++ works): */
-        assert(strideptr[1] == sizeof(double));
-
-        /*
-         * For optimization it can make sense to add a check for
-         * stride == sizeof(double) to allow the compiler to optimize for that.
-         */
-        while (count--)
-        {
-            *out = cos(*(double *)in) * foo;
-            out++;
-            in += stride;
-        }
-    } while (iternext(iter));
-
-    /* Clean up and return the result */
-    NpyIter_Deallocate(iter);
-    return ret;
-}
+//static ChessBoard deserialize_chessboard(PyObject* args)
+//{
+//    /* input args / return values */
+//    PyArrayObject *arrays[2];  /* holds input and output array */
+//    int foo = 1;
+//    PyObject *ret;
+//    
+//    /* temporary variables */
+//    NpyIter *iter;
+//    npy_uint32 op_flags[2];
+//    npy_uint32 iterator_flags;
+//    PyArray_Descr *op_dtypes[2];
+//    char **dataptr, *in;
+//    double *out;
+//    npy_intp *strideptr, *innersizeptr, stride, count;
+//    NpyIter_IterNextFunc *iternext;
+//
+//    /*  parse single numpy array argument */
+//    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &arrays[0], &foo)) { return NULL; }
+//    
+//    /* Init result with NULL. (the result will be allocated by the iterator) */
+//    arrays[1] = NULL;
+//
+//    /* Set up and create the iterator */
+//    iterator_flags = (NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER);
+//    op_flags[0] = (NPY_ITER_READONLY | NPY_ITER_NBO | NPY_ITER_ALIGNED);
+//
+//    /* Ask the iterator to allocate an array to write the output to */
+//    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+//
+//    /* Ensure the iteration has the correct type, could be checked specifically here. */
+//    op_dtypes[0] = PyArray_DescrFromType(NPY_UINT64);
+//    op_dtypes[1] = op_dtypes[0];
+//
+//    /* Create the numpy iterator object: */
+//    iter = NpyIter_MultiNew(2, arrays, iterator_flags, NPY_KEEPORDER, NPY_EQUIV_CASTING, op_flags, op_dtypes);
+//    Py_DECREF(op_dtypes[0]);
+//    if (iter == NULL) { return NULL; }
+//
+//    iternext = NpyIter_GetIterNext(iter, NULL);
+//    if (iternext == NULL) { NpyIter_Deallocate(iter); return NULL; }
+//
+//    /* Fetch the output array which was allocated by the iterator: */
+//    ret = (PyObject *)NpyIter_GetOperandArray(iter)[1];
+//    Py_INCREF(ret);
+//    if (NpyIter_GetIterSize(iter) == 0) { NpyIter_Deallocate(iter); return ret; }
+//
+//    /* The location of the data pointer which the iterator may update */
+//    dataptr = NpyIter_GetDataPtrArray(iter);
+//    strideptr = NpyIter_GetInnerStrideArray(iter);
+//    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+//
+//    /* iterate over the arrays */
+//    do
+//    {
+//        stride = strideptr[0];
+//        count = *innersizeptr;
+//        /* out is always contiguous, so use double */
+//        out = (double *)dataptr[1];
+//        in = dataptr[0];
+//
+//        /* The output is allocated and guaranteed contiguous (out++ works): */
+//        assert(strideptr[1] == sizeof(double));
+//
+//        /*
+//         * For optimization it can make sense to add a check for
+//         * stride == sizeof(double) to allow the compiler to optimize for that.
+//         */
+//        while (count--)
+//        {
+//            *out = cos(*(double *)in) * foo;
+//            out++;
+//            in += stride;
+//        }
+//    } while (iternext(iter));
+//
+//    /* Clean up and return the result */
+//    NpyIter_Deallocate(iter);
+//    return ret;
+//}
 
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)
 {
