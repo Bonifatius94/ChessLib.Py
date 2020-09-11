@@ -5,8 +5,6 @@ import numpy as np
 
 def test_module():
 
-    #test_cos_custom()
-
     # test base datatypes
     test_chesscolor()
     test_chessposition()
@@ -15,19 +13,11 @@ def test_module():
     test_chessboard_start()
 
     # test draw-gen
-    #test_drawgen()
+    test_drawgen()
 
     # additional tests
     #test_chesspieceatpos()
     #test_chessboard()
-
-
-def test_cos_custom():
-
-    #x = np.arange(0, 2 * np.pi, 0.1)
-    x = np.array([1, 2, 3, 4, 0x8FFF000000000000], dtype=np.uint64)
-    y = chesslib.cos_custom(x, -1)
-    print(x, y)
 
 
 def test_chesscolor():
@@ -176,33 +166,14 @@ def test_chessboard_start():
 
 def test_drawgen():
 
-    start_formation = np.array([
-        0x0000000000000010,
-        0x0000000000000008,
-        0x0000000000000081,
-        0x0000000000000024,
-        0x0000000000000042,
-        0x000000000000FF00,
-        0x1000000000000000,
-        0x0800000000000000,
-        0x8100000000000000,
-        0x2400000000000000,
-        0x4200000000000000,
-        0x00FF000000000000,
-        0xFFFF00000000FFFF
-    ], dtype=np.uint64)
-
-    print(start_formation)
-
     # get all draws for starting position (white side)
-    #start_formation = chesslib.ChessBoard_StartFormation()
-
+    start_formation = chesslib.ChessBoard_StartFormation()
     print(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null)
-    draws = chesslib.GenerateDraws(start_formation)
-    #draws = chesslib.GenerateDraws(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
-    #print(draws)
+    #draws = chesslib.GenerateDraws(start_formation)
+    draws = chesslib.GenerateDraws(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
+    print(draws)
 
-    return 0
+    print("test passed!")
 
 
 test_module()
