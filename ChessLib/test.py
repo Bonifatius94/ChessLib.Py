@@ -168,10 +168,10 @@ def test_chessboard_start():
     start = chesslib.ChessBoard_StartFormation()
     print(start)
 
-    #for i in range(13):
-    #    assert_equal(start[i], START_FORMATION[i])
+    for i in range(13):
+        assert_equal(start[i], START_FORMATION[i])
 
-    #print("test passed!")
+    print("test passed!")
 
 
 def test_drawgen():

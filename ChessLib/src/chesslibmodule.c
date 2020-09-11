@@ -309,7 +309,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
 static PyObject* chesslib_create_chessboard_startformation(PyObject* self)
 {
     /* create the chess board */
-    const Bitboard start_formation[] = { 
+    const Bitboard start_formation[] = {
         0x0000000000000010uLL, /* white king     */
         0x0000000000000008uLL, /* white queen(s) */
         0x0000000000000081uLL, /* white rooks    */
@@ -479,13 +479,13 @@ static PyObject* serialize_chessboard(const ChessBoard board)
     /* init a one-dimensional 64-bit integer numpy array with 13 elements */
     npy_intp dims[1] = { 13 };
 
-    /*uint8_t i;
+    uint8_t i;
     uint64_t *data_copy = (uint64_t*)malloc(13 * sizeof(uint64_t));
     if (data_copy == NULL) { return NULL; }
-    for (i = 0; i < 13; i++) { data_copy[i] = board[i]; }*/
+    for (i = 0; i < 13; i++) { data_copy[i] = board[i]; }
 
     /*return PyArray_SimpleNew(1, &dims[0], NPY_UINT64);*/
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, board);
+    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, data_copy);
 }
 
 static ChessBoard deserialize_chessboard(PyObject* args)
