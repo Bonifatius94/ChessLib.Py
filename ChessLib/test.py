@@ -5,14 +5,14 @@ import numpy as np
 
 def test_module():
 
-    test_cos_custom()
+    #test_cos_custom()
 
     # test base datatypes
     test_chesscolor()
     test_chessposition()
     test_chesspiece()
     test_chessdraw_null()
-    #test_chessboard_start()
+    test_chessboard_start()
 
     # test draw-gen
     #test_drawgen()
@@ -166,7 +166,7 @@ def test_chessboard_start():
 
     # test if the expected board in start formation is returned
     start = chesslib.ChessBoard_StartFormation()
-    #print(start)
+    print(start)
 
     #for i in range(13):
     #    assert_equal(start[i], START_FORMATION[i])
