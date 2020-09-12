@@ -53,6 +53,10 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     /* initialize the python environment */
     Py_Initialize();
 
+    /* init numpy array tools */
+    import_array();
+    if (PyErr_Occurred()) { return NULL; }
+
     /* create module from definition */
     module = PyModule_Create(&chesslib_module);
     if (!module) { return NULL; }
@@ -63,10 +67,6 @@ PyMODINIT_FUNC PyInit_chesslib(void)
 
     /* add integer constant for enum ChessDraw NULL */
     PyModule_AddIntConstant(module, "ChessDraw_Null", (int32_t)DRAW_NULL);
-
-    /* init numpy array tools */
-    import_array();
-    if (PyErr_Occurred()) { return NULL; }
 
     return module;
 }
@@ -297,22 +297,18 @@ static PyObject* chesslib_create_chessdraw_null(PyObject* self)
  **************************************************************************/
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
-    PyArrayObject* bitboards;
-    PyObject *drawing_side_obj, *last_draw_obj;
-    const size_t dims[1];
+    PyObject *bitboards_obj;
+    PyArrayObject *bitboards;
+    size_t dims[1];
 
     ChessDraw *out_draws, last_draw = DRAW_NULL;
     ChessBoard board;
     ChessColor drawing_side;
     int analyze_draw_into_check;
 
-    /* parse args as object */
-    if (!PyArg_ParseTuple(args, "O!kki", &PyArray_Type, &bitboards, &drawing_side_obj, &last_draw_obj, &analyze_draw_into_check)) { return NULL; }
-    /* TODO: add overloads without last_draw and/or analyze_draw_into_check */
-
-    drawing_side = (ChessColor)PyLong_AsUnsignedLong(drawing_side_obj);
-    last_draw = (ChessDraw)PyLong_AsUnsignedLong(last_draw_obj);
-    board = deserialize_chessboard(bitboards);
+    /* parse input args */
+    if (!PyArg_ParseTuple(args, "Okki", &bitboards_obj, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
+    board = deserialize_chessboard(bitboards_obj);
 
     /* compute possible draws */
     get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);
@@ -401,26 +397,16 @@ static PyObject* serialize_chessboard(const ChessBoard board)
     return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, data_copy);
 }
 
-static ChessBoard deserialize_chessboard(PyObject* bitboards)
+static ChessBoard deserialize_chessboard(PyObject* bitboards_obj)
 {
-    PyObject *iterator, *temp_obj;
-    size_t i;
+    PyArrayObject* bitboards;
     ChessBoard board;
 
-    board = (ChessBoard)malloc(13 * sizeof(Bitboard));
-    if(!board) { return NULL; }
+    /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */
+    bitboards = PyArray_FromObject(bitboards_obj, NPY_UINT64, 1, 13);
 
-    /* get an iterator of the list to parse (and make sure that the iterator is valid) */
-    iterator = PyObject_GetIter(bitboards);
-    if (!iterator) { return NULL; }
-
-    /* loop through the list using the iterator */
-    for (i = 0; i < 13; i++)
-    {
-        temp_obj = PyIter_Next(iterator);
-        if (!PyLong_Check(temp_obj)) { return NULL; }
-        board[i] = PyLong_AsUnsignedLongLong(temp_obj);
-    }
+    /* retrieve the raw data from the PyArrayObject */
+    board = (Bitboard*)PyArray_DATA(bitboards);
 
     return board;
 }

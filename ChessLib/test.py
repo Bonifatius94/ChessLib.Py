@@ -168,6 +168,8 @@ def test_drawgen():
 
     # get all draws for starting position (white side)
     start_formation = chesslib.ChessBoard_StartFormation()
+    print(type(start_formation))
+
     print(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null)
     #draws = chesslib.GenerateDraws(start_formation)
     draws = chesslib.GenerateDraws(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
