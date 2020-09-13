@@ -28,7 +28,7 @@ cd ChessLib.Py
 docker build . -t "chesslib-python3:1.0"
 
 # run a test command using the chesslib
-docker run "chesslib-python3:1.0" "python3 test.py"
+docker run "chesslib-python3:1.0" python3 test.py
 ```
 
 ## Copyright
