@@ -414,7 +414,7 @@ Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, 
 
 Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter)
 {
-    Bitboard draws = 0x0uLL, bitboard, allied_pieces, enemy_pieces, blocking_pieces, enemy_peasants, 
+    Bitboard draws = 0x0uLL, bitboard, allied_pieces, enemy_pieces, blocking_pieces, enemy_peasants,
         was_moved_mask, white_mask, black_mask, last_draw_new_pos, last_draw_old_pos;
 
     /* get peasants bitboard */
@@ -457,7 +457,7 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side,
 }
 
 /* ====================================================
-             C H E S S    P O S I T I O N S    
+             C H E S S    P O S I T I O N S
                  O N    B I T B O A R D
    ==================================================== */
 

@@ -11,13 +11,14 @@ def test_module():
     test_chesspiece()
     test_chessdraw_null()
     test_chessboard_start()
+    #test_chesspieceatpos()
+    #test_chessboard()
 
     # test draw-gen
     test_drawgen()
 
-    # additional tests
-    #test_chesspieceatpos()
-    #test_chessboard()
+    # test conversion functions
+    test_board_to_hash()
 
 
 def test_chesscolor():
@@ -151,12 +152,12 @@ def test_chessboard_start():
         0x2400000000000000,
         0x4200000000000000,
         0x00FF000000000000,
-        0xFFFF00000000FFFF
+        0x0000FFFFFFFF0000
     ]
 
     # test if the expected board in start formation is returned
     start = chesslib.ChessBoard_StartFormation()
-    print(start)
+    #print(start)
 
     for i in range(13):
         assert_equal(start[i], START_FORMATION[i])
@@ -166,16 +167,55 @@ def test_chessboard_start():
 
 def test_drawgen():
 
+    print("testing draw-gen")
+
     # get all draws for starting position (white side)
     start_formation = chesslib.ChessBoard_StartFormation()
-    print(type(start_formation))
-
-    print(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null)
-    #draws = chesslib.GenerateDraws(start_formation)
     draws = chesslib.GenerateDraws(start_formation, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
-    print(draws)
+
+    # define the expected draws
+    expected_draws = np.array([
+        18088016, 18088018, 18088341, 18088343, 18350608, 18350616, 18350673, 18350681,
+        18350738, 18350746, 18350803, 18350811, 18350868, 18350876, 18350933, 18350941,
+        18350998, 18351006, 18351063, 18351071],
+        np.uint32
+    )
+
+    # make sure that the generated draws equal the expected draws
+    assert_true(set(draws) == set(expected_draws))
 
     print("test passed!")
 
 
+def test_board_to_hash():
+
+    print("testing board to hash function")
+
+    # create board in start formation
+    board = chesslib.ChessBoard_StartFormation()
+
+    # compute the board's hash
+    hash = bytes(chesslib.Board_Hash(board))
+    #print(bytes(hash).hex())
+
+    # define the expected hash
+    exp_hash = bytes([
+        0x19, 0x48, 0x20, 0x90, 0xA3,
+        0x31, 0x8C, 0x63, 0x18, 0xC6,
+        0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00,
+        0x73, 0x9C, 0xE7, 0x39, 0xCE,
+        0x5B, 0x58, 0xA4, 0xB1, 0xAB
+    ])
+
+    # make sure that the computed hash is correct
+    for i in range(40):
+        assert_equal(exp_hash[i], hash[i])
+
+    print("test passed!")
+
+
+# run all tests
 test_module()

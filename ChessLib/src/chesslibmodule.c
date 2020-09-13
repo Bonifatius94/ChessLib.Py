@@ -8,8 +8,6 @@ static PyObject* serialize_chessboard(ChessBoard board);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 
-/*static PyObject* cos_func_np(PyObject* self, PyObject* args);*/
-
 /* =================================================
                  I N I T I A L I Z E
               P Y T H O N    M O D U L E
@@ -17,8 +15,6 @@ static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)
 
 /* enforce Python 3 or higher */
 #if PY_MAJOR_VERSION >= 3
-
-/* info: module extension code taken from following tutorial: https://realpython.com/build-python-c-extension-module/ */
 
 #define PY_METHODS_SENTINEL {NULL, NULL, 0, NULL}
 
@@ -32,7 +28,6 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
-    /*{"cos_custom", cos_func_np, METH_VARARGS, "A custom implementation of math. cos(x) function."},*/
     PY_METHODS_SENTINEL,
 };
 
@@ -242,7 +237,7 @@ static PyObject* chesslib_create_chessboard_startformation(PyObject* self)
         0x2400000000000000uLL, /* black bishops  */
         0x4200000000000000uLL, /* black knights  */
         0x00FF000000000000uLL, /* black pawns    */
-        0xFFFF00000000FFFFuLL  /* was_moved mask */
+        0x0000FFFFFFFF0000uLL  /* was_moved mask */
     };
 
     return serialize_chessboard(start_formation);
@@ -351,7 +346,7 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
     for (i = 0; i < 12; i++)
     {
         color = (ChessColor)(i / 6);
-        piece_type = (ChessPieceType)(i % 6);
+        piece_type = (ChessPieceType)((i % 6) + 1);
         temp_bitboard = board[i];
 
         /* until all set bits were evaluated */
