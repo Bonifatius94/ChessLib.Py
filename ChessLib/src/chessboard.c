@@ -97,7 +97,7 @@ ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 {
     uint8_t i;
     ChessBoard new_board;
-        
+
     new_board = (ChessBoard)malloc(13 * sizeof(Bitboard));
     if (!new_board) { return NULL; }
 

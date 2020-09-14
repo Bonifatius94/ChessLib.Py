@@ -17,6 +17,9 @@ def test_module():
     # test draw-gen
     test_drawgen()
 
+    # test applying draws to chess boards
+    test_apply_draw()
+
     # test conversion functions
     test_board_to_hash()
 
@@ -183,6 +186,25 @@ def test_drawgen():
 
     # make sure that the generated draws equal the expected draws
     assert_true(set(draws) == set(expected_draws))
+
+    print("test passed!")
+
+
+def test_apply_draw():
+
+    print("test applying draws to chess boards")
+
+    # get board in start formation and opening draw 'white peasant E2-E4'
+    board = chesslib.ChessBoard_StartFormation()
+    draw = 0x0118070C
+    #draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0)
+
+    # try applying the draw
+    print(board, draw)
+    #new_board = chesslib.ApplyDraw(board, draw)
+
+    # add validation
+    
 
     print("test passed!")
 

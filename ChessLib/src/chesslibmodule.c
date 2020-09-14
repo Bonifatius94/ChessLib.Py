@@ -28,6 +28,7 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
+    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},
     PY_METHODS_SENTINEL,
 };
 
@@ -255,27 +256,17 @@ static PyObject* chesslib_create_chessboard_startformation(PyObject* self)
  **************************************************************************/
 static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
 {
-    PyObject *bitboards, *old_pos_obj, *new_pos_obj, *prom_type_obj;
+    PyObject* bitboards;
     ChessBoard board = NULL;
     ChessPosition old_pos = 0, new_pos = 0;
-    ChessPieceType peasant_promotion_type = Invalid;
+    ChessPieceType prom_type = Invalid;
 
     /* TODO: make sure that both overloads work correctly */
-    if (!PyArg_ParseTuple(args, "Okkk", &bitboards, &old_pos_obj, &new_pos_obj, &prom_type_obj)
-        || !PyArg_ParseTuple(args, "Okk", &bitboards, &old_pos_obj, &new_pos_obj)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "Okkk", &bitboards, &old_pos, &new_pos, &prom_type)) { return NULL; }
+    board = deserialize_chessboard(bitboards);
 
-    /* convert parsed python objects */
-    if (!PyLong_Check(old_pos_obj) || !PyLong_Check(new_pos_obj) || !PyLong_Check(prom_type_obj)) { return NULL; }
-    old_pos = (ChessPosition)PyLong_AsUnsignedLong(old_pos_obj);
-    new_pos = (ChessPosition)PyLong_AsUnsignedLong(new_pos_obj);
-    peasant_promotion_type = (ChessPieceType)PyLong_AsUnsignedLong(prom_type_obj);
-
-    return PyLong_FromUnsignedLong(create_draw(board, old_pos, new_pos, peasant_promotion_type));
-}
-
-static PyObject* chesslib_create_chessdraw_null(PyObject* self)
-{
-    return PyLong_FromUnsignedLong(DRAW_NULL);
+    /* create the chess draw as unsigned 32-bit integer */
+    return PyLong_FromUnsignedLong(create_draw(board, old_pos, new_pos, prom_type));
 }
 
 /* =================================================
@@ -293,7 +284,6 @@ static PyObject* chesslib_create_chessdraw_null(PyObject* self)
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
     PyObject *bitboards_obj;
-    PyArrayObject *bitboards;
     size_t dims[1];
 
     ChessDraw *out_draws, last_draw = DRAW_NULL;
@@ -313,7 +303,46 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 }
 
 /* =================================================
-                B O A R D    H A S H
+                 A P P L Y    D R A W
+   ================================================= */
+
+static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
+{
+    PyObject* bitboards;
+    size_t dims[1];
+
+    ChessBoard board;
+    ChessDraw draw_to_apply = 0;
+
+    /* parse input args */
+    if (!PyArg_ParseTuple(args, "Ok", &bitboards, &draw_to_apply)) { return NULL; }
+    board = deserialize_chessboard(bitboards);
+
+    /* compute possible draws */
+    /*get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);*/
+
+    /* serialize draws as numpy list */
+    /*return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);*/
+
+    /*PyObject* bitboards;
+    size_t dims[1] = { 13 };
+
+    ChessDraw draw_to_apply;
+    Bitboard *board, *new_board;
+
+    /* parse input args */
+    /*if (!PyArg_ParseTuple(args, "Ok", &bitboards, &draw_to_apply)) { return NULL; }*/
+    /*board = deserialize_chessboard(bitboards);*/
+
+    /* get updated chessboard with the given draw applied to it */
+    /*new_board = apply_draw(board, draw_to_apply);*/
+
+    /* serialize draws as numpy list */
+    /*return serialize_chessboard(new_board);*/
+}
+
+/* =================================================
+         C O M P U T E    B O A R D    H A S H
    ================================================= */
 
 /**************************************************************************
