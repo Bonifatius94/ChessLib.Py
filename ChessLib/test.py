@@ -200,8 +200,8 @@ def test_apply_draw():
     #draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0)
 
     # try applying the draw
-    print(board, draw)
-    #new_board = chesslib.ApplyDraw(board, draw)
+    print(board, draw, type(board))
+    new_board = chesslib.ApplyDraw(board, draw)
 
     # add validation
     

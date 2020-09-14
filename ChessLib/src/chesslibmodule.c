@@ -4,7 +4,7 @@
       H E L P E R    F U N C T I O N    S T U B S
    ================================================= */
 
-static PyObject* serialize_chessboard(ChessBoard board);
+static PyObject* serialize_chessboard(const Bitboard board[]);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 
@@ -79,20 +79,6 @@ PyMODINIT_FUNC PyInit_chesslib(void)
          -    C H E S S    B O A R D
          -    C H E S S    D R A W
    ================================================= */
-
-static PyObject* chesslib_create_chesscolor_white(PyObject* self)
-{
-    /* TODO: replace with  */
-
-    /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong((uint8_t)White);
-}
-
-static PyObject* chesslib_create_chesscolor_black(PyObject* self)
-{
-    /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong((uint8_t)Black);
-}
 
 /**************************************************************************
   Create an instance of the ChessPosition type given the position as string
@@ -197,6 +183,8 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
     uint8_t offset = 0;
     ChessBoard board;
 
+    /* TODO: rework this logic without iterator pattern */
+
     /* parse args as object */
     if (!PyArg_ParseTuple(args, "O", &pieces_list)) { return NULL; }
 
@@ -222,7 +210,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
   Create an instance of the ChessBoard struct with all chess pieces in
   start formation.
  **************************************************************************/
-static PyObject* chesslib_create_chessboard_startformation(PyObject* self)
+static PyObject* chesslib_create_chessboard_startformation(PyObject* self, PyObject* args)
 {
     /* create the chess board */
     const Bitboard start_formation[] = {
@@ -299,7 +287,7 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
     get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);
 
     /* serialize draws as numpy list */
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);
+    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT32, out_draws);
 }
 
 /* =================================================
@@ -309,36 +297,18 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
 {
     PyObject* bitboards;
-    size_t dims[1];
-
-    ChessBoard board;
-    ChessDraw draw_to_apply = 0;
+    ChessDraw draw_to_apply;
+    Bitboard *board, *new_board;
 
     /* parse input args */
     if (!PyArg_ParseTuple(args, "Ok", &bitboards, &draw_to_apply)) { return NULL; }
     board = deserialize_chessboard(bitboards);
 
-    /* compute possible draws */
-    /*get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);*/
-
-    /* serialize draws as numpy list */
-    /*return PyArray_SimpleNewFromData(1, dims, NPY_UINT32, out_draws);*/
-
-    /*PyObject* bitboards;
-    size_t dims[1] = { 13 };
-
-    ChessDraw draw_to_apply;
-    Bitboard *board, *new_board;
-
-    /* parse input args */
-    /*if (!PyArg_ParseTuple(args, "Ok", &bitboards, &draw_to_apply)) { return NULL; }*/
-    /*board = deserialize_chessboard(bitboards);*/
-
     /* get updated chessboard with the given draw applied to it */
-    /*new_board = apply_draw(board, draw_to_apply);*/
+    new_board = apply_draw(board, draw_to_apply);
 
     /* serialize draws as numpy list */
-    /*return serialize_chessboard(new_board);*/
+    return serialize_chessboard(new_board);
 }
 
 /* =================================================
@@ -357,7 +327,7 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 
     ChessColor color; ChessPieceType piece_type; int was_moved;
     Bitboard temp_bitboard; ChessPosition temp_pos;
-    ChessPiece temp_piece, *temp_pieces;
+    ChessPiece temp_piece, temp_pieces[64] = { 0 };
 
     /* parse bitboards as ChessBoard struct */
     if (!PyArg_ParseTuple(args, "O", &bitboards)) { return NULL; }
@@ -366,10 +336,6 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
     /* allocate 40-bytes array */
     bytes = (uint8_t*)calloc(40, sizeof(uint8_t));
     if (bytes == NULL) { return NULL; }
-
-    /* allocate 64-bytes pieces cache (index = position on the chess board) */
-    temp_pieces = (ChessPiece*)calloc(64, sizeof(uint8_t));
-    if (temp_pieces == NULL) { return NULL; free(bytes); }
 
     /* determine the pieces at each position and write them to the result bytes */
     for (i = 0; i < 12; i++)
@@ -398,17 +364,16 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 
     /* compress the pieces cache to 40 bytes by removing the unused leading 3 bits of each ChessPiece value */
     compress_pieces_array(temp_pieces, bytes);
-    free(temp_pieces);
 
     /* convert parsed bytes to Python bytearray struct */
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT8, bytes);
+    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, bytes);
 }
 
 /* =================================================
            H E L P E R    F U N C T I O N S
    ================================================= */
 
-static PyObject* serialize_chessboard(const ChessBoard board)
+static PyObject* serialize_chessboard(const Bitboard board[])
 {
     /* init a one-dimensional 64-bit integer numpy array with 13 elements */
     npy_intp dims[1] = { 13 };
@@ -418,21 +383,18 @@ static PyObject* serialize_chessboard(const ChessBoard board)
     if (data_copy == NULL) { return NULL; }
     for (i = 0; i < 13; i++) { data_copy[i] = board[i]; }
 
-    return PyArray_SimpleNewFromData(1, dims, NPY_UINT64, data_copy);
+    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT64, data_copy);
 }
 
 static ChessBoard deserialize_chessboard(PyObject* bitboards_obj)
 {
     PyArrayObject* bitboards;
-    ChessBoard board;
 
     /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */
-    bitboards = PyArray_FromObject(bitboards_obj, NPY_UINT64, 1, 13);
+    bitboards = (PyArrayObject*)PyArray_FromObject(bitboards_obj, NPY_UINT64, 1, 13);
 
     /* retrieve the raw data from the PyArrayObject */
-    board = (Bitboard*)PyArray_DATA(bitboards);
-
-    return board;
+    return (Bitboard*)PyArray_DATA(bitboards);
 }
 
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)

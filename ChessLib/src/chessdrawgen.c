@@ -19,8 +19,6 @@ Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, 
 Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter);
 Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter);
 
-void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
-ChessPosition get_board_position(Bitboard bitboard);
 Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
 Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
 
@@ -38,16 +36,9 @@ Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
  *********************************************************************************************************/
 void get_all_draws(ChessDraw** out_draws, size_t* out_length, ChessBoard board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
-    uint8_t side_offset;
-    ChessColor opponent;
-
     ChessDraw *king_draws, *queen_draws, *rook_draws, *bishop_draws, *knight_draws, *peasant_draws;
     size_t king_draws_len, queen_draws_len, rook_draws_len, bishop_draws_len, knight_draws_len, peasant_draws_len;
     size_t i, offset = 0;
-
-    /* determine the drawing side */
-    side_offset = SIDE_OFFSET(drawing_side);
-    opponent = OPPONENT(drawing_side);
 
     /* compute the draws for the pieces of each type */
     get_draws(&king_draws,    &king_draws_len,    board, drawing_side, King,    last_draw);
@@ -155,7 +146,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
             case Bishop:  draw_bitboard = get_bishop_draw_positions(bitboards, side, filter, PIECE_OFFSET(Bishop)); break;
             case Knight:  draw_bitboard = get_knight_draw_positions(bitboards, side, filter);                       break;
             case Peasant: draw_bitboard = get_peasant_draw_positions(bitboards, side, last_draw, filter);           break;
-            /*default: throw new ArgumentException("Invalid chess piece type detected!");*/
+            default: return; /* TODO: throw exception instead */
         }
 
         /* extract all capturable positions from the draws bitboard */
