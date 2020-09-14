@@ -85,7 +85,7 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
 
 Bitboard is_captured_at(ChessBoard board, ChessPosition pos);
 ChessPiece get_piece_at(ChessBoard board, ChessPosition pos);
-Bitboard was_piece_moved(ChessBoard board, ChessPosition pos);
+int was_piece_moved(ChessBoard board, ChessPosition pos);
 
 ChessBoard apply_draw(ChessBoard board, ChessDraw draw);
 void apply_draw_to_bitboards(Bitboard* bitboards, ChessDraw draw);

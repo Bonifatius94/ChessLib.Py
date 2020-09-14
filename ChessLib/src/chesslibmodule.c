@@ -21,6 +21,7 @@ static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)
 /* Define all functions exposed to python. */
 static PyMethodDef chesslib_methods[] = {
     {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, "Generate all possible draws for the given position."},
+    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},
     {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, "Create a new chess board."},
     {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, "Create a new chess draw."},
     {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, "Create a new chess piece."},
@@ -28,7 +29,7 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
-    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},
+    /*{"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},*/
     PY_METHODS_SENTINEL,
 };
 
@@ -296,18 +297,18 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 
 static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
 {
-    PyObject* bitboards;
+    PyObject *bitboards_obj;
     ChessDraw draw_to_apply;
-    Bitboard *board, *new_board;
+    ChessBoard old_board, new_board;
 
     /* parse input args */
-    if (!PyArg_ParseTuple(args, "Ok", &bitboards, &draw_to_apply)) { return NULL; }
-    board = deserialize_chessboard(bitboards);
+    if (!PyArg_ParseTuple(args, "Oi", &bitboards_obj, &draw_to_apply)) { return NULL; }
+    old_board = deserialize_chessboard(bitboards_obj);
 
-    /* get updated chessboard with the given draw applied to it */
-    new_board = apply_draw(board, draw_to_apply);
+    /* apply the chess draw to a new ChessBoard instance */
+    new_board = apply_draw(old_board, draw_to_apply);
 
-    /* serialize draws as numpy list */
+    /* serialize the new Chessboard as numpy list */
     return serialize_chessboard(new_board);
 }
 

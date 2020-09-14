@@ -88,9 +88,9 @@ ChessPiece get_piece_at(ChessBoard board, ChessPosition pos)
     return piece;
 }
 
-Bitboard was_piece_moved(ChessBoard board, ChessPosition pos)
+int was_piece_moved(ChessBoard board, ChessPosition pos)
 {
-    return ((~START_POSITIONS | board[12]) & (0x1uLL << pos));
+    return ((~START_POSITIONS | board[12]) & (0x1uLL << pos)) > 0;
 }
 
 ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
@@ -111,7 +111,7 @@ ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 
 void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
 {
-    Bitboard old_pos, new_pos, white_mask, black_mask, targetColumn;
+    Bitboard old_pos, new_pos, white_mask, black_mask, target_column;
     uint8_t rooks_board_index, side_offset, drawing_board_index, taken_piece_bitboard_index, promotion_board_index;
 
     /* determine bitboard masks of the drawing piece's old and new position */
@@ -123,8 +123,8 @@ void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
     drawing_board_index = PIECE_OFFSET(get_drawing_piece_type(draw)) + side_offset;
 
     /* set was moved */
-    if (get_is_first_move(draw) && (bitboards[drawing_board_index] & old_pos)) { bitboards[12] |= (old_pos | new_pos); }
-    else if (get_is_first_move(draw)) { bitboards[12] &= ~(old_pos | new_pos); }
+    if (get_is_first_move(draw) && (bitboards[drawing_board_index] & old_pos)) { bitboards[12] |= (~START_POSITIONS | old_pos | new_pos); }
+    else if (get_is_first_move(draw)) { bitboards[12] &= ~(START_POSITIONS & (old_pos | new_pos)); }
 
     /* move the drawing piece by flipping its' bits at the old and new position on the bitboard */
     bitboards[drawing_board_index] ^= old_pos | new_pos;
@@ -155,10 +155,10 @@ void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
             black_mask = ~white_mask;
 
             /* catch the enemy peasant by flipping the bit at his position */
-            targetColumn = COL_A << get_column(get_new_position(draw));
+            target_column = COL_A << get_column(get_new_position(draw));
             bitboards[taken_piece_bitboard_index] ^=
-                  (white_mask & targetColumn & ROW_5)  /* caught enemy white peasant */
-                | (black_mask & targetColumn & ROW_4); /* caught enemy black peasant */
+                  (white_mask & target_column & ROW_5)  /* caught enemy white peasant */
+                | (black_mask & target_column & ROW_4); /* caught enemy black peasant */
         }
         /* handle normal catch: catch the enemy piece by flipping the bit at its' position on the bitboard */
         else { bitboards[taken_piece_bitboard_index] ^= new_pos; }

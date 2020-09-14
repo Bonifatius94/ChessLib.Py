@@ -187,6 +187,8 @@ def test_drawgen():
     # make sure that the generated draws equal the expected draws
     assert_true(set(draws) == set(expected_draws))
 
+    # TODO: add more unit tests that at least cover the correct parsing of all parameters
+
     print("test passed!")
 
 
@@ -196,15 +198,32 @@ def test_apply_draw():
 
     # get board in start formation and opening draw 'white peasant E2-E4'
     board = chesslib.ChessBoard_StartFormation()
-    draw = 0x0118070C
+    draw = np.uint32(0x0118070C)
     #draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0)
 
     # try applying the draw
-    print(board, draw, type(board))
     new_board = chesslib.ApplyDraw(board, draw)
 
-    # add validation
-    
+    # define the expected board after applying the draw
+    exp_new_board = [
+        0x0000000000000010,
+        0x0000000000000008,
+        0x0000000000000081,
+        0x0000000000000024,
+        0x0000000000000042,
+        0x000000001000EF00,
+        0x1000000000000000,
+        0x0800000000000000,
+        0x8100000000000000,
+        0x2400000000000000,
+        0x4200000000000000,
+        0x00FF000000000000,
+        0x0000FFFFFFFF0000
+    ]
+
+    # make sure that the new board is as expected
+    for i in range(13):
+        assert_equal(exp_new_board[i], new_board[i])
 
     print("test passed!")
 
@@ -218,7 +237,6 @@ def test_board_to_hash():
 
     # compute the board's hash
     hash = bytes(chesslib.Board_Hash(board))
-    #print(bytes(hash).hex())
 
     # define the expected hash
     exp_hash = bytes([
