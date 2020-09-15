@@ -31,7 +31,7 @@ docker build . -t "chesslib-python3:1.0"
 docker run "chesslib-python3:1.0" python3 test.py
 ```
 
-## USAGE
+## Usage
 The following sample outlines the usage of the ChessLib:
 ```py
 import chesslib
