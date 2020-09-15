@@ -123,8 +123,8 @@ void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
     drawing_board_index = PIECE_OFFSET(get_drawing_piece_type(draw)) + side_offset;
 
     /* set was moved */
-    if (get_is_first_move(draw) && (bitboards[drawing_board_index] & old_pos)) { bitboards[12] |= (~START_POSITIONS | old_pos | new_pos); }
-    else if (get_is_first_move(draw)) { bitboards[12] &= ~(START_POSITIONS & (old_pos | new_pos)); }
+    if (get_is_first_move(draw) && (bitboards[drawing_board_index] & old_pos)) { bitboards[12] ^= (old_pos | new_pos) & START_POSITIONS; }
+    else if (get_is_first_move(draw)) { bitboards[12] ^= (old_pos | new_pos) & START_POSITIONS; }
 
     /* move the drawing piece by flipping its' bits at the old and new position on the bitboard */
     bitboards[drawing_board_index] ^= old_pos | new_pos;

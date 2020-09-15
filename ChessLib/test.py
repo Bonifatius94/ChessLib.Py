@@ -198,7 +198,7 @@ def test_apply_draw():
 
     # get board in start formation and opening draw 'white peasant E2-E4'
     board = chesslib.ChessBoard_StartFormation()
-    draw = np.uint32(0x0118070C)
+    draw = 0x0118070C
     #draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0)
 
     # try applying the draw
@@ -218,12 +218,19 @@ def test_apply_draw():
         0x2400000000000000,
         0x4200000000000000,
         0x00FF000000000000,
-        0x0000FFFFFFFF0000
+        0x0000FFFFFFFF1000
     ]
 
     # make sure that the new board is as expected
     for i in range(13):
         assert_equal(exp_new_board[i], new_board[i])
+
+    # test if ApplyDraw() function is revertible
+    rev_board = chesslib.ApplyDraw(new_board, draw)
+
+    # make sure that the reverted board is the same as the original board
+    for i in range(13):
+        assert_equal(board[i], rev_board[i])
 
     print("test passed!")
 
