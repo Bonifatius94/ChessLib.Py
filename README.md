@@ -31,5 +31,33 @@ docker build . -t "chesslib-python3:1.0"
 docker run "chesslib-python3:1.0" python3 test.py
 ```
 
+## USAGE
+The following sample outlines the usage of the ChessLib:
+```py
+import chesslib
+import numpy as np
+import random
+
+
+test():
+
+    # create a new chess board in start formation
+    board = chesslib.ChessBoard_StartFormation()
+    
+    # generate all possible draws
+    draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
+    
+    # apply one of the possible draws
+    draw_to_apply = draws[random.randint(0, len(draws) - 1)]
+    new_board = chesslib.ApplyDraw(board, draw_to_apply)
+    
+    # revert the draw (just call ApplyDraw again with the new board)
+    rev_board = chesslib.ApplyDraw(new_board, draw_to_apply)
+    
+    # get the board's 40-byte-hash
+    board_hash = chesslib.BoardHash(board)
+    new_board_hash = chesslib.BoardHash(new_board)
+```
+
 ## Copyright
 You may use this project under the MIT licence's conditions.
