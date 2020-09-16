@@ -183,12 +183,11 @@ static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
  **************************************************************************/
 static PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args)
 {
-    ChessPiece piece;
-    ChessPosition pos;
+    ChessPiece piece = 0;
+    ChessPosition pos = 0;
 
     /* read chess piece and chess position, quit if the parameters do not exist */
-    if (!PyArg_ParseTuple(args, "kk", &piece, &pos)) { return NULL; }
-    /* TODO: check if parsing requires 'O' option for parsing the python uint32 objects */
+    if (!PyArg_ParseTuple(args, "bb", &piece, &pos)) { return NULL; }
 
     /* make sure that the chess piece and chess position value are withing their numeric bounds */
     if (piece >= 32 || pos >= 64) { return NULL; }
@@ -203,31 +202,20 @@ static PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args)
  **************************************************************************/
 static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
 {
-    PyObject *pieces_list = NULL, *temp_obj, *iterator;
-    ChessPieceAtPos pieces_at_pos[32];
-    uint8_t offset = 0;
+    PyArrayObject* nd_pieces_at_pos;
+    PyObject *pieces_list = NULL;
+    ChessPieceAtPos* pieces_at_pos;
+    uint8_t count = 0;
     ChessBoard board;
 
-    /* TODO: rework this logic without iterator pattern */
-
-    /* parse args as object */
+    /* parse all args */
     if (!PyArg_ParseTuple(args, "O", &pieces_list)) { return NULL; }
-
-    /* get an iterator of the list to parse */
-    iterator = PyObject_GetIter(pieces_list);
-
-    /* make sure that the iterator is valid */
-    if (!iterator) { return NULL; }
-
-    /* loop through the list using the iterator */
-    while ((temp_obj = PyIter_Next(iterator)))
-    {
-        if (!PyLong_Check(temp_obj)) { return NULL; }
-        pieces_at_pos[offset++] = (ChessPieceAtPos)PyLong_AsLong(temp_obj);
-    }
+    nd_pieces_at_pos = (PyArrayObject*)PyArray_FromObject(pieces_list, NPY_UINT16, 1, 32);
+    count = (size_t)PyArray_Size(nd_pieces_at_pos);
+    pieces_at_pos = (ChessPieceAtPos*)PyArray_DATA(nd_pieces_at_pos);
 
     /* create the chess board */
-    board = create_board_from_piecesatpos(pieces_at_pos, offset);
+    board = create_board_from_piecesatpos(pieces_at_pos, count);
     return serialize_chessboard(board);
 }
 

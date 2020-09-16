@@ -36,9 +36,8 @@ ChessBoard create_board(const Bitboard bitboards[])
 
 ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count)
 {
-    /* TODO: check if memory allocation works */
     size_t i;
-    ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
+    ChessBoard board = (Bitboard*)calloc(13, sizeof(Bitboard));
     if (!board) { return NULL; }
 
     uint8_t board_index;
@@ -46,7 +45,7 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
     ChessPiece piece;
 
     /* assume pieces as already moved */
-    board[12] = 0xFFFFFFFFFFFFFFFFuL;
+    board[12] = 0xFFFFFFFFFFFFFFFFuLL;
 
     /* loop through the pieces@pos array */
     for (i = 0; i < pieces_count; i++)
@@ -63,7 +62,7 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
 
         /* apply was_moved state of the chess piece to the bitboard */
         /* the chess pieces are assumed to be already moved, so only flip the bit if the piece was not moved */
-        if (pos < 16 || pos > 47) { board[12] ^= ((uint64_t)(get_was_piece_moved(piece) ^ 1)) << pos; }
+        board[12] ^= (((uint64_t)(get_was_piece_moved(piece) ^ 1)) << pos) & START_POSITIONS;
     }
 
     return board;
