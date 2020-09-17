@@ -211,7 +211,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args)
     /* parse all args */
     if (!PyArg_ParseTuple(args, "O", &pieces_list)) { return NULL; }
     nd_pieces_at_pos = (PyArrayObject*)PyArray_FromObject(pieces_list, NPY_UINT16, 1, 32);
-    count = (size_t)PyArray_Size(nd_pieces_at_pos);
+    count = (size_t)PyArray_Size((PyObject*)nd_pieces_at_pos);
     pieces_at_pos = (ChessPieceAtPos*)PyArray_DATA(nd_pieces_at_pos);
 
     /* create the chess board */
@@ -333,6 +333,8 @@ static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
  **************************************************************************/
 static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 {
+    /* TODO: export this function to chessboard.c */
+
     ChessBoard board;
     PyObject *bitboards;
     uint8_t *bytes, i;

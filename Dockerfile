@@ -33,7 +33,7 @@ FROM ubuntu:18.04
 # install build dependencies: c/c++ pyhton3 numpy
 RUN apt-get update && \
     apt-get install -y build-essential python3 python3-dev python3-pip && \
-    pip3 install numpy asserts tensorflow && \
+    pip3 install numpy asserts && \
     rm -rf /var/lib/apt/lists/*
 
 # configure build settings
