@@ -43,9 +43,6 @@ Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, 
 Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter);
 Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter);
 
-Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
-Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
-
 /* ====================================================
                D R A W - G E N    M A I N
    ==================================================== */

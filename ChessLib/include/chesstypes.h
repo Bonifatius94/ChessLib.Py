@@ -54,6 +54,14 @@ typedef enum _CHESS_DRAW_TYPE {
     PeasantPromotion = 3
 } ChessDrawType;
 
+/* Representation of chess game states. */
+typedef enum _CHESS_GAME_STATE {
+    None = 'N',
+    Check = 'C',
+    Checkmate = 'M',
+    Tie = 'T',
+} ChessGameState;
+
 /* | was moved | color | piece type |
    |         x |     x |        xxx | */
 typedef uint8_t ChessPiece;

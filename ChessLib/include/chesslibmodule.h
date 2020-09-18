@@ -56,6 +56,8 @@ static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args);
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args);
 static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args);
 static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args);
+static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args);
+
 
 PyMODINIT_FUNC PyInit_chesslib(void);
 

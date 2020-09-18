@@ -53,6 +53,7 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
+    {"GameState", chesslib_get_game_state, METH_NOARGS, "Determine the game state for the given chess board and side."},
     /*{"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},*/
     PY_METHODS_SENTINEL,
 };
@@ -86,8 +87,14 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     PyModule_AddIntConstant(module, "ChessColor_White", (int8_t)White);
     PyModule_AddIntConstant(module, "ChessColor_Black", (int8_t)Black);
 
-    /* add integer constant for enum ChessDraw NULL */
+    /* add integer constant for ChessDraw NULL value */
     PyModule_AddIntConstant(module, "ChessDraw_Null", (int32_t)DRAW_NULL);
+
+    /* add integer constants for ChessGameState enum */
+    PyModule_AddIntConstant(module, "GameState_None", (ChessGameState)None);
+    PyModule_AddIntConstant(module, "GameState_Check", (ChessGameState)Check);
+    PyModule_AddIntConstant(module, "GameState_Checkmate", (ChessGameState)Checkmate);
+    PyModule_AddIntConstant(module, "GameState_Tie", (ChessGameState)Tie);
 
     return module;
 }
@@ -382,6 +389,22 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 
     /* convert parsed bytes to Python bytearray struct */
     return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, bytes);
+}
+
+static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args)
+{
+    PyObject* bitboards;
+    ChessBoard board;
+    ChessDraw last_draw = DRAW_NULL;
+    ChessGameState state;
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTuple(args, "Oi", &bitboards, &last_draw)) { return NULL; }
+    board = deserialize_chessboard(bitboards);
+
+    /* determine the game state */
+    state = get_game_state(board, last_draw);
+    return PyLong_FromUnsignedLong(state);
 }
 
 /* =================================================

@@ -22,24 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef CHESSDRAWGEN_H
-#define CHESSDRAWGEN_H
+#ifndef CHESSGAMESTATE_H
+#define CHESSGAMESTATE_H
 
-#include "chesstypes.h"
 #include "chessboard.h"
 #include "chessdraw.h"
-#include "chesspiece.h"
-#include "chessposition.h"
+#include "chessdrawgen.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-void get_all_draws(ChessDraw** out_draws, size_t* out_length, ChessBoard board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check);
-
-void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
-ChessPosition get_board_position(Bitboard bitboard);
-
-Bitboard get_capturable_fields(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw);
-Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
+ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw);
 
 #endif
