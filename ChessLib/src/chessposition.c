@@ -41,11 +41,12 @@ int8_t get_column(ChessPosition position)
 
 char* position_to_string(ChessPosition position)
 {
-    char* pos_str = (char*)malloc(2 * sizeof(char));
+    char* pos_str = (char*)malloc(3 * sizeof(char));
 
     /* serialize position as string*/
-    pos_str[1] = '1' + get_row(position);
     pos_str[0] = 'A' + get_column(position);
+    pos_str[1] = '1' + get_row(position);
+    pos_str[2] = '\0';
 
     return pos_str;
 }

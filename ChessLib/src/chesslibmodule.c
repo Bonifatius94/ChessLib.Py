@@ -404,7 +404,8 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 {
     PyObject* bitboards;
     ChessBoard board;
-    char out[18 * 46], *separator = "   -----------------------------------------";
+    char out[18 * 46], buf[6];
+    char separator[] = "   -----------------------------------------\n";
     uint8_t row, column;
     ChessPosition pos;
     ChessPiece piece;
@@ -414,12 +415,13 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
     board = deserialize_chessboard(bitboards);
 
     /* determine the chess board's textual representation */
-    sprintf(out, "%s\n", separator);
+    strcpy(out, separator);
 
-    for (row = 7; row >= 0; row--)
+    for (row = 7; row < 8; row--)
     {
         /* write row description */
-        sprintf(out, "%s %i |", out, (row + 1));
+        sprintf(buf, " %i |", (row + 1));
+        strcat(out, buf);
 
         for (column = 0; column < 8; column++)
         {
@@ -428,17 +430,21 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
             piece = get_piece_at(board, pos);
 
             /* write the chess piece to the output */
-            sprintf(out, "%s %c%c |", out, 
+            sprintf(buf, " %c%c |", 
                 is_captured_at(board, pos) ? color_to_char(get_piece_color(piece)) : ' ',
                 is_captured_at(board, pos) ? piece_type_to_char(get_piece_type(piece)) : ' ');
+            strcat(out, buf);
         }
 
         /* write separator line */
-        sprintf(out, "%s\n%s\n", out, separator);
+        strcat(out, "\n");
+        strcat(out, separator);
+
+        if (row == -1) { return Py_BuildValue("s", out); }
     }
 
     /* write column descriptions */
-    sprintf(out, "%s     A    B    C    D    E    F    G    H", out);
+    strcat(out, "     A    B    C    D    E    F    G    H");
 
     return Py_BuildValue("s", out);
 }
@@ -446,7 +452,7 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
 {
     ChessDraw draw;
-    char out[100], *old_pos, *new_pos;
+    char out[100], buf[100], *old_pos, *new_pos;
     int is_left_side = 0;
 
     /* parse bitboards as ChessBoard struct */
@@ -456,10 +462,12 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
     new_pos = position_to_string(get_new_position(draw));
 
     /* determine the chess draw's base representation */
-    sprintf(out, "%s %s %s-%s",
+    sprintf(buf, "%s %s %s-%s",
         color_to_string(get_drawing_side(draw)),
         piece_type_to_string(get_drawing_piece_type(draw)),
-        old_pos, new_pos);
+        old_pos,
+        new_pos);
+    strcpy(out, buf);
 
     free(old_pos); free(new_pos);
 
@@ -469,18 +477,20 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
         case Rochade:
             is_left_side = (get_column(get_new_position(draw)) == 2 && get_drawing_side(draw) == White) 
                 || (get_column(get_new_position(draw)) == 6 && get_drawing_side(draw) == Black);
-            sprintf(out, "%s %s-side rochade", out, (is_left_side ? "left" : "right"));
+            sprintf(buf, "%s-side rochade", (is_left_side ? "left" : "right"));
+            strcat(out, buf);
             break;
         case EnPassant:
-            sprintf(out, "%s (en-passant)", out);
+            strcat(out, " (en-passant)");
             break;
         case PeasantPromotion:
-            sprintf(out, "%s (%s)", out, piece_type_to_string(get_peasant_promotion_piece_type(draw)));
+            sprintf(buf, " (%s)", piece_type_to_string(get_peasant_promotion_piece_type(draw)));
+            strcat(out, buf);
             break;
         case Standard: break;
     }
-    
-    return Py_BuildValue("s", out);
+
+    return Py_BuildValue("s", out, strlen(out));
 }
 
 /* =================================================

@@ -45,6 +45,10 @@ def test_module():
     #test_game_state()
     test_board_to_hash()
 
+    # test visualization functions
+    test_visualize_board()
+    test_visualize_draw()
+
 
 def test_chesscolor():
 
@@ -350,6 +354,41 @@ def test_board_to_hash():
 #     assert_equal(chesslib.GameState_Tie, chesslib.GameState(board_tie, last_draw_tie))
 
 #     print("test passed!")
+
+
+def test_visualize_board():
+
+    print("testing visualize chess board")
+
+    # generate a chess board in start formation
+    board = chesslib.ChessBoard_StartFormation()
+
+    # convert the board to a printable string
+    board_str = chesslib.VisualizeBoard(board)
+
+    # make sure that the expected content is retrieved
+    exp_board_str = "   -----------------------------------------\n 8 | BR | BN | BB | BQ | BK | BB | BN | BR |\n   -----------------------------------------\n 7 | BP | BP | BP | BP | BP | BP | BP | BP |\n   -----------------------------------------\n 6 |    |    |    |    |    |    |    |    |\n   -----------------------------------------\n 5 |    |    |    |    |    |    |    |    |\n   -----------------------------------------\n 4 |    |    |    |    |    |    |    |    |\n   -----------------------------------------\n 3 |    |    |    |    |    |    |    |    |\n   -----------------------------------------\n 2 | WP | WP | WP | WP | WP | WP | WP | WP |\n   -----------------------------------------\n 1 | WR | WN | WB | WQ | WK | WB | WN | WR |\n   -----------------------------------------\n     A    B    C    D    E    F    G    H"
+    assert_equal(board_str, exp_board_str)
+
+    print("test passed!")
+
+
+def test_visualize_draw():
+
+    print("testing visualize chess draw")
+
+    # generate a chess board in start formation
+    draw = 0x0118070C
+
+    # convert the board to a printable string
+    draw_str = chesslib.VisualizeDraw(draw)
+
+    # make sure that the expected content is retrieved
+    assert_equal(draw_str, 'White Peasant E4-E2')
+
+    print("test passed!")
+
+    # TODO: add more tests for edge cases (rochade, en-passant, promotion)
 
 
 # run all tests
