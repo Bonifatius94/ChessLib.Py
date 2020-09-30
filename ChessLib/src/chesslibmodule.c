@@ -300,7 +300,7 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
     int analyze_draw_into_check;
 
     /* parse input args */
-    if (!PyArg_ParseTuple(args, "Okki", &bitboards_obj, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "Okii", &bitboards_obj, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
     board = deserialize_chessboard(bitboards_obj);
 
     /* compute possible draws */
