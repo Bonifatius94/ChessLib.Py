@@ -49,6 +49,12 @@ ChessPiece create_piece(ChessPieceType type, ChessColor color, int was_moved);
 ChessColor get_piece_color(ChessPiece piece);
 int get_was_piece_moved(ChessPiece piece);
 ChessPieceType get_piece_type(ChessPiece piece);
+
 ChessColor color_from_char(char c);
+ChessPieceType piece_type_from_char(char c);
+char color_to_char(ChessColor color);
+char piece_type_to_char(ChessPieceType type);
+char* color_to_string(ChessColor color);
+char* piece_type_to_string(ChessPieceType type);
 
 #endif

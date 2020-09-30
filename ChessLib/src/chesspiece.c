@@ -54,11 +54,72 @@ ChessColor color_from_char(char c)
     switch (toupper(c))
     {
         case 'W': return White;
-        case 'B': return White;
-
-        /* TODO: implement error handling properly */
-        default: return White;
+        case 'B': return Black;
+        default:  return White;
     }
 }
 
-/* TODO: add to_char() functions for ChessPieceType and ChessColor */
+char color_to_char(ChessColor color)
+{
+    switch (color)
+    {
+        case White: return 'W';
+        case Black: return 'B';
+        default:    return 'W';
+    }
+}
+
+ChessPieceType piece_type_from_char(char c)
+{
+    switch (toupper(c))
+    {
+        case 'I': return (ChessPieceType)Invalid;
+        case 'K': return (ChessPieceType)King;
+        case 'Q': return (ChessPieceType)Queen;
+        case 'R': return (ChessPieceType)Rook;
+        case 'B': return (ChessPieceType)Bishop;
+        case 'N': return (ChessPieceType)Knight;
+        case 'P': return (ChessPieceType)Peasant;
+        default:  return (ChessPieceType)Invalid;
+    }
+}
+
+char piece_type_to_char(ChessPieceType type)
+{
+    switch (type)
+    {
+        case Invalid: return 'I';
+        case King:    return 'K';
+        case Queen:   return 'Q';
+        case Rook:    return 'R';
+        case Bishop:  return 'B';
+        case Knight:  return 'N';
+        case Peasant: return 'P';
+        default:      return 'I';
+    }
+}
+
+char* color_to_string(ChessColor color)
+{
+    switch (color)
+    {
+        case White: return "White";
+        case Black: return "Black";
+        default:    return "White";
+    }
+}
+
+char* piece_type_to_string(ChessPieceType type)
+{
+    switch (type)
+    {
+        case Invalid: return "Invalid";
+        case King:    return "King";
+        case Queen:   return "Queen";
+        case Rook:    return "Rook";
+        case Bishop:  return "Bishop";
+        case Knight:  return "Knight";
+        case Peasant: return "Peasant";
+        default:      return "Invalid";
+    }
+}

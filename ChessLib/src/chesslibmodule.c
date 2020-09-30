@@ -54,6 +54,8 @@ static PyMethodDef chesslib_methods[] = {
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
     {"GameState", chesslib_get_game_state, METH_VARARGS, "Determine the game state for the given chess board and side."},
+    {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS, "Transform the chess board instance into a printable string."},
+    {"VisualizeDraw", chesslib_visualize_draw, METH_VARARGS, "Transform the chess draw instance into a printable string."},
     /*{"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},*/
     PY_METHODS_SENTINEL,
 };
@@ -129,7 +131,6 @@ static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args)
     if (*(pos_as_string + 2) != '\0'
         || (!isalpha(pos_as_string[0]) || toupper(pos_as_string[0]) - 'A' >= 8 || toupper(pos_as_string[0]) - 'A' < 0)
         || (!isdigit(pos_as_string[1]) || pos_as_string[1] - '1' >= 8)) { return NULL; }
-    /* TODO: implement throwing an invalid argument exception instead */
 
     /* parse position from position string */
     row = pos_as_string[1] - '1';
@@ -157,25 +158,9 @@ static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args)
     /* read was moved boolean, quit if the parameter does not exist */
     if (!PyArg_ParseTuple(args, "ssi", &color_as_char, &type_as_char, &was_moved)) { return NULL; }
 
-    /* parse the chess piece color */
-    switch (toupper(*color_as_char))
-    {
-        case 'W': color = White; break;
-        case 'B': color = Black; break;
-        default: return NULL;    break;
-    }
-
-    /* parse the chess piece type */
-    switch (toupper(*type_as_char))
-    {
-        case 'K': type = King;    break;
-        case 'Q': type = Queen;   break;
-        case 'R': type = Rook;    break;
-        case 'B': type = Bishop;  break;
-        case 'N': type = Knight;  break;
-        case 'P': type = Peasant; break;
-        default: return NULL;
-    }
+    /* parse the chess piece's color and type */
+    color = color_from_char(*color_as_char);
+    type = piece_type_from_char(*type_as_char);
 
     /* create uint32 python object and return it */
     return PyLong_FromUnsignedLong(create_piece(type, color, was_moved));
@@ -409,6 +394,93 @@ static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args)
     /* determine the game state */
     state = get_game_state(board, last_draw);
     return PyLong_FromUnsignedLong(state);
+}
+
+/* =================================================
+                  V I S U A L I Z E
+   ================================================= */
+
+static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
+{
+    PyObject* bitboards;
+    ChessBoard board;
+    char out[18 * 46], *separator = "   -----------------------------------------";
+    uint8_t row, column;
+    ChessPosition pos;
+    ChessPiece piece;
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTuple(args, "O", &bitboards)) { return NULL; }
+    board = deserialize_chessboard(bitboards);
+
+    /* determine the chess board's textual representation */
+    sprintf(out, "%s\n", separator);
+
+    for (row = 7; row >= 0; row--)
+    {
+        /* write row description */
+        sprintf(out, "%s %i |", out, (row + 1));
+
+        for (column = 0; column < 8; column++)
+        {
+            /* get the chess piece at the iteration's position */
+            pos = create_position(row, column);
+            piece = get_piece_at(board, pos);
+
+            /* write the chess piece to the output */
+            sprintf(out, "%s %c%c |", out, 
+                is_captured_at(board, pos) ? color_to_char(get_piece_color(piece)) : ' ',
+                is_captured_at(board, pos) ? piece_type_to_char(get_piece_type(piece)) : ' ');
+        }
+
+        /* write separator line */
+        sprintf(out, "%s\n%s\n", out, separator);
+    }
+
+    /* write column descriptions */
+    sprintf(out, "%s     A    B    C    D    E    F    G    H", out);
+
+    return Py_BuildValue("s", out);
+}
+
+static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
+{
+    ChessDraw draw;
+    char out[100], *old_pos, *new_pos;
+    int is_left_side = 0;
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTuple(args, "i", &draw)) { return NULL; }
+
+    old_pos = position_to_string(get_old_position(draw));
+    new_pos = position_to_string(get_new_position(draw));
+
+    /* determine the chess draw's base representation */
+    sprintf(out, "%s %s %s-%s",
+        color_to_string(get_drawing_side(draw)),
+        piece_type_to_string(get_drawing_piece_type(draw)),
+        old_pos, new_pos);
+
+    free(old_pos); free(new_pos);
+
+    /* append additional information for special draws */
+    switch (get_draw_type(draw))
+    {
+        case Rochade:
+            is_left_side = (get_column(get_new_position(draw)) == 2 && get_drawing_side(draw) == White) 
+                || (get_column(get_new_position(draw)) == 6 && get_drawing_side(draw) == Black);
+            sprintf(out, "%s %s-side rochade", out, (is_left_side ? "left" : "right"));
+            break;
+        case EnPassant:
+            sprintf(out, "%s (en-passant)", out);
+            break;
+        case PeasantPromotion:
+            sprintf(out, "%s (%s)", out, piece_type_to_string(get_peasant_promotion_piece_type(draw)));
+            break;
+        case Standard: break;
+    }
+    
+    return Py_BuildValue("s", out);
 }
 
 /* =================================================

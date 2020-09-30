@@ -38,3 +38,14 @@ int8_t get_column(ChessPosition position)
 {
     return (position & 7);
 }
+
+char* position_to_string(ChessPosition position)
+{
+    char* pos_str = (char*)malloc(2 * sizeof(char));
+
+    /* serialize position as string*/
+    pos_str[1] = '1' + get_row(position);
+    pos_str[0] = 'A' + get_column(position);
+
+    return pos_str;
+}

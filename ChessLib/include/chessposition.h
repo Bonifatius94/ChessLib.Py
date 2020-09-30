@@ -30,7 +30,9 @@
    ==================================================== */
 
 #include "chesstypes.h"
+
 #include <stdint.h>
+#include <stdlib.h>
 
 /* ====================================================
              D E F I N E    F U N C T I O N S
@@ -40,5 +42,7 @@ ChessPosition create_position(int8_t row, int8_t column);
 
 int8_t get_row(ChessPosition position);
 int8_t get_column(ChessPosition position);
+
+char* position_to_string(ChessPosition position);
 
 #endif
