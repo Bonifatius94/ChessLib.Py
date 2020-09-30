@@ -46,6 +46,7 @@
 #include "chesspieceatpos.h"
 #include "chessdraw.h"
 #include "chessdrawgen.h"
+#include "chessgamestate.h"
 
 static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args);
 static PyObject* chesslib_create_chesspiece(PyObject* self, PyObject* args);

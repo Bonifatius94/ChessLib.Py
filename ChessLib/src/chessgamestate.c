@@ -37,8 +37,8 @@ ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw)
     /* determine allied and enemy side */
     allied_side = (last_draw == DRAW_NULL) ? White : OPPONENT(get_drawing_side(last_draw));
     enemy_side = OPPONENT(allied_side);
-    
-    /* analyze the chess piece types on the board => determine whether any player 
+
+    /* analyze the chess piece types on the board => determine whether any player
        can even achieve a checkmate with his remaining pieces */
     can_ally_checkmate = can_achieve_checkmate(board, allied_side);
     can_enemy_checkmate = can_achieve_checkmate(board, enemy_side);
@@ -57,15 +57,15 @@ ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw)
        check:     ally is checked, but can at least draw
        stalemate: ally cannot draw but is also not checked (end of game)
        checkmate: ally is checked and cannot draw anymore (end of game) */
-    
+
     return draws_count
-        ? (is_ally_checked ? Check : None) 
+        ? (is_ally_checked ? Check : None)
         : (is_ally_checked ? Checkmate : Tie);
 }
 
 int can_achieve_checkmate(ChessBoard board, ChessColor side)
 {
-    /* minimal pieces required for checkmate: 
+    /* minimal pieces required for checkmate:
        ======================================
         (1) king + queen
         (2) king + rook
@@ -80,18 +80,20 @@ int can_achieve_checkmate(ChessBoard board, ChessColor side)
 
     /* check for options 1, 2 or 6: any allied queen, rook or peasant existing */
     opt_1_2_6 = (
-          board[SIDE_OFFSET(side) + PIECE_OFFSET(Queen)] 
-        | board[SIDE_OFFSET(side) + PIECE_OFFSET(Rook)] 
+          board[SIDE_OFFSET(side) + PIECE_OFFSET(Queen)]
+        | board[SIDE_OFFSET(side) + PIECE_OFFSET(Rook)]
         | board[SIDE_OFFSET(side) + PIECE_OFFSET(Peasant)]
     ) > 0;
 
     /* check for option 3: at least 2 bishops, but on different lanes */
     first_pos = get_board_position(board[SIDE_OFFSET(side) + PIECE_OFFSET(Bishop)]);
-    second_pos = get_board_position((0x1uLL << first_pos) ^ board[SIDE_OFFSET(side) + PIECE_OFFSET(Bishop)]);
+    second_pos = get_board_position(
+        (0x1uLL << first_pos) ^ board[SIDE_OFFSET(side) + PIECE_OFFSET(Bishop)]);
     opt_3 = (first_pos % 2 == 0) && (second_pos % 2 == 1);
 
     /* check for option 4: at least 1 bishop and 1 knight */
-    opt_4 = (board[SIDE_OFFSET(side) + PIECE_OFFSET(Bishop)] > 0 && board[SIDE_OFFSET(side) + PIECE_OFFSET(Knight)] > 0);
+    opt_4 = (board[SIDE_OFFSET(side) + PIECE_OFFSET(Bishop)] > 0 
+        && board[SIDE_OFFSET(side) + PIECE_OFFSET(Knight)] > 0);
 
     /* check for option 5: at least 3 knights */
     knights = board[SIDE_OFFSET(side) + PIECE_OFFSET(Knight)];

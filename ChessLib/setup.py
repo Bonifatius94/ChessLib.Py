@@ -45,7 +45,8 @@ def main():
         "src/chessposition.c",
         "src/chessdraw.c",
         "src/chessdrawgen.c",
-        "src/chesspieceatpos.c"
+        "src/chesspieceatpos.c",
+        "src/chessgamestate.c"
     ]
 
     # define extension module settings (for cross-plattform builds)

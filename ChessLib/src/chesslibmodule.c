@@ -53,7 +53,7 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
     {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
-    {"GameState", chesslib_get_game_state, METH_NOARGS, "Determine the game state for the given chess board and side."},
+    {"GameState", chesslib_get_game_state, METH_VARARGS, "Determine the game state for the given chess board and side."},
     /*{"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},*/
     PY_METHODS_SENTINEL,
 };
@@ -390,6 +390,10 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
     /* convert parsed bytes to Python bytearray struct */
     return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, bytes);
 }
+
+/* =================================================
+                 G A M E    S T A T E
+   ================================================= */
 
 static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args)
 {

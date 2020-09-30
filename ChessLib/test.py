@@ -321,35 +321,35 @@ def test_board_to_hash():
     print("test passed!")
 
 
-def test_game_state():
+# def test_game_state():
 
-    print("test game state")
+#     print("test game state")
 
-    # TODO: implement this test!!!!!
+#     # TODO: implement this test!!!!!
 
-    # prepare a regular position
-    board_regular = ...
-    last_draw_regular = ...
+#     # prepare a regular position
+#     board_regular = ...
+#     last_draw_regular = ...
 
-    # prepare a check position
-    board_check = ...
-    last_draw_check = ...
+#     # prepare a check position
+#     board_check = ...
+#     last_draw_check = ...
 
-    # prepare a checkmate position
-    board_checkmate = ...
-    last_draw_checkmate = ...
+#     # prepare a checkmate position
+#     board_checkmate = ...
+#     last_draw_checkmate = ...
 
-    # prepare a tie position
-    board_tie = ...
-    last_draw_tie = ...
+#     # prepare a tie position
+#     board_tie = ...
+#     last_draw_tie = ...
 
-    # make sure that all game states are detected correctly
-    assert_equal(chesslib.GameState_None, chesslib.GameState(board_regular, last_draw_regular))
-    assert_equal(chesslib.GameState_Check, chesslib.GameState(board_check, last_draw_check))
-    assert_equal(chesslib.GameState_Checkmate, chesslib.GameState(board_checkmate, last_draw_checkmate))
-    assert_equal(chesslib.GameState_Tie, chesslib.GameState(board_tie, last_draw_tie))
+#     # make sure that all game states are detected correctly
+#     assert_equal(chesslib.GameState_None, chesslib.GameState(board_regular, last_draw_regular))
+#     assert_equal(chesslib.GameState_Check, chesslib.GameState(board_check, last_draw_check))
+#     assert_equal(chesslib.GameState_Checkmate, chesslib.GameState(board_checkmate, last_draw_checkmate))
+#     assert_equal(chesslib.GameState_Tie, chesslib.GameState(board_tie, last_draw_tie))
 
-    print("test passed!")
+#     print("test passed!")
 
 
 # run all tests
