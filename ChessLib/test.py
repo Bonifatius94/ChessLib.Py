@@ -43,7 +43,7 @@ def test_module():
     test_drawgen()
     test_apply_draw()
     #test_game_state()
-    test_board_to_hash()
+    test_board_hash()
 
     # test visualization functions
     test_visualize_board()
@@ -296,15 +296,15 @@ def test_apply_draw():
     print("test passed!")
 
 
-def test_board_to_hash():
+def test_board_hash():
 
     print("testing board to hash function")
 
     # create board in start formation
     board = chesslib.ChessBoard_StartFormation()
 
-    # compute the board's hash
-    hash = bytes(chesslib.Board_Hash(board))
+    # compute the board's 40-byte hash
+    hash = bytes(chesslib.Board_ToHash(board))
 
     # define the expected hash
     exp_hash = bytes([
@@ -321,6 +321,15 @@ def test_board_to_hash():
     # make sure that the computed hash is correct
     for i in range(40):
         assert_equal(exp_hash[i], hash[i])
+
+    # convert the board's 40-byte hash back to a board instance
+    board_copy = chesslib.Board_FromHash(np.frombuffer(hash, dtype=np.uint8))
+
+    print(board, board_copy)
+
+    # make sure that the board converted from 40-byte hash is the same as the original board
+    for i in range(13):
+        assert_equal(board_copy[i], board[i])
 
     print("test passed!")
 

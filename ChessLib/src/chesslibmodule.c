@@ -31,6 +31,7 @@
 static PyObject* serialize_chessboard(const Bitboard board[]);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
+static void uncompress_pieces_array(const uint8_t hash_bytes[], ChessPiece* out_pieces);
 
 /* =================================================
                  I N I T I A L I Z E
@@ -51,7 +52,8 @@ static PyMethodDef chesslib_methods[] = {
     {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, "Create a new chess piece."},
     {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, "Create a new chess position."},
     {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
-    {"Board_Hash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
+    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
+    {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
     {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_NOARGS, "Create a new chess board in start formation."},
     {"GameState", chesslib_get_game_state, METH_VARARGS, "Determine the game state for the given chess board and side."},
     {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS, "Transform the chess board instance into a printable string."},
@@ -317,7 +319,7 @@ static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
 }
 
 /* =================================================
-         C O M P U T E    B O A R D    H A S H
+                B O A R D    H A S H
    ================================================= */
 
 /**************************************************************************
@@ -374,6 +376,60 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
 
     /* convert parsed bytes to Python bytearray struct */
     return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, bytes);
+}
+
+/**************************************************************************
+  Retrieve a ChessBoard instance of the given 40-byte hash representation.
+ **************************************************************************/
+static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
+{
+    /* TODO: export this function to chessboard.c */
+
+    ChessBoard board;
+    PyObject *hash_orig;
+    PyArrayObject* hash;
+    uint8_t *bytes;
+
+    ChessColor color; ChessPieceType piece_type; int was_moved;
+    Bitboard temp_bitboard; ChessPosition pos;
+    ChessPiece temp_piece, temp_pieces[64] = { 0 };
+    uint8_t board_index;
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTuple(args, "O", &hash_orig)) { return NULL; }
+    hash = (PyArrayObject*)PyArray_FromObject(hash_orig, NPY_UINT8, 1, 40);
+    bytes = (Bitboard*)PyArray_DATA(hash);
+
+    /* uncompress the pieces cache from 40 bytes by adding the unused leading 3 bits of each ChessPiece value */
+    compress_pieces_array(bytes, temp_pieces);
+
+    /* allocate chess board */
+    board = (Bitboard*)calloc(13, sizeof(Bitboard));
+    if (board == NULL) { return NULL; }
+    board[12] = 0xFFFFFFFFFFFFFFFF;
+
+    /* determine the pieces at each position and write them to the bitboards */
+    for (pos = 0; pos < 64; pos++)
+    {
+        temp_piece = temp_pieces[pos];
+
+        /* determine which bitboard to write to */
+        board_index = PIECE_OFFSET(get_piece_type(temp_piece))
+            + SIDE_OFFSET(get_piece_color(temp_piece));
+
+        /* set the piece's bit on the according bitboard */
+        temp_bitboard = (temp_piece != CHESS_PIECE_NULL ? 0x1uLL : 0x0uLL) << pos;
+        board[board_index] |= temp_bitboard;
+
+        /* set was moved bit */
+        board[12] ^= !get_was_piece_moved(temp_piece) ? (temp_bitboard & START_POSITIONS) : 0x0uLL;
+    }
+
+    /* compress the pieces cache to 40 bytes by removing the unused leading 3 bits of each ChessPiece value */
+    compress_pieces_array(temp_pieces, bytes);
+
+    /* convert parsed bytes to Python bytearray struct */
+    return serialize_chessboard(board);
 }
 
 /* =================================================
@@ -542,5 +598,31 @@ static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)
 
         /* write overlapping bits to the next byte (only if needed) */
         if (offset > 3) { out_bytes[index + 1] |= (uint8_t)((piece_bits & mask) << (8 - offset)); }
+    }
+}
+
+static void uncompress_pieces_array(const uint8_t hash_bytes[], ChessPiece* out_pieces)
+{
+    ChessPosition pos;
+    const uint8_t mask = 0xF8u;
+    uint8_t offset, index, piece_bits;
+
+    /* TODO: fix this function!!! */
+
+    /* loop through all positions */
+    for (pos = 0; pos < 64; pos++)
+    {
+        /* determine the output byte's index and bit offset */
+        index = ((int)pos * 5) / 8;
+        offset = ((int)pos * 5) % 8;
+
+        /* write leading bits to byte at the piece's position */
+        piece_bits |= (hash_bytes[index] << offset) & mask;
+
+        /* write overlapping bits to the next byte (only if needed) */
+        if (offset > 3) { piece_bits |= (uint8_t)((hash_bytes[index + 1] >> (8 - offset))) & mask; }
+
+        /* get chess piece from array by position */
+        out_pieces[pos] = piece_bits >> 3;
     }
 }
