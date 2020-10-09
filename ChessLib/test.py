@@ -325,8 +325,6 @@ def test_board_hash():
     # convert the board's 40-byte hash back to a board instance
     board_copy = chesslib.Board_FromHash(np.frombuffer(hash, dtype=np.uint8))
 
-    print(board, board_copy)
-
     # make sure that the board converted from 40-byte hash is the same as the original board
     for i in range(13):
         assert_equal(board_copy[i], board[i])

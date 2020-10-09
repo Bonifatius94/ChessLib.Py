@@ -32,7 +32,7 @@ static PyObject* serialize_chessboard(const Bitboard board[]);
 static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 static void uncompress_pieces_array(const uint8_t hash_bytes[], ChessPiece* out_pieces);
-
+uint8_t get_bits_at(const uint8_t data_bytes[], size_t arr_size, int bit_index, int length);
 /* =================================================
                  I N I T I A L I Z E
               P Y T H O N    M O D U L E
@@ -385,12 +385,10 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
 {
     /* TODO: export this function to chessboard.c */
 
-    ChessBoard board;
-    PyObject *hash_orig;
-    PyArrayObject* hash;
-    uint8_t *bytes;
+    Bitboard board[13] = { 0 };
+    PyObject *hash_orig; PyArrayObject* hash;
+    uint8_t *compressed_bytes;
 
-    ChessColor color; ChessPieceType piece_type; int was_moved;
     Bitboard temp_bitboard; ChessPosition pos;
     ChessPiece temp_piece, temp_pieces[64] = { 0 };
     uint8_t board_index;
@@ -398,14 +396,12 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
     /* parse bitboards as ChessBoard struct */
     if (!PyArg_ParseTuple(args, "O", &hash_orig)) { return NULL; }
     hash = (PyArrayObject*)PyArray_FromObject(hash_orig, NPY_UINT8, 1, 40);
-    bytes = (Bitboard*)PyArray_DATA(hash);
+    compressed_bytes = (uint8_t*)PyArray_DATA(hash);
 
     /* uncompress the pieces cache from 40 bytes by adding the unused leading 3 bits of each ChessPiece value */
-    compress_pieces_array(bytes, temp_pieces);
+    uncompress_pieces_array(compressed_bytes, temp_pieces);
 
     /* allocate chess board */
-    board = (Bitboard*)calloc(13, sizeof(Bitboard));
-    if (board == NULL) { return NULL; }
     board[12] = 0xFFFFFFFFFFFFFFFF;
 
     /* determine the pieces at each position and write them to the bitboards */
@@ -424,9 +420,6 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
         /* set was moved bit */
         board[12] ^= !get_was_piece_moved(temp_piece) ? (temp_bitboard & START_POSITIONS) : 0x0uLL;
     }
-
-    /* compress the pieces cache to 40 bytes by removing the unused leading 3 bits of each ChessPiece value */
-    compress_pieces_array(temp_pieces, bytes);
 
     /* convert parsed bytes to Python bytearray struct */
     return serialize_chessboard(board);
@@ -604,25 +597,34 @@ static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes)
 static void uncompress_pieces_array(const uint8_t hash_bytes[], ChessPiece* out_pieces)
 {
     ChessPosition pos;
-    const uint8_t mask = 0xF8u;
-    uint8_t offset, index, piece_bits;
-
-    /* TODO: fix this function!!! */
+    uint8_t piece_bits;
 
     /* loop through all positions */
     for (pos = 0; pos < 64; pos++)
     {
-        /* determine the output byte's index and bit offset */
-        index = ((int)pos * 5) / 8;
-        offset = ((int)pos * 5) % 8;
-
-        /* write leading bits to byte at the piece's position */
-        piece_bits |= (hash_bytes[index] << offset) & mask;
-
-        /* write overlapping bits to the next byte (only if needed) */
-        if (offset > 3) { piece_bits |= (uint8_t)((hash_bytes[index + 1] >> (8 - offset))) & mask; }
-
-        /* get chess piece from array by position */
-        out_pieces[pos] = piece_bits >> 3;
+        piece_bits = get_bits_at(hash_bytes, 40, pos * 5, 5) >> 3;
+        out_pieces[pos] = piece_bits;
     }
+}
+
+uint8_t get_bits_at(const uint8_t data_bytes[], size_t arr_size, int bit_index, int length)
+{
+    /* load data bytes into cache */
+    uint8_t upper = data_bytes[bit_index / 8];
+    uint8_t lower = (bit_index / 8 + 1 < arr_size) ? data_bytes[bit_index / 8 + 1] : (uint8_t)0x00;
+    int bitOffset = bit_index % 8;
+
+    /* cut the bits from the upper byte */
+    uint8_t upperDataMask = (uint8_t)((1 << (8 - bitOffset)) - 1);
+    int lastIndexOfByte = bitOffset + length - 1;
+    if (lastIndexOfByte < 7) { upperDataMask = (uint8_t)((upperDataMask >> (7 - lastIndexOfByte)) << (7 - lastIndexOfByte)); }
+    uint8_t upperData = (uint8_t)((upper & upperDataMask) << (bitOffset));
+
+    /* cut bits from the lower byte (if needed, otherwise set all bits 0) */
+    uint8_t lowerDataMask = (uint8_t)(0xFF << (16 - bitOffset - length));
+    uint8_t lowerData = (uint8_t)((lower & lowerDataMask) >> (8 - bitOffset));
+
+    /* put the data bytes together (with bitwise OR) */
+    uint8_t data = (uint8_t)(upperData | lowerData);
+    return data;
 }
