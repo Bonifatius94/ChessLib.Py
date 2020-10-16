@@ -51,13 +51,35 @@ test():
     draw_to_apply = draws[random.randint(0, len(draws) - 1)]
     new_board = chesslib.ApplyDraw(board, draw_to_apply)
     
+    # write the draw's name
+    print(chesslib.VisualizeDraw(draw_to_apply))
+    
+    # visualize the board before / after applying the draw
+    print(chesslib.VisualizeBoard(board))
+    print(chesslib.VisualizeBoard(new_board))
+    
     # revert the draw (just call ApplyDraw again with the new board)
     rev_board = chesslib.ApplyDraw(new_board, draw_to_apply)
     
-    # get the board's 40-byte-hash
-    board_hash = chesslib.BoardHash(board)
-    new_board_hash = chesslib.BoardHash(new_board)
+    # get the board's 40-byte-hash and create a new board instance from the hash
+    board_hash = chesslib.Board_ToHash(board)
+    board_reloaded = chesslib.Board_FromHash(board_hash)
+    
+    # see ChessLib/test.py file for more examples
 ```
+
+## Roadmap
+
+Following features are planned for the near future:
+- change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
+- improve code coverage of unit tests
+- implement CI/CD GitHub pipelines for DockerHub and PyPi releases
+- fix all memory leaks of the lib
+- think of performence testing / performance improvements (especially draw-gen)
+
+Following optional / fancy improvements are to be considered:
+- add fancy travis build labels, beautify README
+- add API documentation compatible with common Python linters
 
 ## Copyright
 You may use this project under the MIT licence's conditions.
