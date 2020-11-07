@@ -18,7 +18,7 @@ jobs:
       run: docker build . --file Dockerfile --tag chesslib-python3:$(date +%s)
 
   test:
-    
+    needs: build
     runs-on: ubuntu-latest
     
     steps:
