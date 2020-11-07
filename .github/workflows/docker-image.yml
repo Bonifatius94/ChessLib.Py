@@ -8,19 +8,15 @@ on:
 
 jobs:
 
-  build:
+  build_and_test:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+      
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag chesslib-python3:$(date +%s)
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
     
-    steps:
-      - name: Run the unit tests
-        run: docker run chesslib-python3:$(date +%s) python3 test.py
+    - name: Run the unit tests
+      run: docker run chesslib-python3:$(date +%s) python3 test.py
