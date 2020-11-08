@@ -31,11 +31,20 @@
 # import python C-lib extension tools
 from distutils.core import setup, Extension
 import numpy as np
+import sys
 # TODO: try the alternative scikit build tools allowing for the integration of CMake builds
 
 
 # declare main function
 def main():
+    
+    # read package version (can be passed as command parameter, e.g. '--version=1.0.3156')
+    version = "1.0.0"
+    for arg in sys.argv:
+        if arg.startswith("version=") and len(arg) > 8:
+            version = arg[8:]
+            sys.argv.remove(arg)
+            break
 
     # define source files to compile as python C-lib extension module
     source_files = [
@@ -57,7 +66,7 @@ def main():
 
     # setup python extension module (compilation, packaging, deployment, ...)
     setup(name = "chesslib",
-          version = "1.0.0",
+          version = version,
           description = "Python interface for efficient chess draw-gen C library functions",
           author = "Marco Tröster",
           author_email = "marco@troester-gmbh.de",
