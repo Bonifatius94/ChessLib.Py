@@ -71,15 +71,15 @@ test():
 ## Roadmap
 
 Following features are planned for the near future:
-- change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
-- improve code coverage of unit tests
-- implement CI/CD GitHub pipelines for DockerHub and PyPi releases
-- fix all memory leaks of the lib
-- think of performence testing / performance improvements (especially draw-gen)
+- [ ] change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
+- [ ] improve code coverage of unit tests
+- [ ] implement CI/CD GitHub pipelines for DockerHub and PyPi releases
+- [ ] fix all memory leaks of the lib
+- [ ] think of performence testing / performance improvements (especially draw-gen)
 
 Following optional / fancy improvements are to be considered:
-- add fancy travis build labels, beautify README
-- add API documentation compatible with common Python linters
+- [ ] add fancy travis build labels, beautify README
+- [ ] add API documentation compatible with common Python linters
 
 ## Copyright
 You may use this project under the MIT licence's conditions.
