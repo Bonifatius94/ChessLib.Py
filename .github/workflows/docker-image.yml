@@ -45,9 +45,9 @@ jobs:
           #os: ${{ matrix.os }}
       - name: Install additionaly Python Libs required for build (NumPy)
         run: pip install numpy
-              
+        
       - name: Create PyPi Package
-        run: cd ChessLib && python setup.py bdist --format=zip --release=${{ github.ref }}
+        run: cd ChessLib && python setup.py bdist --format=zip
         
       - name: Create a new GitHub release
         id: create_release
