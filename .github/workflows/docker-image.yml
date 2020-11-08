@@ -42,8 +42,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-          os: ${{ matrix.os }}
-        
+          #os: ${{ matrix.os }}
+      - name: Install additionaly Python Libs required for build (NumPy)
+        run: pip install numpy
+              
       - name: Create PyPi Package
         run: cd ChessLib && python setup.py bdist --format=zip --release=${{ github.ref }}
         
