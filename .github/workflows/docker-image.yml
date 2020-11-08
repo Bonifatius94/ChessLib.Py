@@ -9,14 +9,58 @@ on:
 jobs:
 
   build_and_test:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout source code
+        uses: actions/checkout@v2
       
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag chesslib-python3:$GITHUB_SHA
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag chesslib-python3:$GITHUB_SHA
     
-    - name: Run the unit tests
-      run: docker run chesslib-python3:$GITHUB_SHA python3 test.py
+      #- name: Run the unit tests
+      #  run: docker run chesslib-python3:$GITHUB_SHA python3 test.py
+
+  pypi_release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.x]
+        #exclude:
+        #  - os: macos-latest
+        #    python-version: 3.8
+        #  - os: windows-latest
+        #    python-version: 3.6
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+        
+      - name: Install Python
+        run: actions/setup-python@v2
+        
+      - name: Create PyPi Package
+        run: cd ChessLib && python setup.py bdist --format=zip --release=${{ github.ref }}
+        
+      - name: Create a new GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ChessLib Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          
+      - name: Push the PyPi Package as artifact of the new GitHub release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./ChessLib/dist/chesslib-${{ github.ref }}.linux-x86_64.zip
+          asset_name: chesslib-${{ github.ref }}.linux-x86_64.zip
+          asset_content_type: application/zip
+        
