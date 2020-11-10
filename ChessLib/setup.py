@@ -29,23 +29,20 @@
 
 
 # import python C-lib extension tools
+# TODO: try the alternative scikit build tools allowing for the integration of CMake builds
 from distutils.core import setup, Extension
 import numpy as np
 import sys
-# TODO: try the alternative scikit build tools allowing for the integration of CMake builds
+import package_version_gen
 
 
 # declare main function
 def main():
     
-    # read package version (can be passed as command parameter, e.g. '--version=1.0.3156')
-    version = "1.0.0"
-    for arg in sys.argv:
-        if arg.startswith("version=") and len(arg) > 8:
-            version = arg[8:]
-            sys.argv.remove(arg)
-            break
-
+    # generate unique package version using package_version_gen.py script
+    version = package_version_gen.__PACKAGE_VERSION__
+    #package_version_gen.update_version_file()
+    
     # define source files to compile as python C-lib extension module
     source_files = [
         "src/chesslibmodule.c",
