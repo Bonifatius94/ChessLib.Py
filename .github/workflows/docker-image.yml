@@ -47,29 +47,30 @@ jobs:
         run: pip install numpy setuptools wheel twine
         
       - name: Create PyPi Package
-        id: package_pypi_dist
+        #id: package_pypi_dist
         run: |
           cd ChessLib &&
           python update_version.py && python setup.py sdist && 
-          twine upload --repository-url  pypi dist/* -u __token__ -p ${{PYPI_API_TOKEN}}
+          python -m twine upload --repository-url  pypi dist/* \
+                 -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
         
-      - name: Create a new GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.create_release.env.PACKAGE_VERSION }}
-          release_name: ChessLib Release ${{ steps.create_release.env.PACKAGE_VERSION }}
-          draft: false
-          prerelease: false
-          
-      - name: Push the PyPi Package as artifact of the new GitHub release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./ChessLib/dist/chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
-          asset_name: chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
-          asset_content_type: application/zip
+#      - name: Create a new GitHub release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: $(cat version)
+#          release_name: ChessLib Release $(cat version)
+#          draft: false
+#          prerelease: false
+#          
+#      - name: Push the PyPi Package as artifact of the new GitHub release
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+#          asset_path: ./ChessLib/dist/chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
+#          asset_name: chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
+#          asset_content_type: application/zip
