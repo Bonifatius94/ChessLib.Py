@@ -37,7 +37,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # configure build settings
-ARG SRC_ROOT=$HOME
+USER root
+ARG SRC_ROOT=/root
 
 # copy the source code
 ADD ./ $SRC_ROOT
