@@ -33,6 +33,7 @@ static ChessBoard deserialize_chessboard(PyObject* board);
 static void compress_pieces_array(const ChessPiece pieces[], uint8_t* out_bytes);
 static void uncompress_pieces_array(const uint8_t hash_bytes[], ChessPiece* out_pieces);
 uint8_t get_bits_at(const uint8_t data_bytes[], size_t arr_size, int bit_index, int length);
+
 /* =================================================
                  I N I T I A L I Z E
               P Y T H O N    M O D U L E
@@ -99,6 +100,9 @@ PyMODINIT_FUNC PyInit_chesslib(void)
     PyModule_AddIntConstant(module, "GameState_Check", (ChessGameState)Check);
     PyModule_AddIntConstant(module, "GameState_Checkmate", (ChessGameState)Checkmate);
     PyModule_AddIntConstant(module, "GameState_Tie", (ChessGameState)Tie);
+    
+    /* add package version attribute */
+    PyModule_AddStringConstant(module, "version", CHESSLIB_PACKAGE_VERSION);
 
     return module;
 }
