@@ -23,44 +23,46 @@
 # SOFTWARE.                                                                         #
 # ================================================================================= #
 
-# ================================================ #
-#     Build Engine for Python Extension C-Libs     #
-# ================================================ #
 
-# use the Ubuntu 18.04 LTS image as base
-FROM ubuntu:18.04
+# define semantic major and minor version (this may be changed manually)
+__MAJOR_VERSION__ = 1
+__MINOR_VERSION__ = 0
 
-# install build dependencies: c/c++ pyhton3 numpy
-RUN apt-get update && \
-    apt-get install -y build-essential python3 python3-dev python3-pip && \
-    pip3 install numpy asserts setuptools && \
-    rm -rf /var/lib/apt/lists/*
 
-# configure build settings
-USER root
-ARG SRC_ROOT=/root
+def generate_package_version():
+    """
+    Generate a unique package version of the format
+    'major_version.minor_version.build'.
+    """
 
-# copy the source code
-ADD ./ $SRC_ROOT
+    unique_build_no = generate_unique_build_number()
+    return '{}.{}.{}'.format(__MAJOR_VERSION__, __MINOR_VERSION__, unique_build_no)
 
-# change working directory to source code root
-WORKDIR $SRC_ROOT
 
-# generate new package version
-RUN python3 update_version.py
+def generate_unique_build_number():
+    """
+    Unique build number generator function providing
+    growing build numbers using seconds/2 since millenium formula.
+    """
 
-# build and install the Python extension
-RUN python3 setup.py install
+    # import the standard datetime lib
+    from datetime import datetime
+    from datetime import timezone
 
-# run unit test of the Python extension
-RUN python3 tests/test.py
+    # create UTC timestamp of now
+    utc_now = datetime.now(timezone.utc)
 
-# TODO: move this to the github pipeline
-# package as binary distribution
-#RUN pip3 install setuptools wheel twine
-#RUN python3 setup.py sdist
-#RUN twine upload --repository pypi dist/*
+    # create UTC timestamp millenium 2000
+    utc_millenium = datetime(2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
 
-# ================================================ #
-#            Marco Tröster, 2020-09-04             #
-# ================================================ #
+    # determine the total seconds / 2 since millenium
+    return round((utc_now - utc_millenium).total_seconds() / 2)
+
+
+if __name__ == "__main__":
+
+    # generate a version and write it to 'version' file
+    version = generate_package_version()
+    f = open("version", "w")
+    f.write(version)
+    f.close()

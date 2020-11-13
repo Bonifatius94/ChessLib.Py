@@ -45,39 +45,24 @@ AUTHOR_EMAIL = "marco@troester-gmbh.de"
 PYTHON_VERSION = '>=3.0.0'
 DEPENDENCIES = ['numpy']
 
-# define semantic major and minor version (this may be changed manually)
-__MAJOR_VERSION__ = 1
-__MINOR_VERSION__ = 0
 
+def load_package_version():
 
-def generate_package_version():
-    """
-    Generate a unique package version of the format
-    'major_version.minor_version.build'.
-    """
+    # initialize version with new generated version
+    import update_version
+    version = update_version.generate_package_version()
 
-    unique_build_no = generate_unique_build_number()
-    return '{}.{}.{}'.format(__MAJOR_VERSION__, __MINOR_VERSION__, unique_build_no)
+    # load existing version file or write a new version file with the generated version
+    if os.path.isfile("version"):
+        f = open("version", "r")
+        version = f.read()
+        f.close()
+    else:
+        f.open("version", "w")
+        f.write(version)
+        f.close()
 
-
-def generate_unique_build_number():
-    """
-    Unique build number generator function providing
-    growing build numbers using seconds/2 since millenium formula.
-    """
-
-    # import the standard datetime lib
-    from datetime import datetime
-    from datetime import timezone
-
-    # create UTC timestamp of now
-    utc_now = datetime.now(timezone.utc)
-
-    # create UTC timestamp millenium 2000
-    utc_millenium = datetime(2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
-
-    # determine the total seconds / 2 since millenium
-    return round((utc_now - utc_millenium).total_seconds() / 2)
+    return version
 
 
 def load_readme_description():
@@ -94,7 +79,7 @@ def load_readme_description():
 def main():
 
     # generate a unique package version
-    version = generate_package_version()
+    version = load_package_version()
 
     # define source files to compile as python C-lib extension module
     source_files = [
