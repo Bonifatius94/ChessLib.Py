@@ -1,0 +1,6 @@
+
+include LICENSE.md
+include MAINTAINERS.md
+include README.md
+include requirements.txt
+include __version__.py

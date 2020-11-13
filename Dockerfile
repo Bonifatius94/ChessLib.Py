@@ -33,27 +33,28 @@ FROM ubuntu:18.04
 # install build dependencies: c/c++ pyhton3 numpy
 RUN apt-get update && \
     apt-get install -y build-essential python3 python3-dev python3-pip && \
-    pip3 install numpy asserts && \
+    pip3 install numpy asserts setuptools && \
     rm -rf /var/lib/apt/lists/*
 
 # configure build settings
-ARG SRC_FOLDER=ChessLib
-ARG SRC_ROOT=/home/src/$SRC_FOLDER
+ARG SRC_ROOT=$HOME
 
 # copy the source code
-ADD ./$SRC_FOLDER $SRC_ROOT
+ADD ./ $SRC_ROOT
 
-# move inside sources folder
+# change working directory to source code root
 WORKDIR $SRC_ROOT
 
 # build and install the Python extension
-# user-only installation, no system installation -> fixes privileges issues
-RUN python3 setup.py install --user
+RUN python3 setup.py install
 
-# run unit test of Python extension
-RUN python3 test.py
+# run unit test of the Python extension
+RUN python3 tests/test.py
 
-# TODO: add deployment commands (packaging binaries, uploading to artifactory, ...)
+# package as binary distribution
+#RUN pip3 install setuptools wheel twine
+#RUN python3 setup.py sdist bdist_wheel
+#RUN twine upload --repository chesslib dist/*
 
 # ================================================ #
 #            Marco Tröster, 2020-09-04             #
