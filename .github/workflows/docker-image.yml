@@ -50,7 +50,7 @@ jobs:
         #id: package_pypi_dist
         run: |
           python update_version.py && python setup.py sdist && 
-          python -m twine upload --repository-url https://pypi.org/pypi dist/* \
+          python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
         
 #      - name: Create a new GitHub release
