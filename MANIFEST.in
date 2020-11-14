@@ -3,6 +3,7 @@ include LICENSE.md
 include MAINTAINERS.md
 include README.md
 include requirements.txt
+include pyproject.toml
 include version
 include update_version.py
 include chesslib/include/*

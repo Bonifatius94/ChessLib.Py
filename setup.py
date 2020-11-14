@@ -66,12 +66,16 @@ def load_package_version():
 
 def load_readme_description():
 
+    long_description = None
     here = os.path.abspath(os.path.dirname(__file__))
+
     try:
         with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
             long_description = '\n' + f.read()
     except FileNotFoundError:
         long_description = DESCRIPTION
+
+    return long_description
 
 
 # declare main function
@@ -111,7 +115,7 @@ def main():
           python_requires = PYTHON_VERSION,
           install_requires = DEPENDENCIES,
           ext_modules = [chesslib_module],
-          setup_requires=['wheel', 'numpy'])
+          setup_requires=['wheel'])
 
 
 # invoke main function
