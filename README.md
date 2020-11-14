@@ -32,6 +32,11 @@ docker run "chesslib-python3:1.0" python3 test.py
 ```
 
 ## Usage
+Install the [official Python package](https://pypi.org/project/chesslib/) using pip:
+```sh
+pip install chesslib
+```
+
 The following sample outlines the usage of the ChessLib:
 ```py
 import chesslib
@@ -73,7 +78,7 @@ test():
 Following features are planned for the near future:
 - [ ] change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
 - [ ] improve code coverage of unit tests
-- [ ] implement CI/CD GitHub pipelines for DockerHub and PyPi releases
+- [x] implement CI/CD GitHub pipelines for DockerHub and PyPi releases
 - [ ] fix all memory leaks of the lib
 - [ ] think of performence testing / performance improvements (especially draw-gen)
 
