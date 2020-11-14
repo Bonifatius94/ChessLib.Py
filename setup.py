@@ -30,8 +30,7 @@
 
 # import python C-lib extension tools
 from setuptools import setup, Extension
-import numpy as np
-import sys, os, io
+import sys, os, io, subprocess
 # TODO: try the alternative scikit build tools allowing for the integration of CMake builds
 
 
@@ -81,6 +80,9 @@ def load_readme_description():
 # declare main function
 def main():
 
+    # install all packages from requirements.txt (makes sure that numpy is installed)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+
     # generate a unique package version
     version = load_package_version()
 
@@ -97,6 +99,7 @@ def main():
     ]
 
     # define extension module settings (for cross-plattform builds)
+    import numpy as np
     chesslib_module = Extension("chesslib",
                                 include_dirs = ["chesslib/include", np.get_include()],
                                 sources = source_files,
