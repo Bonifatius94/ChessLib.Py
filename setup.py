@@ -111,7 +111,7 @@ def main():
           python_requires = PYTHON_VERSION,
           install_requires = DEPENDENCIES,
           ext_modules = [chesslib_module],
-          setup_requires=['wheel'])
+          setup_requires=['wheel', 'numpy'])
 
 
 # invoke main function
