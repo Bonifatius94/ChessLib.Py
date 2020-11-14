@@ -3,4 +3,6 @@ include LICENSE.md
 include MAINTAINERS.md
 include README.md
 include requirements.txt
-include __version__.py
+include version
+include update_version.py
+include chesslib/include/*
