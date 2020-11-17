@@ -8,7 +8,7 @@ PYTHON_VERSION=$1
 PYTHON_ROOT=/opt/python/$PYTHON_VERSION/bin
 
 # install build dependencies
-$PYTHON_ROOT/pip install setuptools twine numpy
+$PYTHON_ROOT/pip install numpy
 
 # build manylinux wheels (expects /output directory to exist)
 cd /build
