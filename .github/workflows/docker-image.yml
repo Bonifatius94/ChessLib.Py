@@ -55,7 +55,7 @@ jobs:
         run: |
           python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
-                 dist/*-manylinux*.whl
+                 dist/chesslib*-manylinux*.whl
 
 
   # TODO: add a task building and releasing a minimal docker image based on e.g. Slim or Alpine
