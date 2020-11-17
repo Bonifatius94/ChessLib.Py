@@ -49,6 +49,8 @@ jobs:
         run: |
           docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
                  bash /build/build_manylinux.sh cp36-cp36m
+          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+                 bash /build/build_manylinux.sh cp38-cp38
         # TODO: add wheels for more python versions
 
       - name: Upload PyPi manylinux Python wheel
