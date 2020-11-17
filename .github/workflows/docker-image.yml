@@ -31,7 +31,7 @@ jobs:
     # specify all Python versions to be 
     strategy:
       matrix:
-        python-version: ['3.x']
+        python-version: ['3.8']
 
     steps:
       - name: Checkout source code
@@ -51,8 +51,9 @@ jobs:
       - name: Build manylinux Python wheel
         uses: RalfG/python-wheels-manylinux-build@v0.3.1-manylinux2010_x86_64
         with:
-          python-versions: 'cp36-cp36m cp37-cp37m'
+          python-versions: 'cp38-cp38m'
           build-requirements: 'numpy'
+          system-packages: ''
 
       - name: Upload PyPi manylinux Python wheel
         run: |
