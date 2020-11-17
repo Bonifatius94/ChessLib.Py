@@ -12,5 +12,5 @@ $PYTHON_ROOT/pip install setuptools twine numpy
 
 # build manylinux wheels (expects /output directory to exist)
 cd /build
-$PYTHON_ROOT/pip wheel /build -w /output
-auditwheel repair /output/chesslib*whl -w /output
+$PYTHON_ROOT/pip wheel /build -w /output-out
+auditwheel repair /output-out/chesslib*$PYTHON_VERSION*.whl -w /output
