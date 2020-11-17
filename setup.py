@@ -56,7 +56,7 @@ def load_package_version():
         version = f.read()
         f.close()
     else:
-        f.open("version", "w")
+        f = open("version", "w")
         f.write(version)
         f.close()
 
