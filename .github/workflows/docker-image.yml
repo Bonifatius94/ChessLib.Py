@@ -45,15 +45,21 @@ jobs:
       - name: Create unique build version
         run: python update_version.py
 
-      - name: Build manylinux1 Python wheel
+      - name: Build manylinux1 Python wheels
         run: |
+          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+                 bash /build/build_manylinux.sh cp35-cp35m
           docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
                  bash /build/build_manylinux.sh cp36-cp36m
           docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+                 bash /build/build_manylinux.sh cp37-cp37m
+          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
                  bash /build/build_manylinux.sh cp38-cp38
+          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+                 bash /build/build_manylinux.sh cp39-cp39
         # TODO: add wheels for more python versions
 
-      - name: Upload PyPi manylinux Python wheel
+      - name: Upload PyPi manylinux Python wheels
         run: |
           python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
