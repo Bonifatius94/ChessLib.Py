@@ -39,15 +39,15 @@ jobs:
           python-version: '3.8'
 
       - name: Create build version
-        run: |
-          python update_version.py
+        run: python update_version.py
 
-        - name: 'Upload Artifact'
-          uses: actions/upload-artifact@v2
-          with:
-            name: package_version
-            path: version
-            retention-days: 5
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: package_version
+          path: version
+          retention-days: 5
+
 
   pypi_release:
     runs-on: 'ubuntu-latest'
