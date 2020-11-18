@@ -117,7 +117,7 @@ jobs:
             
             **Usage:**
             ```sh
-            'pip install chesslib==${{ steps.read_version.outputs.VERSION }}'
+            pip install chesslib==${{ steps.read_version.outputs.VERSION }}
             ```
             
             ```py
