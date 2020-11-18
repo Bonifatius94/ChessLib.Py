@@ -102,7 +102,7 @@ jobs:
       - name: Create VERSION env variable
         id: read_version
         run: |
-          echo 'VERSION<<EOF' >> $GITHUB_ENV && cat version >> $GITHUB_ENV && echo 'EOF' >> $GITHUB_ENV
+          echo VERSION $(cat version) >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create_github_release
