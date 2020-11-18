@@ -1,4 +1,4 @@
-name: PyPi Manylinux Wheel Package Build
+name: PyPi Release
 
 on:
   push:
