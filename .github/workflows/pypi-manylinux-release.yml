@@ -100,7 +100,7 @@ jobs:
           name: package_version
 
       - name: Create VERSION env variable
-        id: step_one
+        id: version_env
         run: echo VERSION=$(cat version) >> $GITHUB_ENV
 
       - name: Create GitHub release
@@ -110,16 +110,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # TODO: figure out why the environment variable is not applied properly
-          tag_name: chesslib-v$VERSION
-          release_name: ChessLib $VERSION
+          tag_name: chesslib-v${{ steps.version_env.env.VERSION }}
+          release_name: ChessLib ${{ steps.version_env.env.VERSION }}
           body: |
-            ### ChessLib $VERSION
+            ### ChessLib ${{ steps.version_env.env.VERSION }}
             
             Highly compatible Python3 lib for efficient chess draw generation.
             
             **Usage:**
             ```sh
-            \'pip install chesslib==$VERSION\'
+            \'pip install chesslib==${{ steps.version_env.env.VERSION }}\'
             ```
             
             ```py
@@ -128,7 +128,7 @@ jobs:
             ```
             
             **PyPi:**
-            see: https://pypi.org/project/chesslib/$VERSION
+            see: https://pypi.org/project/chesslib/${{ steps.version_env.env.VERSION }}
           draft: false
           prerelease: false
 
