@@ -4,27 +4,14 @@ on:
   push:
     branches: [ master ]
 
-#  pull_request:
-#    branches: [ master ]
+# TODO: disable this trigger before merging
+  pull_request:
+    branches: [ master ]
 
 jobs:
 
-# TODO: remove this code when #9 is finished
-# ==========================================
-#  build_and_test:
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout source code
-#        uses: actions/checkout@v2
-#      
-#      - name: Build the Docker image
-#        run: docker build . --file Dockerfile-dev --tag chesslib-python3:$GITHUB_SHA
-#    
-#      #- name: Run the unit tests
-#      #  run: docker run chesslib-python3:$GITHUB_SHA python3 test.py
-
-
+  # create the 'version' file containing the auto-generated package version of all 
+  # pypi packages (required to sync artifact versions created by 'pypi_release' tasks)
   gen_package_version:
     runs-on: 'ubuntu-latest'
 
@@ -40,7 +27,7 @@ jobs:
       - name: Create build version
         run: python update_version.py
 
-      - name: 'Upload Artifact'
+      - name: Share package verison file with other tasks
         uses: actions/upload-artifact@v2
         with:
           name: package_version
@@ -48,6 +35,9 @@ jobs:
           retention-days: 5
 
 
+  # create pypi binary wheels for all combinations of manylinux build environments
+  # and related python target versions of each environment (see 'strategy' section)
+  # -> upload the manylinux pypi wheel at the end of each subtask
   pypi_release:
     runs-on: 'ubuntu-latest'
 
@@ -60,50 +50,82 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v2
 
-      - name: Install Python (with dependencies)
+      - name: Install Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
-      - name: Install additional Python Libs required for build / deployment
+      - name: Install Python deployment dependencies (pip, twine)
         run: | 
           python -m pip install --upgrade pip &&
           pip install twine
 
-      - name: Download a single artifact
+      - name: Download package version file
         uses: actions/download-artifact@v2
         with:
           name: package_version
 
-      - name: Build manylinux1 Python wheels
+      - name: Build manylinux wheel
         run: |
           docker run -v $PWD/dist:/output \
                  -v $PWD:/build quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
                  bash /build/build_manylinux.sh ${{ matrix.manylinux-cpython-version }}
 
-      - name: Upload PyPi manylinux Python wheels
+      - name: Upload PyPi wheel
         run: |
           python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
                  dist/chesslib*-${{ matrix.manylinux-build-env }}*.whl
 
-
-  # TODO: add a task building and releasing a minimal docker image based on e.g. Slim or Alpine
-
-
-# TODO: re-enable this code to fulfill #9
-# =======================================
-#      - name: Create a new GitHub release
-#        id: create_release
-#        uses: actions/create-release@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# TODO: bring this to work to attach the PyPi wheel to the GitHub release
+# =======================================================================
+#      - name: Share manylinux wheel artifact
+#        uses: actions/upload-artifact@v2
 #        with:
-#          tag_name: $(cat version)
-#          release_name: ChessLib Release $(cat version)
-#          draft: false
-#          prerelease: false
-#          
+#          name: pypi-wheel-${{ matrix.manylinux-build-env }}_x86_64-
+#          path: version
+#          retention-days: 5
+
+
+  # Make an auto-generated GitHub release tagging the src version corresponding to the PyPi release
+  github_release:
+    runs-on: 'ubuntu-latest'
+    
+    steps:
+      - name: Download package version file
+        uses: actions/download-artifact@v2
+        with:
+          name: package_version
+      
+      - name: Create GitHub release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: chesslib-v$(cat version)
+          release_name: ChessLib $(cat version)
+          body: |
+            ### ChessLib $(cat version)
+            
+            Highly compatible Python3 lib for efficient chess draw generation.
+            
+            **Usage:**
+            ```sh
+            \'pip install chesslib==$(cat version)\'
+            ```
+            
+            ```py
+            import chesslib
+            ...
+            ```
+            
+            **PyPi:**
+            see: https://pypi.org/project/chesslib/$(cat version)
+          draft: false
+          prerelease: false
+
+# TODO: think of attaching the PyPi wheels also to a corresponding GitHub release
+# ===============================================================================
 #      - name: Push the PyPi Package as artifact of the new GitHub release
 #        uses: actions/upload-release-asset@v1
 #        env:
