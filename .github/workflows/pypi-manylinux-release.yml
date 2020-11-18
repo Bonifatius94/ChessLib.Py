@@ -92,19 +92,22 @@ jobs:
   github_release:
     runs-on: 'ubuntu-latest'
     needs: gen_package_version
-    
+
     steps:
       - name: Download package version file
         uses: actions/download-artifact@v2
         with:
           name: package_version
-        
+
       - name: Create VERSION env variable
         id: read_version
-        run: echo ::set-env name=VERSION::$(cat version)
+        run: |
+          echo 'VERSION<<EOF' >> $GITHUB_ENV
+          cat version >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      
+
       - name: Create GitHub release
         id: create_github_release
         uses: actions/create-release@v1
