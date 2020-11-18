@@ -1,37 +1,12 @@
-# ChessLib Python Extension
 ![PyPi Release](https://github.com/Bonifatius94/ChessLib.Py/workflows/PyPi%20Release/badge.svg)
 ![Docker CI](https://github.com/Bonifatius94/ChessLib.Py/workflows/Docker%20CI/badge.svg)
+
+# ChessLib Python Extension
 
 ## About
 This project provides an efficient chess draw generation extension for Python3.
 The main purpose of this project is enabling further TensorFlow AI projects and learning 
 how to write an efficient Python3 extension (using good old C).
-
-## How to Build / Test
-The commands for building the Python3 extension module and testing it properly are 
-wrapped as a Docker image. Therefore just build the Dockerfile and use the image
-as base for your Python3 application importing the module. 
-
-Alternatively you could run the commands from the Dockerfile onto an Ubuntu-like 
-machine and build the binaries on your own. I'm using the default distutils tools,
-so making your own builds should not be too hard to achieve.
-
-```sh
-# install docker (e.g. Ubuntu 18.04)
-sudo apt-get update && sudo apt-get install -y git docker.io
-sudo usermod -aG docker $USER && reboot
-
-# download the project's source code
-git clone https://github.com/Bonifatius94/ChessLib.Py
-cd ChessLib.Py
-
-# build the chesslib Python3 module using the commands from the Dockerfile
-# this also includes running the unit tests (Docker build fails if tests don't pass)
-docker build . -t "chesslib-python3:1.0"
-
-# run a test command using the chesslib
-docker run "chesslib-python3:1.0" python3 test.py
-```
 
 ## Usage
 Install the [official Python package](https://pypi.org/project/chesslib/) using pip:
@@ -39,7 +14,7 @@ Install the [official Python package](https://pypi.org/project/chesslib/) using 
 pip install chesslib
 ```
 
-The following sample outlines the usage of the ChessLib:
+Use the chesslib package like in the following example:
 ```py
 import chesslib
 import numpy as np
@@ -72,7 +47,49 @@ test():
     board_hash = chesslib.Board_ToHash(board)
     board_reloaded = chesslib.Board_FromHash(board_hash)
     
-    # see ChessLib/test.py file for more examples
+    # see tests/ folder for more examples
+```
+
+## How to Develop
+The commands for dev-testing the chesslib are wrapped within a Docker environment.
+Therefore build the 'Dockerfile-dev' file which takes your source code and performs 
+all required CI steps (build + install + unit tests). Afterwards you may attach to the 
+Docker image with the bash console interactively and run commands, etc.
+
+```sh
+# make a dev build using the 'Dockerfile-dev' build environment
+# this runs all CI steps (build + install + unit tests)
+docker build . --file Dockerfile-dev -t "chesslib-dev"
+
+# attach to the build environment's interactive bash console (leave the session with 'exit')
+docker run "chesslib-dev" -it bash
+
+# mount a Python test script into the build environment and run it
+docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
+```
+
+Advantages of this approach are that it simplifies the dev machine setup a lot as you only 
+need Docker, git and a good text editor on your local machine. Moreover you don't mess up your
+dev machine when trying to build and install the chesslib package for debugging again and again.
+And most importantly you keep your local copy of the git repo clean as all temporary files are 
+created within the Docker container, so you basically don't need to worry about accidentially
+including build files into git commits, etc.
+
+For a quickstart, set up your dev machine as a VM (e.g. Ubuntu 20.04 hosted by VirtualBox). After 
+successfully creating the VM, use following commands to install all essential dev tools (git, 
+docker, good text editor).
+
+```sh
+# install docker (e.g. Ubuntu 20.04)
+sudo apt-get update && sudo apt-get install -y git docker.io
+sudo usermod -aG docker $USER && reboot
+
+# download the project's source code (if you haven't done before)
+git clone https://github.com/Bonifatius94/ChessLib.Py
+cd ChessLib.Py
+
+# install the 'Visual Studio Code' text editor (optional)
+sudo snap install code --classic
 ```
 
 ## Roadmap
@@ -80,8 +97,8 @@ test():
 Following features are planned for the near future:
 - [ ] change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
 - [ ] improve code coverage of unit tests
-- [x] implement CI/CD GitHub pipelines for DockerHub and PyPi releases
-- [ ] fix all memory leaks of the lib
+- [x] implement CI/CD GitHub pipelines for ~~DockerHub~~ and PyPi releases
+- [ ] fix all memory leaks of the lib (if there even are leaks)
 - [ ] think of performence testing / performance improvements (especially draw-gen)
 
 Following optional / fancy improvements are to be considered:
