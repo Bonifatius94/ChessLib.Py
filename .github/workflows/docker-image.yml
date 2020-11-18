@@ -25,12 +25,36 @@ jobs:
 
   # TODO: rework the PyPi release task for supporting manylinux wheels similar to 
   # https://github.com/RalfG/python-wheels-manylinux-build/blob/master/full_workflow_example.yml
+
+  gen_package_version:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install Python (with dependencies)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name Create build version
+        run: |
+          python update_version.py
+
+        - name: 'Upload Artifact'
+          uses: actions/upload-artifact@v2
+          with:
+            name: package_version
+            path: version
+            retention-days: 5
+
   pypi_release:
     runs-on: 'ubuntu-latest'
 
     strategy:
       matrix:
-        manylinux-build-env: [manylinux1, manylinux2010]
+        manylinux-build-env: [manylinux1, manylinux2010, manylinux2014]
         manylinux-cpython-version: [cp35-cp35m, cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
 
     steps:
@@ -47,8 +71,13 @@ jobs:
           python -m pip install --upgrade pip &&
           pip install twine
 
-      - name: Create unique build version
-        run: python update_version.py
+      - name: Download a single artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: version
+
+#      - name: Create unique build version
+#        run: python update_version.py
 
       - name: Build manylinux1 Python wheels
         run: |
