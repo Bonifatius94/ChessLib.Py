@@ -101,7 +101,7 @@ jobs:
 
       - name: Create VERSION env variable
         id: step_one
-        run: echo VERSION $(cat version) >> $GITHUB_ENV
+        run: echo VERSION=$(cat version) >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create_github_release
