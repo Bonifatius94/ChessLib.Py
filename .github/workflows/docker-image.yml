@@ -52,8 +52,10 @@ jobs:
 
       - name: Build manylinux1 Python wheels
         run: |
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/${{manylinux-build-env}}_x86_64 \
-                 bash /build/build_manylinux.sh ${{manylinux-cpython-version}}
+          docker run -v $PWD/dist:/output \
+                 -v $PWD:/build quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
+                 bash /build/build_manylinux.sh ${{ matrix.manylinux-cpython-version }}
+
 #          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
 #                 bash /build/build_manylinux.sh cp36-cp36m
 #          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
