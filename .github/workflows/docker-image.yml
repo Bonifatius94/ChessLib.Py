@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name Create build version
+      - name: Create build version
         run: |
           python update_version.py
 
