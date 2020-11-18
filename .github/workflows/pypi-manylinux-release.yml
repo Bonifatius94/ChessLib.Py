@@ -108,16 +108,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: $(cat version)
         with:
-          tag_name: chesslib-v$VERSION
-          release_name: ChessLib ${{ VERSION }}
+          tag_name: chesslib-v${{ env.VERSION }}
+          release_name: ChessLib ${{ env.VERSION }}
           body: |
-            ### ChessLib ${{ VERSION }}
+            ### ChessLib ${{ env.VERSION }}
             
             Highly compatible Python3 lib for efficient chess draw generation.
             
             **Usage:**
             ```sh
-            \'pip install chesslib==${{ VERSION }}\'
+            \'pip install chesslib==${{ env.VERSION }}\'
             ```
             
             ```py
@@ -126,7 +126,7 @@ jobs:
             ```
             
             **PyPi:**
-            see: https://pypi.org/project/chesslib/${{ VERSION }}
+            see: https://pypi.org/project/chesslib/${{ env.VERSION }}
           draft: false
           prerelease: false
 
