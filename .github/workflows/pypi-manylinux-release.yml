@@ -40,6 +40,7 @@ jobs:
   # -> upload the manylinux pypi wheel at the end of each subtask
   pypi_release:
     runs-on: 'ubuntu-latest'
+    needs: gen_package_version
 
     strategy:
       matrix:
@@ -90,6 +91,7 @@ jobs:
   # Make an auto-generated GitHub release tagging the src version corresponding to the PyPi release
   github_release:
     runs-on: 'ubuntu-latest'
+    needs: gen_package_version
     
     steps:
       - name: Download package version file
