@@ -28,6 +28,11 @@ jobs:
   pypi_release:
     runs-on: 'ubuntu-latest'
 
+    strategy:
+      matrix:
+        manylinux-build-env: [manylinux1, manylinux2010]
+        manylinux-cpython-version: [cp35-cp35m, cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2
@@ -47,16 +52,16 @@ jobs:
 
       - name: Build manylinux1 Python wheels
         run: |
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-                 bash /build/build_manylinux.sh cp35-cp35m
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-                 bash /build/build_manylinux.sh cp36-cp36m
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-                 bash /build/build_manylinux.sh cp37-cp37m
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-                 bash /build/build_manylinux.sh cp38-cp38
-          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-                 bash /build/build_manylinux.sh cp39-cp39
+          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/${{manylinux-build-env}}_x86_64 \
+                 bash /build/build_manylinux.sh ${{manylinux-cpython-version}}
+#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+#                 bash /build/build_manylinux.sh cp36-cp36m
+#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+#                 bash /build/build_manylinux.sh cp37-cp37m
+#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+#                 bash /build/build_manylinux.sh cp38-cp38
+#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
+#                 bash /build/build_manylinux.sh cp39-cp39
         # TODO: add wheels for more python versions
 
       - name: Upload PyPi manylinux Python wheels
