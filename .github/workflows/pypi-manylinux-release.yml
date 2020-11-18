@@ -99,26 +99,26 @@ jobs:
         with:
           name: package_version
         
-      - name: Show version file content
-        run: echo ChessLib $(cat version)
+      - name: Create VERSION env variable
+        id: read_version
+        run: echo ::set-env name=VERSION::$(cat version)
       
       - name: Create GitHub release
         id: create_github_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: $(cat version)
         with:
-          tag_name: chesslib-v${{ steps.create_github_release.env.VERSION }}
-          release_name: ChessLib ${{ steps.create_github_release.env.VERSION }}
+          tag_name: chesslib-v${{ steps.read_version.env.VERSION }}
+          release_name: ChessLib ${{ steps.read_version.env.VERSION }}
           body: |
-            ### ChessLib ${{ steps.create_github_release.env.VERSION }}
+            ### ChessLib ${{ steps.read_version.env.VERSION }}
             
             Highly compatible Python3 lib for efficient chess draw generation.
             
             **Usage:**
             ```sh
-            \'pip install chesslib==${{ steps.create_github_release.env.VERSION }}\'
+            \'pip install chesslib==${{ steps.read_version.env.VERSION }}\'
             ```
             
             ```py
@@ -127,7 +127,7 @@ jobs:
             ```
             
             **PyPi:**
-            see: https://pypi.org/project/chesslib/${{ steps.create_github_release.env.VERSION }}
+            see: https://pypi.org/project/chesslib/${{ steps.read_version.env.VERSION }}
           draft: false
           prerelease: false
 
