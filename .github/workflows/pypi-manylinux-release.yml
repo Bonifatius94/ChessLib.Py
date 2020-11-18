@@ -100,9 +100,8 @@ jobs:
           name: package_version
 
       - name: Create VERSION env variable
-        id: read_version
-        run: |
-          echo VERSION $(cat version) >> $GITHUB_ENV
+        id: step_one
+        run: echo VERSION $(cat version) >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create_github_release
@@ -111,16 +110,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # TODO: figure out why the environment variable is not applied properly
-          tag_name: chesslib-v${{ steps.read_version.env.VERSION }}
-          release_name: ChessLib ${{ steps.read_version.env.VERSION }}
+          tag_name: chesslib-v$VERSION
+          release_name: ChessLib $VERSION
           body: |
-            ### ChessLib ${{ steps.read_version.env.VERSION }}
+            ### ChessLib $VERSION
             
             Highly compatible Python3 lib for efficient chess draw generation.
             
             **Usage:**
             ```sh
-            \'pip install chesslib==${{ steps.read_version.env.VERSION }}\'
+            \'pip install chesslib==$VERSION\'
             ```
             
             ```py
@@ -129,7 +128,7 @@ jobs:
             ```
             
             **PyPi:**
-            see: https://pypi.org/project/chesslib/${{ steps.read_version.env.VERSION }}
+            see: https://pypi.org/project/chesslib/$VERSION
           draft: false
           prerelease: false
 
