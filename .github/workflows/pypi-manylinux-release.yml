@@ -105,8 +105,6 @@ jobs:
           echo 'VERSION<<EOF' >> $GITHUB_ENV
           cat version >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Create GitHub release
         id: create_github_release
