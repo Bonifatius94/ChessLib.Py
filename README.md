@@ -1,4 +1,6 @@
 # ChessLib Python Extension
+![PyPi Release](https://github.com/Bonifatius94/ChessLib.Py/workflows/PyPi%20Release/badge.svg)
+![Docker CI](https://github.com/Bonifatius94/ChessLib.Py/workflows/Docker%20CI/badge.svg)
 
 ## About
 This project provides an efficient chess draw generation extension for Python3.
@@ -83,7 +85,7 @@ Following features are planned for the near future:
 - [ ] think of performence testing / performance improvements (especially draw-gen)
 
 Following optional / fancy improvements are to be considered:
-- [ ] add fancy travis build labels, beautify README
+- [x] add fancy status badges, beautify README
 - [ ] add API documentation compatible with common Python linters
 
 ## Copyright
