@@ -109,15 +109,15 @@ jobs:
           VERSION: $(cat version)
         with:
           tag_name: chesslib-v$VERSION
-          release_name: ChessLib $VERSION
+          release_name: ChessLib ${{ VERSION }}
           body: |
-            ### ChessLib $VERSION
+            ### ChessLib ${{ VERSION }}
             
             Highly compatible Python3 lib for efficient chess draw generation.
             
             **Usage:**
             ```sh
-            \'pip install chesslib==$VERSION\'
+            \'pip install chesslib==${{ VERSION }}\'
             ```
             
             ```py
@@ -126,7 +126,7 @@ jobs:
             ```
             
             **PyPi:**
-            see: https://pypi.org/project/chesslib/$VERSION
+            see: https://pypi.org/project/chesslib/${{ VERSION }}
           draft: false
           prerelease: false
 
