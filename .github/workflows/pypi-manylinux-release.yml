@@ -98,6 +98,9 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: package_version
+        
+      - name: Show version file content
+        run: echo ChessLib $(cat version)
       
       - name: Create GitHub release
         uses: actions/create-release@v1
