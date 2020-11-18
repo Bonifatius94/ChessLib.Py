@@ -3,8 +3,9 @@ name: Docker Image CI
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
+
+#  pull_request:
+#    branches: [ master ]
 
 jobs:
 
@@ -23,8 +24,6 @@ jobs:
 #      #- name: Run the unit tests
 #      #  run: docker run chesslib-python3:$GITHUB_SHA python3 test.py
 
-  # TODO: rework the PyPi release task for supporting manylinux wheels similar to 
-  # https://github.com/RalfG/python-wheels-manylinux-build/blob/master/full_workflow_example.yml
 
   gen_package_version:
     runs-on: 'ubuntu-latest'
@@ -76,24 +75,11 @@ jobs:
         with:
           name: package_version
 
-#      - name: Create unique build version
-#        run: python update_version.py
-
       - name: Build manylinux1 Python wheels
         run: |
           docker run -v $PWD/dist:/output \
                  -v $PWD:/build quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
                  bash /build/build_manylinux.sh ${{ matrix.manylinux-cpython-version }}
-
-#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-#                 bash /build/build_manylinux.sh cp36-cp36m
-#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-#                 bash /build/build_manylinux.sh cp37-cp37m
-#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-#                 bash /build/build_manylinux.sh cp38-cp38
-#          docker run -v $PWD/dist:/output -v $PWD:/build quay.io/pypa/manylinux1_x86_64 \
-#                 bash /build/build_manylinux.sh cp39-cp39
-        # TODO: add wheels for more python versions
 
       - name: Upload PyPi manylinux Python wheels
         run: |
