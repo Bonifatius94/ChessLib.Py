@@ -21,7 +21,7 @@ import numpy as np
 import random
 
 
-test():
+def test():
 
     # create a new chess board in start formation
     board = chesslib.ChessBoard_StartFormation()
@@ -91,19 +91,6 @@ cd ChessLib.Py
 # install the 'Visual Studio Code' text editor (optional)
 sudo snap install code --classic
 ```
-
-## Roadmap
-
-Following features are planned for the near future:
-- [ ] change Board_ToHash() / Board_FromHash() exchange format to Python type 'bytes' or 'bytearray' for better compatibility
-- [ ] improve code coverage of unit tests
-- [x] implement CI/CD GitHub pipelines for ~~DockerHub~~ and PyPi releases
-- [ ] fix all memory leaks of the lib (if there even are leaks)
-- [ ] think of performence testing / performance improvements (especially draw-gen)
-
-Following optional / fancy improvements are to be considered:
-- [x] add fancy status badges, beautify README
-- [ ] add API documentation compatible with common Python linters
 
 ## Copyright
 You may use this project under the MIT licence's conditions.
