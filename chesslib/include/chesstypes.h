@@ -82,6 +82,10 @@ typedef uint16_t ChessPieceAtPos;
    | xxxxxxx |             x |    x |        xx |        xxx |              xxx |            xxx |       xxxxxx |       xxxxxx | */
 typedef uint32_t ChessDraw;
 
+/* | prom. piece type | old position | new position | 
+   |              xxx |       xxxxxx |       xxxxxx | */
+typedef uint16_t CompactChessDraw;
+
 /* A chess bitboard with each bit representing a field onto a chess board. Addressing is normalized, starting with the lowest bit as A1 and the highest bit as H8 (indexes A1=0, B1=1, ..., A2=8, ..., H8=63). */
 typedef uint64_t Bitboard;
 

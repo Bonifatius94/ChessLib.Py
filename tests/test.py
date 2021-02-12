@@ -248,6 +248,20 @@ def test_drawgen():
     # make sure that the generated draws equal the expected draws
     assert_true(set(draws) == set(expected_draws))
 
+    print("test passed!")
+    print("testing draw-gen (compact draws)")
+
+    # get all draws for starting position (white side)
+    start_formation = chesslib.ChessBoard_StartFormation()
+    draws = chesslib.GenerateDraws(start_formation, 
+        chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True)
+
+    # define the expected draws (only lowest 15 bits of the long draw format)
+    expected_comp_draws = expected_draws % 32768
+
+    # make sure that the generated draws equal the expected draws
+    assert_true(set(draws) == set(expected_comp_draws))
+
     # TODO: add more unit tests that at least cover the correct parsing of all parameters
 
     print("test passed!")
