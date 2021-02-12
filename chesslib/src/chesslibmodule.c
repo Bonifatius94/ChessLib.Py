@@ -275,30 +275,52 @@ static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args)
 /**************************************************************************
   Retrive a list of all possible chess draws for the current chess position
   given following arguments:
-    1) An instance of ChessBoard representing the position before the draws
+    1) An instance of ChessBoard representing the chess piece positions
     2) The drawing side as ChessColor enum (White=0, Black=1)
     3) The last draw or DRAW_NULL on first draw (only relevant for en-passant rule, default: DRAW_NULL)
     4) A boolean indicating whether draw-into-check should be analyzed or not (default: FALSE)
+    5) A boolean indicating whether the draws should be returned as compact format (default: TRUE)
  **************************************************************************/
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
 {
-    PyObject *bitboards_obj;
+    PyObject *bitboards_obj, *serialized_draws;
     size_t dims[1];
 
     ChessDraw *out_draws, last_draw = DRAW_NULL;
+    CompactChessDraw *comp_out_draws;
     ChessBoard board;
     ChessColor drawing_side;
-    int analyze_draw_into_check;
+    int analyze_draw_into_check = 0;
+    int is_compact_format = 0;
+    int i = 0;
 
     /* parse input args */
-    if (!PyArg_ParseTuple(args, "Okii", &bitboards_obj, &drawing_side, &last_draw, &analyze_draw_into_check)) { return NULL; }
+    int is_valid = PyArg_ParseTuple(args, "Ok|iii", &bitboards_obj, &drawing_side, 
+        &last_draw, &analyze_draw_into_check, &is_compact_format);
+
+    /* make sure that any of the given arguments fit any of the patterns above, otherwise abort */
+    if (!is_valid) { return NULL; }
+
+    /* convert the numpy array into a chess bitboard instance */
     board = deserialize_chessboard(bitboards_obj);
 
-    /* compute possible draws */
+    /* compute all possible draws for the given chess position */
     get_all_draws(&out_draws, dims, board, drawing_side, last_draw, analyze_draw_into_check);
 
-    /* serialize draws as numpy list */
-    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT32, out_draws);
+    /* convert draws to compact format if required */
+    if (is_compact_format)
+    {
+        comp_out_draws = (CompactChessDraw *)malloc((*dims) * sizeof(CompactChessDraw));
+        for (i = 0; i < *dims; i++) { comp_out_draws[i] = to_compact_draw(out_draws[i]); }
+        free(out_draws);
+    }
+
+    /* serialize all draws as a numpy array */
+    serialized_draws = is_compact_format ?
+        PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT16, comp_out_draws)
+        : PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT32, out_draws);
+
+    return serialized_draws;
 }
 
 /* =================================================

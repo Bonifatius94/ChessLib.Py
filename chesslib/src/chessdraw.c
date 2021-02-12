@@ -90,6 +90,11 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
     return draw;
 }
 
+CompactChessDraw to_compact_draw(ChessDraw draw)
+{
+    return (CompactChessDraw)(draw & 0x7FFF);
+}
+
 int get_is_first_move(ChessDraw draw)
 {
     return (int)((draw >> 24) & 0x1);
