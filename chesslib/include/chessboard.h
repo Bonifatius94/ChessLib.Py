@@ -84,21 +84,10 @@
 #define FIELD_G8 0x4000000000000000uLL
 #define FIELD_H8 0x8000000000000000uLL
 
-/*#define START_FORMATION (Bitboard[]){ FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS }
-#define BOARD_NULL (Bitboard[]){ 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL }*/
-
 #define SIDE_OFFSET(color) (((uint8_t)(color)) * 6)
 #define PIECE_OFFSET(piece) (((uint8_t)(piece)) - 1)
 #define WHITE_MASK(color) (((Bitboard)(((int64_t)(color)) - 1)))
 #define BLACK_MASK(color) (~WHITE_MASK((color)))
-
-/* ====================================================
-            D E F I N E    C O N  S T A N T S
-   ==================================================== */
-
-   /* global array representing an empty ChessBoard */
-/*ChessBoard BOARD_NULL = (Bitboard[]){ 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL, 0x0uLL };*/
-/*ChessBoard START_FORMATION = (Bitboard[]){ FIELD_E1, FIELD_D1, 0x0000000000000081uLL, 0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL, FIELD_E8, FIELD_D8, 0x8100000000000000uLL, 0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL, START_POSITIONS };*/
 
 /* ====================================================
             D E F I N E     F U N C T I O N S
@@ -107,11 +96,14 @@
 ChessBoard create_board(const Bitboard bitboards[]);
 ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count);
 
-Bitboard is_captured_at(ChessBoard board, ChessPosition pos);
-ChessPiece get_piece_at(ChessBoard board, ChessPosition pos);
-int was_piece_moved(ChessBoard board, ChessPosition pos);
+Bitboard is_captured_at(const Bitboard board[], ChessPosition pos);
+ChessPiece get_piece_at(const Bitboard board[], ChessPosition pos);
+int was_piece_moved(const Bitboard board[], ChessPosition pos);
 
-ChessBoard apply_draw(ChessBoard board, ChessDraw draw);
-void apply_draw_to_bitboards(Bitboard* bitboards, ChessDraw draw);
+ChessBoard apply_draw(const Bitboard board[], ChessDraw draw);
+void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw);
+
+ChessBoard from_simple_board(const ChessPiece simple_board[]);
+SimpleChessBoard to_simple_board(const Bitboard board[]);
 
 #endif

@@ -64,6 +64,4 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args);
 
 PyMODINIT_FUNC PyInit_chesslib(void);
 
-/* TODO: add missing makros, constants, method stubs, etc. */
-
 #endif

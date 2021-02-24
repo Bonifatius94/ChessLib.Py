@@ -29,7 +29,7 @@ ChessDraw create_draw_from_hash(uint32_t hash)
     return (ChessDraw)hash;
 }
 
-ChessDrawType determine_draw_type(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
+ChessDrawType determine_draw_type(const Bitboard board[], ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
 {
     ChessDrawType type = Standard;
     ChessPiece piece = get_piece_at(board, oldPos);
@@ -56,7 +56,7 @@ ChessDrawType determine_draw_type(ChessBoard board, ChessPosition oldPos, ChessP
     return type;
 }
 
-ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
+ChessDraw create_draw(const Bitboard board[], ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType)
 {
     ChessPiece piece;
     int is_first_move;
@@ -73,8 +73,8 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
     draw_type = determine_draw_type(board, oldPos, newPos, peasantPromotionType);
     drawing_side = get_piece_color(piece);
     drawing_piece_type = get_piece_type(piece);
-    taken_piece_type =
-        (draw_type == EnPassant) ? Peasant : (is_captured_at(board, newPos) ? get_piece_type(get_piece_at(board, newPos)) : Invalid);
+    taken_piece_type = (draw_type == EnPassant) ? Peasant
+        : (is_captured_at(board, newPos) ? get_piece_type(get_piece_at(board, newPos)) : Invalid);
 
     /* transform property values to a hash code */
     draw = (ChessDraw)(
@@ -88,6 +88,13 @@ ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newP
         | newPos);
 
     return draw;
+}
+
+ChessDraw from_compact_draw(const Bitboard board[], CompactChessDraw comp_draw)
+{
+    /* determine all meta-info for the compact draw using the given chess board as context */
+    return create_draw(board, get_old_position(comp_draw), 
+        get_new_position(comp_draw), get_peasant_promotion_piece_type(comp_draw));
 }
 
 CompactChessDraw to_compact_draw(ChessDraw draw)

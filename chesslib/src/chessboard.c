@@ -26,7 +26,6 @@
 
 ChessBoard create_board(const Bitboard bitboards[])
 {
-    /* TODO: check if memory allocation works */
     size_t i;
     ChessBoard board = (ChessBoard)malloc(13 * sizeof(Bitboard));
     if (!board) { return NULL; }
@@ -68,7 +67,7 @@ ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], 
     return board;
 }
 
-Bitboard is_captured_at(ChessBoard board, ChessPosition pos)
+Bitboard is_captured_at(const Bitboard board[], ChessPosition pos)
 {
     Bitboard mask, all_pieces;
 
@@ -81,7 +80,7 @@ Bitboard is_captured_at(ChessBoard board, ChessPosition pos)
     return (all_pieces & mask);
 }
 
-ChessPiece get_piece_at(ChessBoard board, ChessPosition pos)
+ChessPiece get_piece_at(const Bitboard board[], ChessPosition pos)
 {
     int i;
     ChessPiece piece = CHESS_PIECE_NULL;
@@ -111,12 +110,12 @@ ChessPiece get_piece_at(ChessBoard board, ChessPosition pos)
     return piece;
 }
 
-int was_piece_moved(ChessBoard board, ChessPosition pos)
+int was_piece_moved(const Bitboard board[], ChessPosition pos)
 {
     return ((~START_POSITIONS | board[12]) & (0x1uLL << pos)) > 0;
 }
 
-ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
+ChessBoard apply_draw(const Bitboard board[], ChessDraw draw)
 {
     uint8_t i;
     ChessBoard new_board;
@@ -128,8 +127,6 @@ ChessBoard apply_draw(ChessBoard board, ChessDraw draw)
 
     apply_draw_to_bitboards(new_board, draw);
     return new_board;
-
-    /* TODO: check if the memory allocation actually works */
 }
 
 void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
@@ -197,4 +194,98 @@ void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw)
         promotion_board_index = side_offset + PIECE_OFFSET(get_peasant_promotion_piece_type(draw));
         bitboards[promotion_board_index] ^= new_pos;
     }
+}
+
+ChessBoard from_simple_board(const ChessPiece simple_board[])
+{
+    uint8_t i, pos, white_pos, black_pos;
+    ChessPieceType piece_type;
+    ChessColor color;
+    Bitboard bitboard;
+    int set_bit;
+
+    ChessBoard bitboards = (ChessBoard)malloc(13 * sizeof(Bitboard));
+
+    /* assume pieces as already moved */
+    Bitboard was_moved = 0xFFFFFFFFFFFFFFFFuL;
+
+    /* loop through all bitboards */
+    for (i = 0; i < 12; i++)
+    {
+        /* determine the chess piece type and color of the iteration */
+        piece_type = (ChessPieceType)((i % 6) + 1);
+        color = (ChessColor)(i / 6);
+
+        /* init empty bitboard */
+        bitboard = 0;
+
+        /* loop through all positions */
+        for (pos = 0; pos < 64; pos++)
+        {
+            /* set piece bit if the position is captured */
+            set_bit = simple_board[pos] != CHESS_PIECE_NULL 
+                && get_piece_type(simple_board[pos]) == piece_type
+                && get_piece_color(simple_board[pos]) == color;
+            bitboard |= set_bit ? 0x1uL << pos : 0x0uL;
+        }
+
+        /* apply converted bitboard */
+        bitboards[i] = bitboard;
+    }
+
+    /* init was moved bitboard */
+    for (i = 0; i < 16; i++)
+    {
+        white_pos = i;
+        black_pos = (uint8_t)(i + 48);
+
+        /* explicitly set was moved to 0 only for unmoved pieces */
+        was_moved ^= simple_board[white_pos] != CHESS_PIECE_NULL && 
+            !get_was_piece_moved(simple_board[white_pos]) ? 0x1uL << white_pos : 0x0uL;
+        was_moved ^= simple_board[black_pos] != CHESS_PIECE_NULL && 
+            !get_was_piece_moved(simple_board[black_pos]) ? 0x1uL << black_pos : 0x0uL;
+    }
+
+    /* apply converted bitboard */
+    bitboards[12] = was_moved;
+
+    return bitboards;
+}
+
+SimpleChessBoard to_simple_board(const Bitboard board[])
+{
+    uint8_t i, pos;
+    ChessPieceType piece_type;
+    ChessColor color;
+    Bitboard bitboard;
+    SimpleChessBoard simple_board;
+
+    /* init pieces array with empty fields */
+    simple_board = (SimpleChessBoard)malloc(sizeof(ChessPiece) * 64);
+
+    // loop through all bitboards
+    for (i = 0; i < 12; i++)
+    {
+        // determine the chess piece type and color of the iteration
+        piece_type = (ChessPieceType)((i % 6) + 1);
+        color = (ChessColor)(i / 6);
+
+        // cache bitboard for shifting bitwise
+        bitboard = board[i];
+
+        // loop through all positions
+        for (pos = 0; pos < 64; pos++)
+        {
+            // write piece to array if there is one
+            simple_board[pos] = (bitboard & 0x1) > 0
+                ? create_piece(piece_type, color, was_piece_moved(board, pos))
+                : CHESS_PIECE_NULL;
+
+            // shift bitboard
+            bitboard >>= 1;
+        }
+    }
+
+    // return a new chess board with the converted chess pieces
+    return simple_board;
 }

@@ -47,7 +47,9 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
-ChessDraw create_draw(ChessBoard board, ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
+ChessDraw create_draw(const Bitboard board[], ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
+ChessDraw from_compact_draw(const Bitboard board[], CompactChessDraw comp_draw);
+CompactChessDraw to_compact_draw(ChessDraw draw);
 
 int get_is_first_move(ChessDraw draw);
 ChessDrawType get_draw_type(ChessDraw draw);
