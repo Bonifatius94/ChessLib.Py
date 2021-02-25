@@ -42,10 +42,10 @@ def test_module():
     # test gameplay functions
     test_drawgen()
     test_apply_draw()
-    #test_game_state()
+    # test_game_state()
     test_board_hash()
 
-    # test visualization functions
+    # # test visualization functions
     test_visualize_board()
     test_visualize_draw()
 
@@ -319,6 +319,7 @@ def test_board_hash():
 
     # compute the board's 40-byte hash
     hash = bytes(chesslib.Board_ToHash(board))
+    print(chesslib.Board_ToHash(board))
 
     # define the expected hash
     exp_hash = bytes([
