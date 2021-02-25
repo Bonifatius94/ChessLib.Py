@@ -90,6 +90,12 @@ ChessDraw create_draw(const Bitboard board[], ChessPosition oldPos, ChessPositio
     return draw;
 }
 
+ChessDraw from_compact_draw(const Bitboard board[], CompactChessDraw comp_draw)
+{
+    return create_draw(board, get_old_position(comp_draw), 
+        get_new_position(comp_draw), get_peasant_promotion_piece_type(comp_draw));
+}
+
 CompactChessDraw to_compact_draw(ChessDraw draw)
 {
     return (CompactChessDraw)(draw & 0x7FFF);

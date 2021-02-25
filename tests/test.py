@@ -43,7 +43,7 @@ def test_module():
     test_drawgen()
     test_apply_draw()
     # test_game_state()
-    # test_board_hash() # -> TODO: fix this API function
+    test_board_hash()
 
     # # test visualization functions
     test_visualize_board()
@@ -221,7 +221,7 @@ def test_chessboard_start():
 
     # test if the expected board in start formation is returned
     start = chesslib.ChessBoard_StartFormation()
-    print(start)
+    #print(start)
 
     for i in range(13):
         assert_equal(start[i], START_FORMATION[i])
@@ -319,6 +319,7 @@ def test_board_hash():
 
     # compute the board's 40-byte hash
     hash = bytes(chesslib.Board_ToHash(board))
+    print(chesslib.Board_ToHash(board))
 
     # define the expected hash
     exp_hash = bytes([

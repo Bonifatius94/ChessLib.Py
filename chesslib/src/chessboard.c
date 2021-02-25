@@ -204,10 +204,11 @@ ChessBoard from_simple_board(const ChessPiece simple_board[])
     Bitboard bitboard;
     int set_bit;
 
-    ChessBoard bitboards = (ChessBoard)malloc(13 * sizeof(Bitboard));
-
     /* assume pieces as already moved */
     Bitboard was_moved = 0xFFFFFFFFFFFFFFFFuL;
+
+    /* allocate bitboards array */
+    ChessBoard bitboards = (ChessBoard)malloc(13 * sizeof(Bitboard));
 
     /* loop through all bitboards */
     for (i = 0; i < 12; i++)
@@ -261,7 +262,7 @@ SimpleChessBoard to_simple_board(const Bitboard board[])
     SimpleChessBoard simple_board;
 
     /* init pieces array with empty fields */
-    simple_board = (SimpleChessBoard)malloc(sizeof(ChessPiece) * 64);
+    simple_board = (SimpleChessBoard)calloc(64, sizeof(ChessPiece));
 
     // loop through all bitboards
     for (i = 0; i < 12; i++)
@@ -279,7 +280,7 @@ SimpleChessBoard to_simple_board(const Bitboard board[])
             // write piece to array if there is one
             simple_board[pos] = (bitboard & 0x1) > 0
                 ? create_piece(piece_type, color, was_piece_moved(board, pos))
-                : CHESS_PIECE_NULL;
+                : simple_board[pos];
 
             // shift bitboard
             bitboard >>= 1;
