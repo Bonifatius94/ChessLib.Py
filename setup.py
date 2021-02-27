@@ -81,7 +81,7 @@ def load_readme_description():
 def main():
 
     # install all packages from requirements.txt (makes sure that numpy is installed)
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    #subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
     # reload system path variable to find installed packages
     import site
