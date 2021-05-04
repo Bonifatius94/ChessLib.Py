@@ -44,7 +44,7 @@ jobs:
     strategy:
       matrix:
         manylinux-build-env: [manylinux1, manylinux2010, manylinux2014]
-        manylinux-cpython-version: [cp35-cp35m, cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+        manylinux-cpython-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
 
     steps:
       - name: Checkout source code
