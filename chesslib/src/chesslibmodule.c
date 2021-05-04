@@ -350,19 +350,22 @@ static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
 {
     PyObject *chessboard;
     ChessDraw draw_to_apply;
-    ChessBoard old_board, new_board;
+    ChessBoard board_before, board_after;
     int is_simple_board = 0;
 
     /* parse input args */
     if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &draw_to_apply, &is_simple_board)) { return NULL; }
-    old_board = deserialize_as_bitboards(chessboard, is_simple_board);
-    draw_to_apply = deserialize_chessdraw(old_board, draw_to_apply);
+    board_before = deserialize_as_bitboards(chessboard, is_simple_board);
+    draw_to_apply = deserialize_chessdraw(board_before, draw_to_apply);
 
     /* apply the chess draw to a new ChessBoard instance */
-    new_board = apply_draw(old_board, draw_to_apply);
+    board_after = apply_draw(board_before, draw_to_apply);
 
     /* serialize the new Chessboard as numpy list */
-    return serialize_as_bitboards(new_board);
+    return serialize_as_bitboards(board_after);
+
+    /* TODO: find out why the serialize_as_pieces() function crashes and make it work */
+    /* return is_simple_board ? serialize_as_pieces(to_simple_board(board_after)) : serialize_as_bitboards(board_after); */
 }
 
 /* =================================================
@@ -400,26 +403,22 @@ static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args)
  **************************************************************************/
 static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
 {
-    /* TODO: export this function to chessboard.c */
-
-    Bitboard *board;
     PyObject *hash_orig; PyArrayObject* hash;
     uint8_t *compressed_bytes;
     ChessPiece temp_pieces[64] = { 0 };
+    int is_simple_board = 0;
 
     /* parse bitboards as ChessBoard struct */
-    if (!PyArg_ParseTuple(args, "O", &hash_orig)) { return NULL; }
+    if (!PyArg_ParseTuple(args, "O|i", &hash_orig, &is_simple_board)) { return NULL; }
     hash = (PyArrayObject*)PyArray_FromObject(hash_orig, NPY_UINT8, 1, 40);
     compressed_bytes = (uint8_t*)PyArray_DATA(hash);
 
     /* uncompress the pieces cache from 40 bytes by adding the unused leading 3 bits of each ChessPiece value */
     uncompress_pieces_array(compressed_bytes, temp_pieces);
 
-    /* convert the single chess pieces (aka SimpleChessBoard) to the bitboard representation */
-    board = from_simple_board(temp_pieces);
-
-    /* convert parsed bytes to Python bytearray struct */
-    return serialize_as_bitboards(board);
+    /* return as simple board or bitboards format */
+    if (is_simple_board) { return serialize_as_pieces(temp_pieces); }
+    else { return serialize_as_bitboards(from_simple_board(temp_pieces)); }
 }
 
 /* =================================================
