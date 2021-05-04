@@ -74,10 +74,6 @@ typedef uint8_t ChessPosition;
    |   xxxxxx | xxxxx | */
 typedef uint16_t ChessPieceAtPos;
 
-/* |  position | piece |
-   |    xxxxxx | xxxxx | */
-/*typedef uint16_t ChessPieceAtPos;*/
-
 /* |  unused | is first move | side | draw type | piece type | taken piece type | promotion type | old position | new position |
    | xxxxxxx |             x |    x |        xx |        xxx |              xxx |            xxx |       xxxxxx |       xxxxxx | */
 typedef uint32_t ChessDraw;
