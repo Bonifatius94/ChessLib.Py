@@ -29,6 +29,8 @@
 #include "chessdraw.h"
 #include "chessdrawgen.h"
 
+/* TODO: add interface documentation */
+
 ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw);
 
 #endif
