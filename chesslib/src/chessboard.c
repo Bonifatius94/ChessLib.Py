@@ -124,14 +124,14 @@ int was_piece_moved(const Bitboard board[], ChessPosition pos)
 void apply_draw(Bitboard* bitboards, ChessDraw draw)
 {
     /* info: this function is implemented using XOR-only operations, so applying
-             a draw once again will revert the draw because fits are flipped back */
+             the same draw once again will flip all bits back (= revert operation) */
 
     Bitboard old_pos, new_pos, white_mask, black_mask, target_column;
     uint8_t rooks_board_index, side_offset, drawing_board_index, 
             taken_piece_bitboard_index, promotion_board_index;
 
     /* determine bitboard masks of the drawing piece's old and new position */
-    old_pos = 0x1uLL <<  get_old_position(draw);
+    old_pos = 0x1uLL << get_old_position(draw);
     new_pos = 0x1uLL << get_new_position(draw);
 
     /* determine the bitboard index of the drawing piece */
@@ -204,16 +204,14 @@ void apply_draw(Bitboard* bitboards, ChessDraw draw)
 
 void from_simple_board(const ChessPiece simple_board[], Bitboard* target)
 {
+    /* info: this function assumes the target to be properly formatted */
+
     uint8_t i, pos, white_pos, black_pos;
     ChessPieceType piece_type; ChessColor color;
     Bitboard bitboard; int set_bit;
 
     /* assume pieces as already moved */
     Bitboard was_moved = 0xFFFFFFFFFFFFFFFFuL;
-
-    /* allocate bitboards array */
-    Bitboard* bitboards = (Bitboard*)malloc(13 * sizeof(Bitboard));
-    /* TODO: think of using create_empty_board() instead */
 
     /* loop through all bitboards */
     for (i = 0; i < 12; i++)
@@ -236,7 +234,7 @@ void from_simple_board(const ChessPiece simple_board[], Bitboard* target)
         }
 
         /* apply converted bitboard */
-        bitboards[i] = bitboard;
+        target[i] = bitboard;
     }
 
     /* init was moved bitboard */
@@ -253,13 +251,13 @@ void from_simple_board(const ChessPiece simple_board[], Bitboard* target)
     }
 
     /* apply converted bitboard */
-    bitboards[12] = was_moved;
-
-    return bitboards;
+    target[12] = was_moved;
 }
 
 void to_simple_board(const Bitboard board[], ChessPiece* target)
 {
+    /* info: this function assumes the target to be properly formatted */
+
     uint8_t i, pos; ChessPieceType piece_type;
     ChessColor color; Bitboard bitboard;
 
@@ -285,7 +283,4 @@ void to_simple_board(const Bitboard board[], ChessPiece* target)
             bitboard >>= 1;
         }
     }
-
-    /* return a new chess board with the converted chess pieces */
-    return target;
 }
