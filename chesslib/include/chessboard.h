@@ -93,17 +93,20 @@
             D E F I N E     F U N C T I O N S
    ==================================================== */
 
-ChessBoard create_board(const Bitboard bitboards[]);
-ChessBoard create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[], size_t pieces_count);
+/* TODO: add interface documentation */
+
+Bitboard* create_empty_chessboard();
+void create_board(const Bitboard bitboards[], Bitboard* target);
+void create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[],
+    size_t pieces_count, Bitboard* target);
 
 Bitboard is_captured_at(const Bitboard board[], ChessPosition pos);
 ChessPiece get_piece_at(const Bitboard board[], ChessPosition pos);
 int was_piece_moved(const Bitboard board[], ChessPosition pos);
 
-ChessBoard apply_draw(const Bitboard board[], ChessDraw draw);
-void apply_draw_to_bitboards(ChessBoard bitboards, ChessDraw draw);
+void apply_draw(Bitboard* bitboards, ChessDraw draw);
 
-ChessBoard from_simple_board(const ChessPiece simple_board[]);
-SimpleChessBoard to_simple_board(const Bitboard board[]);
+void from_simple_board(const ChessPiece simple_board[], Bitboard* target);
+void to_simple_board(const Bitboard board[], ChessPiece* target);
 
 #endif
