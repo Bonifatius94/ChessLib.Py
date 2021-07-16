@@ -47,6 +47,8 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
+/* TODO: add interface documentation */
+
 ChessDraw create_draw(const Bitboard board[], ChessPosition oldPos, ChessPosition newPos, ChessPieceType peasantPromotionType);
 ChessDraw from_compact_draw(const Bitboard board[], CompactChessDraw comp_draw);
 CompactChessDraw to_compact_draw(ChessDraw draw);

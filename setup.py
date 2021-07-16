@@ -52,13 +52,11 @@ def load_package_version():
 
     # load existing version file or write a new version file with the generated version
     if os.path.isfile("version"):
-        f = open("version", "r")
-        version = f.read()
-        f.close()
+        with open("version", "r") as f:
+            version = f.read()
     else:
-        f = open("version", "w")
-        f.write(version)
-        f.close()
+        with open("version", "w") as f:
+            f.write(version)
 
     return version
 

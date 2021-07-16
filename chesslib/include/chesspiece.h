@@ -44,6 +44,8 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
+/* TODO: add interface documentation */
+
 ChessPiece create_piece(ChessPieceType type, ChessColor color, int was_moved);
 
 ChessColor get_piece_color(ChessPiece piece);

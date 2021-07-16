@@ -29,6 +29,8 @@
 #include "chessposition.h"
 #include "chesstypes.h"
 
+/* TODO: add interface documentation */
+
 ChessPieceAtPos create_pieceatpos(ChessPosition pos, ChessPiece piece);
 
 ChessPiece get_pieceatpos_piece(ChessPieceAtPos pieceAtPos);

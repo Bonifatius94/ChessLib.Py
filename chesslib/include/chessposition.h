@@ -38,6 +38,8 @@
              D E F I N E    F U N C T I O N S
    ==================================================== */
 
+/* TODO: add interface documentation */
+
 ChessPosition create_position(int8_t row, int8_t column);
 
 int8_t get_row(ChessPosition position);

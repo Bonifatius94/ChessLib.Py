@@ -32,6 +32,7 @@
     #include <stddef.h>
 #endif
 
+/* Representation of chess piece types. */
 typedef enum _CHESS_PIECE_TYPE {
     Invalid = 0,
     King = 1,
@@ -42,11 +43,13 @@ typedef enum _CHESS_PIECE_TYPE {
     Peasant = 6
 } ChessPieceType;
 
+/* Representation of chess colors. */
 typedef enum _CHESS_COLOR {
     White = 0,
     Black = 1
 } ChessColor;
 
+/* Representation of chess draw types. */
 typedef enum _CHESS_DRAW_TYPE {
     Standard = 0,
     Rochade = 1,
@@ -63,44 +66,33 @@ typedef enum _CHESS_GAME_STATE {
 } ChessGameState;
 
 /* | was moved | color | piece type |
+   | --------- | ----- | ---------- |
    |         x |     x |        xxx | */
 typedef uint8_t ChessPiece;
 
 /* |  row | column |
+   | ---- | ------ |
    |  xxx |    xxx | */
 typedef uint8_t ChessPosition;
 
 /* | position | piece |
+   | -------- | ----- |
    |   xxxxxx | xxxxx | */
 typedef uint16_t ChessPieceAtPos;
 
-/* |  position | piece |
-   |    xxxxxx | xxxxx | */
-/*typedef uint16_t ChessPieceAtPos;*/
-
 /* |  unused | is first move | side | draw type | piece type | taken piece type | promotion type | old position | new position |
+   |-------- | ------------- | ---- | --------- | ---------- | ---------------- | -------------- | ------------ | ------------ |
    | xxxxxxx |             x |    x |        xx |        xxx |              xxx |            xxx |       xxxxxx |       xxxxxx | */
 typedef uint32_t ChessDraw;
 
-/* | prom. piece type | old position | new position | 
+/* | prom. piece type | old position | new position |
+   | ---------------- | ------------ | ------------ |
    |              xxx |       xxxxxx |       xxxxxx | */
 typedef uint16_t CompactChessDraw;
 
-/* A chess bitboard with each bit representing a field onto a chess board. Addressing is normalized, starting with the lowest bit as A1 and the highest bit as H8 (indexes A1=0, B1=1, ..., A2=8, ..., H8=63). */
+/* A chess bitboard with each bit representing a field onto a chess board. 
+   Addressing is normalized, starting with the lowest bit as A1 and the
+   highest bit as H8 (indexes A1=0, B1=1, ..., A2=8, ..., H8=63). */
 typedef uint64_t Bitboard;
-
-/* The chess board represented as 13 bitboards of unsigned 64-bit integers. 
-   The chess field allocation is normalized by the index values corresponding to ChessPosition type starting with the lowest bit as A1 and ending with the highest bit as H8 (indexes A1=0, B1=1, ..., A2=8, ..., H8=63).
-   The first 12 boards show positions of the chess pieces, the last board keeps track of was_moved states.
-   The boards holding information on chess pieces are ordered by the occurance of the piece in the ChessPieceType enum (King=0, Queens=1, Rooks=2, Bishops=3, Knights=4, Peasants=5).
-   All boards with indices 0-5 belong to the white side, the next 6 boards with indices 6-11 belong to the black side.
-*/
-typedef Bitboard * ChessBoard;
-
-/*
- * The chess board represented as 64 bytes, each modelling the chess piece standing at the specific position of the board.
- * In case there is no piece at the given position, it is assigned to CHESS_PIECE_NULL.
- */
-typedef ChessPiece * SimpleChessBoard;
 
 #endif

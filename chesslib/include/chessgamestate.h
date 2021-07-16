@@ -29,6 +29,8 @@
 #include "chessdraw.h"
 #include "chessdrawgen.h"
 
-ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw);
+/* TODO: add interface documentation */
+
+ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw);
 
 #endif
