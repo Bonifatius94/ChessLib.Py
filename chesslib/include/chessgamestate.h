@@ -31,6 +31,6 @@
 
 /* TODO: add interface documentation */
 
-ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw);
+ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw);
 
 #endif

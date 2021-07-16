@@ -24,9 +24,9 @@
 
 #include "chessgamestate.h"
 
-int can_achieve_checkmate(ChessBoard board, ChessColor side);
+int can_achieve_checkmate(const Bitboard board[], ChessColor side);
 
-ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw)
+ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw)
 {
     ChessDraw *draws;
     size_t draws_count;
@@ -63,7 +63,7 @@ ChessGameState get_game_state(ChessBoard board, ChessDraw last_draw)
         : (is_ally_checked ? Checkmate : Tie);
 }
 
-int can_achieve_checkmate(ChessBoard board, ChessColor side)
+int can_achieve_checkmate(const Bitboard board[], ChessColor side)
 {
     /* minimal pieces required for checkmate:
        ======================================
