@@ -97,6 +97,7 @@
 
 Bitboard* create_empty_chessboard();
 void copy_board(const Bitboard orig[], Bitboard* target);
+void copy_simple_board(const ChessPiece orig[], ChessPiece* target);
 void create_board(const Bitboard bitboards[], Bitboard* target);
 void create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[],
     size_t pieces_count, Bitboard* target);
@@ -109,5 +110,8 @@ void apply_draw(Bitboard* bitboards, ChessDraw draw);
 
 void from_simple_board(const ChessPiece simple_board[], Bitboard* target);
 void to_simple_board(const Bitboard board[], ChessPiece* target);
+
+void compress_pieces_array(const ChessPiece pieces[], uint8_t* compr_bytes);
+void uncompress_pieces_array(const uint8_t compr_bytes[], ChessPiece* out_pieces);
 
 #endif
