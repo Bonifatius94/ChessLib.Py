@@ -29,6 +29,11 @@ Bitboard* create_empty_chessboard()
     return (Bitboard*)calloc(13, sizeof(Bitboard));
 }
 
+ChessPiece* create_empty_simple_chessboard()
+{
+    return (ChessPiece*)calloc(64, sizeof(ChessPiece));
+}
+
 void copy_board(const Bitboard orig[], Bitboard* target)
 {
     /* info: this function assumes the target to be properly formatted */
@@ -48,6 +53,9 @@ void create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[],
 {
     size_t i; uint8_t board_index;
     ChessPosition pos; ChessPiece piece;
+
+    /* initialize the target with zeros */
+    for (i = 0; i < 12; i++) { target[i] = 0; }
 
     /* assume all pieces as already moved */
     target[12] = 0xFFFFFFFFFFFFFFFFuLL;
@@ -264,6 +272,9 @@ void to_simple_board(const Bitboard board[], ChessPiece* target)
 
     uint8_t i, pos; ChessPieceType piece_type;
     ChessColor color; Bitboard bitboard;
+
+    /* initialize values in target array with zeros */
+    for (pos = 0; pos < 64; pos++) { target[pos] = 0; }
 
     /* loop through all bitboards */
     for (i = 0; i < 12; i++)

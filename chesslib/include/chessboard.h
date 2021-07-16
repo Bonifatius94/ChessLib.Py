@@ -96,6 +96,7 @@
 /* TODO: add interface documentation */
 
 Bitboard* create_empty_chessboard();
+ChessPiece* create_empty_simple_chessboard();
 void copy_board(const Bitboard orig[], Bitboard* target);
 void copy_simple_board(const ChessPiece orig[], ChessPiece* target);
 void create_board(const Bitboard bitboards[], Bitboard* target);

@@ -207,7 +207,7 @@ def test_create_chessboard():
     # TODO: add pawns to the collection for edge case testing
 
     # define the expected board
-    exp_board = [
+    exp_board = np.array([
         0x0000000000000010, # white king at E1
         0x0000000000000000, # nothing
         0x0002000000010000, # white rooks at A3, B7
@@ -221,7 +221,7 @@ def test_create_chessboard():
         0x0000000000000000, # nothing
         0x0000000000000000, # nothing
         0xF7FFFFFFFFFFFFEF  # unmoved at E1, D8
-    ]
+    ], dtype=np.uint64)
 
     # create the chessboard from pieces at pos array and make sure it was created correctly
     board = chesslib.ChessBoard(pieces_at_pos)
@@ -251,7 +251,7 @@ def test_chessboard_start():
     print("testing chess board start formation value")
 
     # initialize expected bitboards array in start formation
-    exp_start_formation = [
+    exp_start_formation = np.array([
         0x0000000000000010,
         0x0000000000000008,
         0x0000000000000081,
@@ -265,7 +265,7 @@ def test_chessboard_start():
         0x4200000000000000,
         0x00FF000000000000,
         0x0000FFFFFFFF0000
-    ]
+    ], dtype=np.uint64)
 
     # test if the expected board in start formation is returned
     start = chesslib.ChessBoard_StartFormation()
@@ -342,14 +342,13 @@ def test_apply_draw():
     board = chesslib.ChessBoard_StartFormation()
     simple_board = chesslib.ChessBoard_StartFormation(True)
     draw = 0x0118070C
-    #draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0)
 
     # try applying the draw
     board_after = chesslib.ApplyDraw(board, draw)
     simple_board_after = chesslib.ApplyDraw(simple_board, draw, True)
 
     # define the expected board after applying the draw
-    exp_board_after = [
+    exp_board_after = np.array([
         0x0000000000000010,
         0x0000000000000008,
         0x0000000000000081,
@@ -363,10 +362,10 @@ def test_apply_draw():
         0x4200000000000000,
         0x00FF000000000000,
         0x0000FFFFFFFF1000
-    ]
+    ], dtype=np.uint64)
 
     # define the expected board after applying the draw
-    exp_simple_board_after = [
+    exp_simple_board_after = np.array([
         0x03, 0x05, 0x04, 0x2, 0x01, 0x04, 0x05, 0x03,
         0x06, 0x06, 0x06, 0x6, 0x00, 0x06, 0x06, 0x06,
         0x00, 0x00, 0x00, 0x0, 0x00, 0x00, 0x00, 0x00,
@@ -375,9 +374,7 @@ def test_apply_draw():
         0x00, 0x00, 0x00, 0x0, 0x00, 0x00, 0x00, 0x00,
         0x0E, 0x0E, 0x0E, 0xE, 0x0E, 0x0E, 0x0E, 0x0E,
         0x0B, 0x0D, 0x0C, 0xA, 0x09, 0x0C, 0x0D, 0x0B,
-    ]
-
-    print(simple_board_after)
+    ], dtype=np.uint8)
 
     # make sure that the new board is as expected
     assert_true(np.array_equal(exp_board_after, board_after))
@@ -385,7 +382,7 @@ def test_apply_draw():
 
     # test if ApplyDraw() function is revertible
     rev_board = chesslib.ApplyDraw(board_after, draw)
-    simple_rev_board = chesslib.ApplyDraw(board_after, draw, True)
+    simple_rev_board = chesslib.ApplyDraw(simple_board_after, draw, True)
 
     # make sure that the reverted board is the same as the original board
     assert_true(np.array_equal(board, rev_board))
