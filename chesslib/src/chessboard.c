@@ -29,14 +29,11 @@ Bitboard* create_empty_chessboard()
     return (Bitboard*)calloc(13, sizeof(Bitboard));
 }
 
-void copy_board(const Bitboard bitboards[], Bitboard* target)
+void copy_board(const Bitboard orig[], Bitboard* target)
 {
-    /* TODO: think about whether always allocating a new array is useful */
-
+    /* info: this function assumes the target to be properly formatted */
     size_t i;
-    target = create_empty_chessboard();
-    if (!target) { return NULL; }
-    for (i = 0; i < 13; i++) { target[i] = bitboards[i]; }
+    for (i = 0; i < 13; i++) { target[i] = orig[i]; }
 }
 
 void create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[],
