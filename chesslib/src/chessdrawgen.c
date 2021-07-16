@@ -59,7 +59,8 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[],
   Options: When analyze_draw_into_check is set to TRUE, then there won't occur any draws on the output
            that cause a draw-into-check.
  *********************************************************************************************************/
-void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
+void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board,
+    ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
     ChessDraw *king_draws, *queen_draws, *rook_draws, *bishop_draws, *knight_draws, *peasant_draws;
     size_t king_draws_len, queen_draws_len, rook_draws_len, bishop_draws_len, knight_draws_len, peasant_draws_len;
@@ -86,7 +87,8 @@ void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board, C
     for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
 
     /* free temporary draws */
-    free(king_draws); free(queen_draws); free(rook_draws); free(bishop_draws); free(knight_draws); free(peasant_draws);
+    free(king_draws); free(queen_draws); free(rook_draws);
+    free(bishop_draws); free(knight_draws); free(peasant_draws);
 
     /* if flag is active, only return draws that do not cause draw-into-check */
     if (analyze_draw_into_check) { eliminate_draws_into_check(out_draws, out_length, board, drawing_side); }
@@ -117,7 +119,8 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
         king_mask = sim_bitboards[side_offset];
 
         /* calculate enemy answer draws (only fields that could be captured as one bitboard) */
-        enemy_capturable_fields = get_capturable_fields(sim_bitboards, opponent, draws_to_validate[i]);
+        enemy_capturable_fields = get_capturable_fields(
+            sim_bitboards, opponent, draws_to_validate[i]);
 
         /* revert the simulated draw (flip the bits back) */
         apply_draw_to_bitboards(sim_bitboards, draws_to_validate[i]);
@@ -304,7 +307,8 @@ Bitboard get_rochade_king_draw_positions(const Bitboard bitboards[], ChessColor 
                Q U E E N    D R A W - G E N
    ==================================================== */
 
-Bitboard get_queen_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter)
+Bitboard get_queen_draw_positions(const Bitboard bitboards[],
+    ChessColor side, Bitboard drawing_pieces_filter)
 {
     return get_rook_draw_positions(bitboards, side, drawing_pieces_filter, 1) | get_bishop_draw_positions(bitboards, side, drawing_pieces_filter, 1);
 }
@@ -313,7 +317,8 @@ Bitboard get_queen_draw_positions(const Bitboard bitboards[], ChessColor side, B
                 R O O K    D R A W - G E N
    ==================================================== */
 
-Bitboard get_rook_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter, uint8_t piece_offset)
+Bitboard get_rook_draw_positions(const Bitboard bitboards[],
+    ChessColor side, Bitboard drawing_pieces_filter, uint8_t piece_offset)
 {
     uint8_t i;
     Bitboard draws = 0uLL, bitboard, enemy_pieces, allied_pieces, b_rooks, l_rooks, r_rooks, t_rooks;
@@ -362,7 +367,8 @@ Bitboard get_rook_draw_positions(const Bitboard bitboards[], ChessColor side, Bi
              B I S H O P    D R A W - G E N
    ==================================================== */
 
-Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter, uint8_t piece_pffset)
+Bitboard get_bishop_draw_positions(const Bitboard bitboards[],
+    ChessColor side, Bitboard drawing_pieces_filter, uint8_t piece_pffset)
 {
     uint8_t i;
     Bitboard draws = 0uLL, bitboard, enemy_pieces, allied_pieces, br_bishops, bl_bishops, tr_bishops, tl_bishops;
@@ -411,7 +417,8 @@ Bitboard get_bishop_draw_positions(const Bitboard bitboards[], ChessColor side, 
              K N I G H T    D R A W - G E N
    ==================================================== */
 
-Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, Bitboard drawing_pieces_filter)
+Bitboard get_knight_draw_positions(const Bitboard bitboards[],
+    ChessColor side, Bitboard drawing_pieces_filter)
 {
     Bitboard bitboard, allied_pieces, draws;
 
@@ -441,7 +448,8 @@ Bitboard get_knight_draw_positions(const Bitboard bitboards[], ChessColor side, 
              P E A S A N T    D R A W - G E N
    ==================================================== */
 
-Bitboard get_peasant_draw_positions(const Bitboard bitboards[], ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter)
+Bitboard get_peasant_draw_positions(const Bitboard bitboards[],
+    ChessColor side, ChessDraw last_draw, Bitboard drawing_pieces_filter)
 {
     Bitboard draws = 0x0uLL, bitboard, allied_pieces, enemy_pieces, blocking_pieces, enemy_peasants,
         was_moved_mask, white_mask, black_mask, last_draw_new_pos, last_draw_old_pos;
@@ -515,7 +523,6 @@ void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_
     /* copy the positions to the results array (without empty entries) */
     *out_length = count;
     *out_positions = (ChessPosition*)malloc(count * sizeof(ChessPosition));
-    /* TODO: check if the allocation is correct */
 
     for (i = 0; i < count; i++) { (*out_positions)[i] = temp_pos[i]; }
 }
@@ -530,7 +537,8 @@ ChessPosition get_board_position(Bitboard bitboard)
     /* code was taken from https://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers */
 
 #ifdef __GNUC__
-    /* use built-in leading zeros function for GCC Linux build (this compiles to the very fast 'bsr' instruction on x86 AMD processors) */
+    /* use built-in leading zeros function for GCC Linux build
+       (this compiles to the very fast 'bsr' instruction on x86 AMD processors) */
     return (ChessPosition)((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll(bitboard) - 1));
 #else
     /* use abstract DeBruijn algorithm with table lookup */
