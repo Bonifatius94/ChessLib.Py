@@ -36,7 +36,8 @@
 
 /* TODO: add interface documentation */
 
-void get_all_draws(ChessDraw** out_draws, size_t* out_length, ChessBoard board, ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check);
+void get_all_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[],
+    ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check);
 
 void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length);
 ChessPosition get_board_position(Bitboard bitboard);
