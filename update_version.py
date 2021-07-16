@@ -63,6 +63,5 @@ if __name__ == "__main__":
 
     # generate a version and write it to 'version' file
     version = generate_package_version()
-    f = open("version", "w")
-    f.write(version)
-    f.close()
+    with open("version", "w") as f:
+        f.write(version)
