@@ -36,6 +36,13 @@ void copy_board(const Bitboard orig[], Bitboard* target)
     for (i = 0; i < 13; i++) { target[i] = orig[i]; }
 }
 
+void copy_simple_board(const ChessPiece orig[], ChessPiece* target)
+{
+    /* info: this function assumes the target to be properly formatted */
+    size_t i;
+    for (i = 0; i < 64; i++) { target[i] = orig[i]; }
+}
+
 void create_board_from_piecesatpos(const ChessPieceAtPos pieces_at_pos[],
     size_t pieces_count, Bitboard* target)
 {
@@ -279,5 +286,69 @@ void to_simple_board(const Bitboard board[], ChessPiece* target)
             /* shift bitboard */
             bitboard >>= 1;
         }
+    }
+}
+
+void compress_pieces_array(const ChessPiece pieces[], uint8_t* compr_bytes)
+{
+    ChessPosition pos;
+    const uint8_t mask = 0xF8u;
+    uint8_t offset, index, piece_bits;
+
+    /* loop through all positions */
+    for (pos = 0; pos < 64; pos++)
+    {
+        /* get chess piece from array by position */
+        piece_bits = pieces[pos] << 3;
+
+        /* determine the output byte's index and bit offset */
+        index = ((int)pos * 5) / 8;
+        offset = ((int)pos * 5) % 8;
+
+        /* write leading bits to byte at the piece's position */
+        compr_bytes[index] |= (piece_bits & mask) >> offset;
+
+        /* write overlapping bits to the next byte (only if needed) */
+        if (offset > 3) { compr_bytes[index + 1] |= (uint8_t)((piece_bits & mask) << (8 - offset)); }
+    }
+}
+
+uint8_t get_bits_at(const uint8_t data_bytes[], size_t arr_size, int bit_index, int length)
+{
+    /* TODO: refactor this ugly piece of code */
+
+    /* load data bytes into cache */
+    uint8_t upper = data_bytes[bit_index / 8];
+    uint8_t lower = (bit_index / 8 + 1 < arr_size) ? data_bytes[bit_index / 8 + 1] : (uint8_t)0x00;
+    int bitOffset = bit_index % 8;
+
+    /* refactoring idea: combine bytes as uint16_t and shift + mask it
+                         -> should be a lot easier and understandable */
+
+    /* cut the bits from the upper byte */
+    uint8_t upperDataMask = (uint8_t)((1 << (8 - bitOffset)) - 1);
+    int lastIndexOfByte = bitOffset + length - 1;
+    if (lastIndexOfByte < 7) { upperDataMask = (uint8_t)((upperDataMask >> (7 - lastIndexOfByte)) << (7 - lastIndexOfByte)); }
+    uint8_t upperData = (uint8_t)((upper & upperDataMask) << (bitOffset));
+
+    /* cut bits from the lower byte (if needed, otherwise set all bits 0) */
+    uint8_t lowerDataMask = (uint8_t)(0xFF << (16 - bitOffset - length));
+    uint8_t lowerData = (uint8_t)((lower & lowerDataMask) >> (8 - bitOffset));
+
+    /* put the data bytes together (with bitwise OR) */
+    uint8_t data = (uint8_t)(upperData | lowerData);
+    return data;
+}
+
+void uncompress_pieces_array(const uint8_t compr_bytes[], ChessPiece* out_pieces)
+{
+    ChessPosition pos;
+    uint8_t piece_bits;
+
+    /* loop through all positions */
+    for (pos = 0; pos < 64; pos++)
+    {
+        piece_bits = get_bits_at(compr_bytes, 40, pos * 5, 5) >> 3;
+        out_pieces[pos] = piece_bits;
     }
 }
