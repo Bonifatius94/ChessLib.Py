@@ -59,7 +59,7 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[],
   Options: When analyze_draw_into_check is set to TRUE, then there won't occur any draws on the output
            that cause a draw-into-check.
  *********************************************************************************************************/
-void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board,
+void get_all_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[],
     ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
     /* TODO: think of allocating draws as fixed-size stack arrays -> no allocation in get_draws() */
@@ -152,7 +152,7 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
     *length = legal_draws_count;
 }
 
-void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboards[],
+void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[],
     ChessColor side, ChessPieceType type, ChessDraw last_draw)
 {
     uint8_t index, piece_type;
@@ -160,15 +160,15 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
     ChessPosition *drawing_pieces, *capturable_positions;
 
     ChessPosition pos;
-    Bitboard filter, draw_bitboard; Bitboard* board;
+    Bitboard filter, draw_bitboard;
     int contains_peasant_promotion;
 
     /* determine board index and make sure that there are pieces to be drawn, otherwise quit */
     index = SIDE_OFFSET(side) + PIECE_OFFSET(type);
-    if (bitboards[index] == 0x0uLL) { *out_draws = NULL; *out_length = 0; return; }
+    if (board[index] == 0x0uLL) { *out_draws = NULL; *out_length = 0; return; }
 
     /* get drawing pieces */
-    get_board_positions(bitboards[index], &drawing_pieces, &drawing_pieces_len);
+    get_board_positions(board[index], &drawing_pieces, &drawing_pieces_len);
 
     /* init draws result set (max. draws) */
     *out_draws = (ChessDraw*)malloc(drawing_pieces_len * 28 * sizeof(ChessDraw));
@@ -186,12 +186,12 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
         /* compute the chess piece's capturable positions as bitboard */
         switch (type)
         {
-            case King:    draw_bitboard = get_king_draw_positions(bitboards, side, 1);                              break;
-            case Queen:   draw_bitboard = get_queen_draw_positions(bitboards, side, filter);                        break;
-            case Rook:    draw_bitboard = get_rook_draw_positions(bitboards, side, filter, PIECE_OFFSET(Rook));     break;
-            case Bishop:  draw_bitboard = get_bishop_draw_positions(bitboards, side, filter, PIECE_OFFSET(Bishop)); break;
-            case Knight:  draw_bitboard = get_knight_draw_positions(bitboards, side, filter);                       break;
-            case Peasant: draw_bitboard = get_peasant_draw_positions(bitboards, side, last_draw, filter);           break;
+            case King:    draw_bitboard = get_king_draw_positions(board, side, 1);                              break;
+            case Queen:   draw_bitboard = get_queen_draw_positions(board, side, filter);                        break;
+            case Rook:    draw_bitboard = get_rook_draw_positions(board, side, filter, PIECE_OFFSET(Rook));     break;
+            case Bishop:  draw_bitboard = get_bishop_draw_positions(board, side, filter, PIECE_OFFSET(Bishop)); break;
+            case Knight:  draw_bitboard = get_knight_draw_positions(board, side, filter);                       break;
+            case Peasant: draw_bitboard = get_peasant_draw_positions(board, side, last_draw, filter);           break;
             default: return; /* TODO: throw python exception instead */
         }
 
@@ -202,7 +202,6 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
         contains_peasant_promotion = (type == Peasant && (   /* check for peasant (both cases) */
             (side == White && (draw_bitboard & ROW_8))       /* white side promotion -> row 8 */
             || (side == Black && (draw_bitboard & ROW_1)))); /* black side promotion -> row 1 */
-        create_board(bitboards, board);
 
         /* convert the positions into chess draws (peasant prom. case) */
         if (contains_peasant_promotion)
