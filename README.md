@@ -51,29 +51,6 @@ def test():
 ```
 
 ## How to Develop
-The commands for dev-testing the chesslib are wrapped within a Docker environment.
-Therefore build the 'Dockerfile-dev' file which takes your source code and performs 
-all required CI steps (build + install + unit tests). Afterwards you may attach to the 
-Docker image with the bash console interactively and run commands, etc.
-
-```sh
-# make a dev build using the 'Dockerfile-dev' build environment
-# this runs all CI steps (build + install + unit tests)
-docker build . --file Dockerfile-dev -t "chesslib-dev"
-
-# attach to the build environment's interactive bash console (leave the session with 'exit')
-docker run "chesslib-dev" -it bash
-
-# mount a Python test script into the build environment and run it
-docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
-```
-
-Advantages of this approach are that it simplifies the dev machine setup a lot as you only 
-need Docker, git and a good text editor on your local machine. Moreover you don't mess up your
-dev machine when trying to build and install the chesslib package for debugging again and again.
-And most importantly you keep your local copy of the git repo clean as all temporary files are 
-created within the Docker container, so you basically don't need to worry about accidentially
-including build files into git commits, etc.
 
 For a quickstart, set up your dev machine as a VM (e.g. Ubuntu 20.04 hosted by VirtualBox). After 
 successfully creating the VM, use following commands to install all essential dev tools (git, 
@@ -92,5 +69,22 @@ cd ChessLib.Py
 sudo snap install code --classic
 ```
 
+The commands for dev-testing the chesslib are wrapped within a Docker environment.
+Therefore build the 'Dockerfile-dev' file which takes your source code and performs 
+all required CI steps (build + install + unit tests). Afterwards you may attach to the 
+Docker image with the bash console interactively and run commands, etc.
+
+```sh
+# make a dev build using the 'Dockerfile-dev' build environment
+# this runs all CI steps (build + install + unit tests)
+docker build . --file Dockerfile-dev -t "chesslib-dev"
+
+# attach to the build environment's interactive bash console (leave the session with 'exit')
+docker run "chesslib-dev" -it bash
+
+# mount a Python test script into the build environment and run it
+docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
+```
+
 ## Copyright
-You may use this project under the MIT licence's conditions.
+This software is available under the MIT licence's terms.
