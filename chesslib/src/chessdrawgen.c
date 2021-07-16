@@ -62,8 +62,18 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[],
 void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board,
     ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
-    ChessDraw *king_draws, *queen_draws, *rook_draws, *bishop_draws, *knight_draws, *peasant_draws;
-    size_t king_draws_len, queen_draws_len, rook_draws_len, bishop_draws_len, knight_draws_len, peasant_draws_len;
+    /* TODO: think of allocating draws as fixed-size stack arrays -> no allocation in get_draws() */
+    /* max. possible amount of draws per piece type (considering peasant proms):
+          king:    8 ->  1 *  8 =   8
+          queen:  28 ->  9 * 28 = 252
+          rook:   14 -> 10 * 14 = 140
+          bishop: 14 -> 10 * 14 = 140
+          knight:  8 -> 10 *  8 =  80
+          pawn:    4 ->  8 *  4 =  96 */
+    ChessDraw *king_draws, *queen_draws, *rook_draws,
+              *bishop_draws, *knight_draws, *peasant_draws;
+    size_t king_draws_len, queen_draws_len, rook_draws_len,
+           bishop_draws_len, knight_draws_len, peasant_draws_len;
     size_t i, offset = 0;
 
     /* compute the draws for the pieces of each type */
@@ -86,6 +96,7 @@ void get_all_draws(ChessDraw** out_draws, size_t* out_length, Bitboard* board,
     for (i = 0; i < knight_draws_len; i++)  { (*out_draws)[offset++] = knight_draws[i];  }
     for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
 
+    /* TODO: this will not be required when allocating draws on stack */
     /* free temporary draws */
     free(king_draws); free(queen_draws); free(rook_draws);
     free(bishop_draws); free(knight_draws); free(peasant_draws);
@@ -106,7 +117,7 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
     legal_draws_count = *length;
 
     /* make a working copy of all local bitboards */
-    for (i = 0; i < 13; i++) { sim_bitboards[i] = board[i]; }
+    copy_board(board, sim_bitboards);
 
     side_offset = SIDE_OFFSET(drawing_side);
     opponent = OPPONENT(drawing_side);
@@ -115,25 +126,29 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
     for (i = 0; i < legal_draws_count; i++)
     {
         /* simulate the draw */
-        apply_draw_to_bitboards(sim_bitboards, draws_to_validate[i]);
+        apply_draw(sim_bitboards, draws_to_validate[i]);
         king_mask = sim_bitboards[side_offset];
 
-        /* calculate enemy answer draws (only fields that could be captured as one bitboard) */
+        /* calculate enemy answer draws (only fields that
+           could be captured as one bitboard) */
         enemy_capturable_fields = get_capturable_fields(
             sim_bitboards, opponent, draws_to_validate[i]);
 
         /* revert the simulated draw (flip the bits back) */
-        apply_draw_to_bitboards(sim_bitboards, draws_to_validate[i]);
+        apply_draw(sim_bitboards, draws_to_validate[i]);
 
-        /* check if one of those draws would catch the allied king (bitwise AND) -> draw-into-check */
+        /* check if one of those draws would catch the
+           allied king (bitwise AND) -> draw-into-check */
         if ((king_mask & enemy_capturable_fields) > 0)
         {
-            /* overwrite the illegal draw with the last unevaluated draw in the array */
+            /* overwrite the illegal draw with the last
+               unevaluated draw in the array */
             draws_to_validate[i--] = draws_to_validate[--legal_draws_count];
         }
     }
 
-    /* remove illegal draws by shrinking the array length and ignoring them */
+    /* remove illegal draws by shrinking the
+       array length and ignoring them */
     *length = legal_draws_count;
 }
 
@@ -157,6 +172,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
 
     /* init draws result set (max. draws) */
     *out_draws = (ChessDraw*)malloc(drawing_pieces_len * 28 * sizeof(ChessDraw));
+    /* TODO: don't do the allocation here ... */
 
     /* loop through drawing pieces */
     for (i = 0; i < drawing_pieces_len; i++)
@@ -176,7 +192,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
             case Bishop:  draw_bitboard = get_bishop_draw_positions(bitboards, side, filter, PIECE_OFFSET(Bishop)); break;
             case Knight:  draw_bitboard = get_knight_draw_positions(bitboards, side, filter);                       break;
             case Peasant: draw_bitboard = get_peasant_draw_positions(bitboards, side, last_draw, filter);           break;
-            default: return; /* TODO: throw exception instead */
+            default: return; /* TODO: throw python exception instead */
         }
 
         /* extract all capturable positions from the draws bitboard */
@@ -188,7 +204,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
             || (side == Black && (draw_bitboard & ROW_1)))); /* black side promotion -> row 1 */
         create_board(bitboards, board);
 
-        /* convert the positions into chess draws (promotion case) */
+        /* convert the positions into chess draws (peasant prom. case) */
         if (contains_peasant_promotion)
         {
             /* peasant will advance to level 8, all draws need to be peasant promotions */
@@ -202,7 +218,8 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboar
             }
         }
         /* convert the positions into chess draws (standard case) */
-        else {
+        else
+        {
             for (j = 0; j < capturable_positions_len; j++) {
                 (*out_draws)[count++] = create_draw(board, drawing_pieces[i],
                     capturable_positions[j], Invalid);
@@ -523,6 +540,7 @@ void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_
     /* copy the positions to the results array (without empty entries) */
     *out_length = count;
     *out_positions = (ChessPosition*)malloc(count * sizeof(ChessPosition));
+    /* TODO: don't allocate memory here ... allocate it in the calling function */
 
     for (i = 0; i < count; i++) { (*out_positions)[i] = temp_pos[i]; }
 }
