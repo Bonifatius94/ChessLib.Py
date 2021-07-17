@@ -1,0 +1,78 @@
+name: PyPi Build Wheel Test
+
+on:
+  # push:
+  #   branches: [ master ]
+
+ pull_request:
+   branches: [ master ]
+
+jobs:
+
+  # create the 'version' file containing the auto-generated package version of all 
+  # pypi packages (required to sync artifact versions created by 'pypi_release' tasks)
+  gen_package_version:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Install Python (with dependencies)
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Create build version
+        run: python update_version.py
+
+      - name: Share package verison file with other tasks
+        uses: actions/upload-artifact@v2
+        with:
+          name: package_version
+          path: version
+          retention-days: 5
+
+
+  # create pypi binary wheels for all combinations of manylinux build environments
+  # and related python target versions of each environment (see 'strategy' section)
+  # important: don't upload the generated wheels, just simulate if the build process
+  #            would work, so there are no pipeline failures when actually releasing
+  pypi_release:
+    # use the latest ubuntu version (should be 20.04 in 2021)
+    runs-on: 'ubuntu-latest'
+
+    # make sure the task creating the release package version is complete
+    needs: gen_package_version
+
+    # define build tasks for all combinations of (build-dev, python-version) tuples
+    # (can also explicitly exclude specific combinations if required)
+    strategy:
+      matrix:
+        manylinux-build-env: [manylinux1, manylinux2010, manylinux2014]
+        manylinux-cpython-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+
+    steps:
+      # clone the source code to be compiled as a manylinux wheel
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      # make sure python is set up properly
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      # use the previously created release version (-> all matrix tasks use the same version)
+      - name: Download package version file
+        uses: actions/download-artifact@v2
+        with:
+          name: package_version
+
+      # build the source code for a given (build-env, python-version) tuple
+      # therefore pull the manylinux docker image and execute the build_manylinux.sh script
+      - name: Build manylinux wheel
+        run: |
+          docker run -v $PWD/dist:/output -v $PWD:/build  \
+                 quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
+                 bash /build/build_manylinux.sh ${{ matrix.manylinux-cpython-version }}
