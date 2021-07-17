@@ -80,7 +80,7 @@ Docker image with the bash console interactively and run commands, etc.
 docker build . --file Dockerfile-dev -t "chesslib-dev"
 
 # attach to the build environment's interactive bash console (leave the session with 'exit')
-docker run "chesslib-dev" -it bash
+docker run -it "chesslib-dev" bash
 
 # mount a Python test script into the build environment and run it
 docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
