@@ -92,7 +92,6 @@ jobs:
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
                  dist/chesslib*${{ matrix.manylinux-cpython-version }}*${{ matrix.manylinux-build-env }}*.whl
 
-
   # Make an auto-generated GitHub release tagging the
   # src version corresponding to the PyPI release
   github_release:
