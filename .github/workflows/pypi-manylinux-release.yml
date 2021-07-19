@@ -68,6 +68,9 @@ jobs:
         with:
           python-version: '3.8'
 
+      - name: Install twine for manylinux wheel uploads to PyPI
+        run: pip install twine
+
       # use the previously created package version (-> all matrix tasks use the same version)
       - name: Download package version file
         uses: actions/download-artifact@v2
