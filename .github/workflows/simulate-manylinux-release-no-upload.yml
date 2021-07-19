@@ -15,17 +15,23 @@ jobs:
     runs-on: 'ubuntu-latest'
 
     steps:
+      # clone the source code containing the package version generation script
       - name: Checkout source code
         uses: actions/checkout@v2
 
+      # make sure python is set up properly
       - name: Install Python (with dependencies)
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
+      # run the update_version.py script to generate a new
+      # package version (referring to seconds since millenium)
       - name: Create build version
         run: python update_version.py
 
+      # upload the version file as an artifact that can be read by
+      # other workflow tasks like PyPI release or GitHub release, etc.
       - name: Share package verison file with other tasks
         uses: actions/upload-artifact@v2
         with:
@@ -33,10 +39,9 @@ jobs:
           path: version
           retention-days: 5
 
-
-  # create pypi binary wheels for all combinations of manylinux build environments
+  # create PyPI binary wheels for all combinations of manylinux build environments
   # and related python target versions of each environment (see 'strategy' section)
-  # important: don't upload the generated wheels, just simulate if the build process
+  # important: don't upload those generated wheels, just simulate if the build process
   #            would work, so there are no pipeline failures when actually releasing
   pypi_release:
     # use the latest ubuntu version (should be 20.04 in 2021)
@@ -63,7 +68,7 @@ jobs:
         with:
           python-version: '3.8'
 
-      # use the previously created release version (-> all matrix tasks use the same version)
+      # use the previously created package version (-> all matrix tasks use the same version)
       - name: Download package version file
         uses: actions/download-artifact@v2
         with:

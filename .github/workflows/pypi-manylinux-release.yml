@@ -1,4 +1,4 @@
-name: PyPi Release
+name: PyPI Release
 
 on:
   push:
@@ -10,22 +10,28 @@ on:
 jobs:
 
   # create the 'version' file containing the auto-generated package version of all 
-  # pypi packages (required to sync artifact versions created by 'pypi_release' tasks)
+  # PyPI packages (required to sync artifact versions created by 'pypi_release' tasks)
   gen_package_version:
     runs-on: 'ubuntu-latest'
 
     steps:
+      # clone the source code containing the package version generation script
       - name: Checkout source code
         uses: actions/checkout@v2
 
+      # make sure python is set up properly
       - name: Install Python (with dependencies)
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
+      # run the update_version.py script to generate a new
+      # package version (referring to seconds since millenium)
       - name: Create build version
         run: python update_version.py
 
+      # upload the version file as an artifact that can be read by
+      # other workflow tasks like PyPI release or GitHub release, etc.
       - name: Share package verison file with other tasks
         uses: actions/upload-artifact@v2
         with:
@@ -33,83 +39,93 @@ jobs:
           path: version
           retention-days: 5
 
-
-  # create pypi binary wheels for all combinations of manylinux build environments
+  # create PyPI binary wheels for all combinations of manylinux build environments
   # and related python target versions of each environment (see 'strategy' section)
-  # -> upload the manylinux pypi wheel at the end of each subtask
+  # important: don't upload the generated wheels, just simulate if the build process
+  #            would work, so there are no pipeline failures when actually releasing
   pypi_release:
+    # use the latest ubuntu version (should be 20.04 in 2021)
     runs-on: 'ubuntu-latest'
+
+    # make sure the task creating the release package version is complete
     needs: gen_package_version
 
+    # define build tasks for all combinations of (build-dev, python-version) tuples
+    # (can also explicitly exclude specific combinations if required)
     strategy:
       matrix:
         manylinux-build-env: [manylinux1, manylinux2010, manylinux2014]
         manylinux-cpython-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
 
     steps:
+      # clone the source code to be compiled as a manylinux wheel
       - name: Checkout source code
         uses: actions/checkout@v2
 
+      # make sure python is set up properly
       - name: Install Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
 
-      - name: Install Python deployment dependencies (pip, twine)
-        run: | 
-          python -m pip install --upgrade pip &&
-          pip install twine
-
+      # use the previously created package version (-> all matrix tasks use the same version)
       - name: Download package version file
         uses: actions/download-artifact@v2
         with:
           name: package_version
 
+      # build the source code for a given (build-env, python-version) tuple
+      # therefore pull the manylinux docker image and execute the build_manylinux.sh script
       - name: Build manylinux wheel
         run: |
-          docker run -v $PWD/dist:/output \
-                 -v $PWD:/build quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
+          docker run -v $PWD/dist:/output -v $PWD:/build  \
+                 quay.io/pypa/${{ matrix.manylinux-build-env }}_x86_64 \
                  bash /build/build_manylinux.sh ${{ matrix.manylinux-cpython-version }}
 
-      - name: Upload PyPi wheel
+      # TODO: think about splitting up build and upload tasks into two workflows
+      #       -> wheels could be stored as artifacts that can be attached to a GitHub release, etc.
+
+      # upload the manylinux wheel to PyPI using twine
+      - name: Upload wheel to PyPI
         run: |
           python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
                  dist/chesslib*${{ matrix.manylinux-cpython-version }}*${{ matrix.manylinux-build-env }}*.whl
 
-# TODO: bring this to work to attach the PyPi wheel to the GitHub release
-# =======================================================================
-#      - name: Share manylinux wheel artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: pypi-wheel-${{ matrix.manylinux-build-env }}_x86_64-
-#          path: version
-#          retention-days: 5
 
-
-  # Make an auto-generated GitHub release tagging the src version corresponding to the PyPi release
+  # Make an auto-generated GitHub release tagging the
+  # src version corresponding to the PyPI release
   github_release:
+    # use the latest ubuntu version (should be 20.04 in 2021)
     runs-on: 'ubuntu-latest'
-    needs: gen_package_version
+
+    # make sure that all manylinux wheel uploads to PyPI were successful
+    needs: pypi_release
 
     steps:
+      # use the previously created package version (-> all tasks use the same version)
       - name: Download package version file
         uses: actions/download-artifact@v2
         with:
           name: package_version
 
+      # read the package version from 'version' file into an environment variable
       - name: Create VERSION output variable
         id: read_version
         run: echo ::set-output name=VERSION::$(cat version)
 
+      # create a GitHub release for the given package version
       - name: Create GitHub release
         id: create_github_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # define the tag and release name according to the package version
           tag_name: chesslib-v${{ steps.read_version.outputs.VERSION }}
           release_name: ChessLib ${{ steps.read_version.outputs.VERSION }}
+
+          # define the description text shown by the GitHub release
           body: |
             ### ChessLib ${{ steps.read_version.outputs.VERSION }}
             
@@ -127,17 +143,23 @@ jobs:
             
             **PyPi:**
             see: https://pypi.org/project/chesslib/${{ steps.read_version.outputs.VERSION }}
+
+          # make the release non-draft and non-prerelease, i.e. a real auto-release
           draft: false
           prerelease: false
 
-# TODO: think of attaching the PyPi wheels also to a corresponding GitHub release
+# TODO: think of attaching the PyPI wheels also to a corresponding GitHub release
 # ===============================================================================
-#      - name: Push the PyPi Package as artifact of the new GitHub release
+#      - name: Push the PyPI Package as artifact of the new GitHub release
 #        uses: actions/upload-release-asset@v1
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+#          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
+#          # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
 #          asset_path: ./ChessLib/dist/chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
 #          asset_name: chesslib-${{ steps.create_release.env.PACKAGE_VERSION }}.linux-x86_64.zip
 #          asset_content_type: application/zip
+
+# TODO: think of adding a minimalistic docker image release as well
