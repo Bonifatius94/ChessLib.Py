@@ -84,6 +84,9 @@ docker run -it "chesslib-dev" bash
 
 # mount a Python test script into the build environment and run it
 docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
+
+# debug the GitHub release pipeline
+docker run -v $PWD/dist:/output -v $PWD:/build -it "chesslib-dev" bash
 ```
 
 ## Copyright

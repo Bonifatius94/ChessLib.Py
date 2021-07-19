@@ -75,7 +75,7 @@ jobs:
         run: |
           python -m twine upload --repository-url https://upload.pypi.org/legacy/ \
                  -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} \
-                 dist/chesslib*-${{ matrix.manylinux-build-env }}*.whl
+                 dist/chesslib*${{ matrix.manylinux-cpython-version }}*${{ matrix.manylinux-build-env }}*.whl
 
 # TODO: bring this to work to attach the PyPi wheel to the GitHub release
 # =======================================================================
