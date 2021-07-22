@@ -62,9 +62,28 @@ static ChessDraw deserialize_chessdraw(const Bitboard board[], const ChessDraw d
 
 #define PY_METHODS_SENTINEL {NULL, NULL, 0, NULL}
 
+const char GenerateDraws_Docstring[] =
+"\
+Generate all possible draws for the given chess board and drawing side\n\
+:param chessboard: The chess board representing the current game situation\n\
+:type chessboard: class:`numpy.ndarray`\n\
+:param drawing_side: The chess player that is supposed to draw where white=0 and black=1\n\
+:type drawing_side: int\n\
+:param last_draw: The most recent draw made by the opponent - which is important to get the en-passant rule right, defaults to ChessDraw_Null\n\
+:type last_draw: int, optional\n\
+:param analyze_draw_into_check: Indicates whether draws-into-check should be properly filtered from the output, defaults to True\n\
+:type analyze_draw_into_check: bool, optional\n\
+:param is_compact_format: Indicates whether the draws should be returned as compact draw format, defaults to False\n\
+:type is_compact_format: bool, optional\n\
+:param is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+:type is_simple_board: bool, optional\n\
+:return: a set of all possible draws for the given game situation where each draw is encoded as a 32-bit integer with bitwise features\n\
+:rtype: class:`numpy.ndarray`\n\
+";
+
 /* Define all functions exposed to python. */
 static PyMethodDef chesslib_methods[] = {
-    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, "Generate all possible draws for the given position."},
+    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, GenerateDraws_Docstring},
     {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},
     {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, "Create a new chess board."},
     {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, "Create a new chess draw."},
