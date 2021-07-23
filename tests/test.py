@@ -43,7 +43,7 @@ def test_module():
     # test gameplay functions
     test_drawgen()
     test_apply_draw()
-    # test_game_state()
+    test_game_state()
     test_board_hash()
 
     # # test visualization functions
@@ -436,35 +436,30 @@ def test_board_hash():
     print("test passed!")
 
 
-# def test_game_state():
+def test_game_state():
 
-#     print("test game state")
+    print("testing game state function")
 
-#     # TODO: implement this test!!!!!
+    # create a chess board with a check-mate position
+    checkmate_board_pieces = np.array([
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E1')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('H1')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('G7')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+    ], dtype=np.uint16)
+    checkmate_board = chesslib.ChessBoard(checkmate_board_pieces)
+    checkmate_draw = chesslib.ChessDraw(checkmate_board,
+        chesslib.ChessPosition('H1'), chesslib.ChessPosition('H8'))
+    checkmate_board = chesslib.ApplyDraw(checkmate_board, checkmate_draw)
 
-#     # prepare a regular position
-#     board_regular = ...
-#     last_draw_regular = ...
+    # test the GameState() function to detect the mate
+    state = chesslib.GameState(checkmate_board, checkmate_draw)
+    assert_equal(state, chesslib.GameState_Checkmate)
 
-#     # prepare a check position
-#     board_check = ...
-#     last_draw_check = ...
+    # TODO: add at least one test for all other game states
 
-#     # prepare a checkmate position
-#     board_checkmate = ...
-#     last_draw_checkmate = ...
+    print("test passed!")
 
-#     # prepare a tie position
-#     board_tie = ...
-#     last_draw_tie = ...
-
-#     # make sure that all game states are detected correctly
-#     assert_equal(chesslib.GameState_None, chesslib.GameState(board_regular, last_draw_regular))
-#     assert_equal(chesslib.GameState_Check, chesslib.GameState(board_check, last_draw_check))
-#     assert_equal(chesslib.GameState_Checkmate, chesslib.GameState(board_checkmate, last_draw_checkmate))
-#     assert_equal(chesslib.GameState_Tie, chesslib.GameState(board_tie, last_draw_tie))
-
-#     print("test passed!")
 
 exp_board_str = \
 """   -----------------------------------------
