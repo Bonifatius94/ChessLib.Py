@@ -279,7 +279,7 @@ static PyMethodDef chesslib_methods[] = {
     {"GameState", chesslib_get_game_state, METH_VARARGS, GameState_Docstring},
 
     /* extensions for data compression */
-    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS, Board_ToHash},
+    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS, Board_ToHash_Docstring},
     {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS, Board_FromHash_Docstring},
 
     /* extensions for data visualization of complex type encodings */
