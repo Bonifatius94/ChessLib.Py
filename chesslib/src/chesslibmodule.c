@@ -169,9 +169,7 @@ Returns:\n\
 
 /* if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &draw_to_apply, &is_simple_board)) { return NULL; } */
 const char ApplyDraw_Docstring[] =
-"ApplyDraw(chessboard: numpy.ndarray,\n\
-    draw_to_apply: int=chesslib.ChessDraw_Null,\n\
-    is_simple_board: bool=False) -> numpy.ndarray\n\
+"ApplyDraw(chessboard: numpy.ndarray, draw_to_apply: int, is_simple_board: bool=False) -> numpy.ndarray\n\
 \n\
 Apply the draw to the given chess board and return the resulting chess board as a new numpy array instance (immutable).\n\
 This function can also revert draws by calling it with the chess board that resulted from applying the draw in the first place.\n\

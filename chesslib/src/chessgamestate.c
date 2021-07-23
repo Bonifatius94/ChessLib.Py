@@ -28,8 +28,10 @@ int can_achieve_checkmate(const Bitboard board[], ChessColor side);
 
 ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw)
 {
+    /* TODO: find the error in this function that causes to not detecting checkmates correctly */
+
     ChessDraw *draws;
-    size_t draws_count;
+    size_t draws_count = 0;
     ChessColor allied_side, enemy_side;
     int can_ally_checkmate, can_enemy_checkmate, is_ally_checked;
     Bitboard enemy_capturable_fields;
@@ -50,7 +52,7 @@ ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw)
     get_all_draws(&draws, &draws_count, board, allied_side, last_draw, 1);
 
     /* find out whether the allied king is checked */
-    enemy_capturable_fields = get_capturable_fields(board, allied_side, last_draw);
+    enemy_capturable_fields = get_capturable_fields(board, enemy_side, last_draw);
     is_ally_checked = (enemy_capturable_fields & board[SIDE_OFFSET(allied_side)]) > 0;
 
     /* none:      ally can draw and is not checked
