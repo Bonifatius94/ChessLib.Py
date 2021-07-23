@@ -50,6 +50,59 @@ def test():
     # see tests/ folder for more examples
 ```
 
+For playing a chess game with randomly selected action, see this example:
+
+```py
+import chesslib
+import numpy as np
+
+
+def choose_action(board, drawing_side, last_draw):
+    poss_actions = chesslib.GenerateDraws(board, drawing_side, last_draw, True)
+    return np.random.choice(poss_actions)
+
+
+def main():
+
+    # init cache variables
+    last_draw = chesslib.ChessDraw_Null
+    board = chesslib.ChessBoard_StartFormation()
+    drawing_side = chesslib.ChessColor_White
+
+    # init game state
+    state = chesslib.GameState_None
+    game_over_states = [chesslib.GameState_Checkmate, chesslib.GameState_Tie]
+
+    # log the start formation to console
+    print('start of game')
+    print(chesslib.VisualizeBoard(board))
+
+    # continue until the game is over
+    while state not in game_over_states:
+
+        # choose an action and apply it to the board
+        next_action = choose_action(board, drawing_side, last_draw)
+        board = chesslib.ApplyDraw(board, next_action)
+
+        # update the cache variables
+        last_draw = next_action
+        drawing_side = 1 - drawing_side # alternate between white and black side
+        state = chesslib.GameState(board, last_draw)
+
+        # log the game progress to console
+        print()
+        print(chesslib.VisualizeDraw(next_action), f'state={state}')
+        print(chesslib.VisualizeBoard(board))
+
+    # log the game's outcome to console
+    winning_side = "black" if drawing_side == chesslib.ChessColor_White else "white"
+    print('tie' if state == chesslib.GameState_Tie else f'{winning_side} player won')
+
+
+if __name__ == '__main__':
+    main()
+```
+
 ## How to Develop
 
 For a quickstart, set up your dev machine as a VM (e.g. Ubuntu 20.04 hosted by VirtualBox). After 
