@@ -53,6 +53,206 @@ static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_
 static ChessDraw deserialize_chessdraw(const Bitboard board[], const ChessDraw draw);
 
 /* =================================================
+             D O C S T R I N G S   F O R
+              P Y T H O N    M O D U L E
+   ================================================= */
+
+/*if (!PyArg_ParseTuple(args, "s", &pos_as_string)) { return NULL; }*/
+const char ChessPosition_Docstring[] =
+"ChessPosition(pos_as_string: str) -> int\n\
+\n\
+Transform the literal chess position representation (e.g. 'A5' or 'H8') to a bitboard index.\n\
+\n\
+Args:\n\
+    pos_as_string: The literal chess position representation (e.g. 'A5' or 'H8') as string\n\
+\n\
+Returns:\n\
+    the bitboard index representing the given field on the chess board as integer/byte";
+
+/* if (!PyArg_ParseTuple(args, "ssi", &color_as_char, &type_as_char, &was_moved)) { return NULL; } */
+const char ChessPiece_Docstring[] =
+"ChessPiece(color_as_char: str, type_as_char: str, was_moved: bool) -> int\n\
+\n\
+Create a chess piece given its color, type and whether it was already moved.\n\
+\n\
+Args:\n\
+    color_as_char: The piece color (i.e. white='W' or black='B') as string, case-insensitive\n\
+    type_as_char: The piece type (i.e. King='K', Queen='Q', Rook='R', Bishop='B', Knight='N', Pawn='P', Invalid/Null='I') as string, case-insensitive\n\
+    was_moved: Indicates whether the piece was already moved\n\
+\n\
+Returns:\n\
+    the chess piece as integer/byte";
+
+/* if (!PyArg_ParseTuple(args, "bb", &piece, &pos)) { return NULL; } */
+const char ChessPieceAtPos_Docstring[] =
+"ChessPieceAtPos(piece: byte, pos: byte) -> int\n\
+\n\
+Create a chess piece given its color, type and whether it was already moved.\n\
+\n\
+Args:\n\
+    piece: The chess piece encoded as a single byte (e.g. using ChessPiece() function)\n\
+    pos: The chess position encoded as a single byte (e.g. using ChessPosition() function)\n\
+\n\
+Returns:\n\
+    the piece@pos attaching positional information to the given chess pice as 16-bit integer";
+
+/* if (!PyArg_ParseTuple(args, "O|i", &pieces_list, &is_simple_board)) { return NULL; } */
+const char ChessBoard_Docstring[] =
+"ChessBoard(pieces_list: byte, is_simple_board: byte=False) -> numpy.ndarray\n\
+\n\
+Create a chess board given a list of chess pieces (including position annotations, i.e. piece@pos type).\n\
+\n\
+Args:\n\
+    pieces_list: The list containing piece@pos entries, defining the chess board to be created. \n\
+    is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    a chess board having all listed pieces at the given positions, encoded as numpy array";
+
+/* if (!PyArg_ParseTuple(args, "|i", &is_simple_board)) { return NULL; } */
+const char ChessBoard_StartFormation_Docstring[] =
+"ChessBoard_StartFormation(is_simple_board: byte=False) -> numpy.ndarray\n\
+\n\
+Create a chess board with all pieces in start formation.\n\
+\n\
+Args:\n\
+    is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    a chess board having all pieces in start formation, encoded as numpy array";
+
+/* if (!PyArg_ParseTuple(args, "Okk|kii", &chessboard, &old_pos, &new_pos, 
+        &prom_type, &is_compact_format, &is_simple_board)) { return NULL; } */
+const char ChessDraw_Docstring[] =
+"ChessDraw(chessboard: numpy.ndarray,\n\
+    old_pos: int,\n\
+    new_pos: int,\n\
+    prom_type: int=0,\n\
+    is_compact_format: bool=False,\n\
+    is_simple_board: bool=False) -> int\n\
+\n\
+Create a chess draw given a chess board and the old/new position of the piece to be moved.\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the current game situation\n\
+    old_pos: The old position of the chess piece to be moved\n\
+    new_pos: The new position of the chess piece to be moved\n\
+    prom_type: The prom. type, in case a pawn hits the last level, defaults to Invalid/Null (see chess piece types)\n\
+    is_compact_format: Indicates whether the draws should be returned as compact draw format, defaults to False\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    a chess draw representing the given draw features, encoded as 32-bit integer (only lowest 16 bits used for the compact draw format)";
+
+/*int is_valid = PyArg_ParseTuple(args, "Ok|iiii", &chessboard, &drawing_side, 
+        &last_draw, &analyze_draw_into_check, &is_compact_format, &is_simple_board);*/
+const char GenerateDraws_Docstring[] =
+"GenerateDraws(chessboard: numpy.ndarray,\n\
+    drawing_side: int,\n\
+    last_draw: int=chesslib.ChessDraw_Null,\n\
+    analyze_draw_into_check: bool=True,\n\
+    is_compact_format: bool=False,\n\
+    is_simple_board: bool=False) -> numpy.ndarray\n\
+\n\
+Generate all possible draws for the given chess board and drawing side\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the current game situation\n\
+    drawing_side: The chess player that is supposed to draw where white=0 and black=1\n\
+    last_draw: The most recent draw made by the opponent - which is important to get the en-passant rule right, defaults to ChessDraw_Null\n\
+    analyze_draw_into_check: Indicates whether draws-into-check should be properly filtered from the output, defaults to True\n\
+    is_compact_format: Indicates whether the draws should be returned as compact draw format, defaults to False\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    a set of all possible draws for the given game situation where each draw is represented by a 32-bit integer, encoded as a numpy array";
+
+/* if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &draw_to_apply, &is_simple_board)) { return NULL; } */
+const char ApplyDraw_Docstring[] =
+"ApplyDraw(chessboard: numpy.ndarray,\n\
+    draw_to_apply: int=chesslib.ChessDraw_Null,\n\
+    is_simple_board: bool=False) -> numpy.ndarray\n\
+\n\
+Apply the draw to the given chess board and return the resulting chess board as a new numpy array instance (immutable).\n\
+This function can also revert draws by calling it with the chess board that resulted from applying the draw in the first place.\n\
+The revertibility feature is strongly related to the underlying implementation using only bitwise XOR operations, so flipping the bits\n\
+twice will result in the original state before applying the draw for the first time.\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the game situation before applying the draw\n\
+    draw_to_apply: The draw to be applied.\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    a new chess board instance having the given draw applied, encoded as numpy array";
+
+/* if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &last_draw, &is_simple_board)) { return NULL; } */
+const char GameState_Docstring[] =
+"GameState(chessboard: numpy.ndarray, last_draw: int, is_simple_board: bool=False) -> int\n\
+\n\
+Determine the current game state given the chess board and the last draw made.\n\
+Possible outcomes are: None='N', Check='C', Checkmate='M', Tie='T' (as single ASCII char values).\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the game situation to be evaluated\n\
+    last_draw: The draw that was applied last\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the game state related to the given game situation, encoded as integer/ASCII byte";
+
+/* if (!PyArg_ParseTuple(args, "O|i", &chessboard, &is_simple_board)) { return NULL; } */
+const char Board_ToHash_Docstring[] =
+"Board_ToHash(chessboard: numpy.ndarray, is_simple_board: bool=False) -> int\n\
+\n\
+Convert the given chess board to a 40-byte hash.\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the game situation to be exported\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the game state related to the given game situation, encoded as integer/ASCII byte";
+
+/* if (!PyArg_ParseTuple(args, "O|i", &hash_orig, &is_simple_board)) { return NULL; } */
+const char Board_FromHash_Docstring[] =
+"Board_FromHash(hash_orig: numpy.ndarray, is_simple_board: bool=False) -> int\n\
+\n\
+Convert the given 40-byte hash to a chess board.\n\
+\n\
+Args:\n\
+    hash_orig: The 40-byte hash representation to be imported\n\
+    is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the game state related to the given game situation, encoded as integer/ASCII byte";
+
+/* if (!PyArg_ParseTuple(args, "O|i", &bitboards, &is_simple_board)) { return NULL; } */
+const char VisualizeBoard_Docstring[] =
+"VisualizeBoard(chessboard: numpy.ndarray, is_simple_board: bool=False) -> str\n\
+\n\
+Visualize the given chess board as a human-readable textual representation.\n\
+\n\
+Args:\n\
+    chessboard: The chess board representing the game situation to be visualized\n\
+    is_simple_board: Indicates whether the given chess board is of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the chess board's human-readable textual representation as ASCII string";
+
+/* if (!PyArg_ParseTuple(args, "i", &draw)) { return NULL; } */
+const char VisualizeDraw_Docstring[] =
+"VisualizeDraw(draw: numpy.ndarray) -> str\n\
+\n\
+Visualize the given chess draw as a human-readable textual representation.\n\
+\n\
+Args:\n\
+    draw: The chess draw to be visualized (needs to be of non-compact format)\n\
+\n\
+Returns:\n\
+    the chess draw's human-readable textual representation as ASCII string";
+
+/* =================================================
                  I N I T I A L I Z E
               P Y T H O N    M O D U L E
    ================================================= */
@@ -62,21 +262,31 @@ static ChessDraw deserialize_chessdraw(const Bitboard board[], const ChessDraw d
 
 #define PY_METHODS_SENTINEL {NULL, NULL, 0, NULL}
 
-/* Define all functions exposed to python. */
+/* define all functions exposed to python */
 static PyMethodDef chesslib_methods[] = {
-    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, "Generate all possible draws for the given position."},
-    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, "Apply the given chess draw to the given chess board (result as new reference)."},
-    {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, "Create a new chess board."},
-    {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, "Create a new chess draw."},
-    {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, "Create a new chess piece."},
-    {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, "Create a new chess position."},
-    {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, "Create a new chess piece including its' position."},
-    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
-    {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS, "Compute the given chess board's hash as string."},
-    {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_VARARGS, "Create a new chess board in start formation."},
-    {"GameState", chesslib_get_game_state, METH_VARARGS, "Determine the game state for the given chess board and side."},
-    {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS, "Transform the chess board instance into a printable string."},
-    {"VisualizeDraw", chesslib_visualize_draw, METH_VARARGS, "Transform the chess draw instance into a printable string."},
+
+    /* data types and structures */
+    {"ChessPosition", chesslib_create_chessposition, METH_VARARGS, ChessPosition_Docstring},
+    {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS, ChessPiece_Docstring},
+    {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS, ChessPieceAtPos_Docstring},
+    {"ChessBoard", chesslib_create_chessboard, METH_VARARGS, ChessBoard_Docstring},
+    {"ChessBoard_StartFormation", chesslib_create_chessboard_startformation, METH_VARARGS, ChessBoard_StartFormation_Docstring},
+    {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS, ChessDraw_Docstring},
+
+    /* core chess logic for gameplay */
+    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS, GenerateDraws_Docstring},
+    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS, ApplyDraw_Docstring},
+    {"GameState", chesslib_get_game_state, METH_VARARGS, GameState_Docstring},
+
+    /* extensions for data compression */
+    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS, Board_ToHash_Docstring},
+    {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS, Board_FromHash_Docstring},
+
+    /* extensions for data visualization of complex type encodings */
+    {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS, VisualizeBoard_Docstring},
+    {"VisualizeDraw", chesslib_visualize_draw, METH_VARARGS, VisualizeDraw_Docstring},
+    /* TODO: add functions for visualizing remaining data structures like chess piece, chess pos, piece@pos */
+
     PY_METHODS_SENTINEL
 };
 /* TODO: enhance those simple description strings with some more pythonic style -> make module interface properly lintable */
@@ -85,7 +295,7 @@ static PyMethodDef chesslib_methods[] = {
 static struct PyModuleDef chesslib_module = {
     PyModuleDef_HEAD_INIT,
     "chesslib",
-    "Python interface for efficient chess draw-gen C library functions",
+    "C-lib Python3 extension for efficient chess draw-gen",
     -1,
     chesslib_methods
 };
@@ -130,7 +340,6 @@ PyMODINIT_FUNC PyInit_chesslib(void)
 /* =================================================
        C R E A T E    D A T A    O B J E C T S
 
-         -    C H E S S    C O L O R
          -    C H E S S    P O S I T I O N
          -    C H E S S    P I E C E
          -    C H E S S    P I E C E    AT   POSITION
@@ -387,6 +596,27 @@ static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args)
 }
 
 /* =================================================
+                 G A M E    S T A T E
+   ================================================= */
+
+static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args)
+{
+    PyObject* chessboard;
+    Bitboard* board;
+    ChessDraw last_draw = DRAW_NULL;
+    ChessGameState state;
+    int is_simple_board = 0;
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &last_draw, &is_simple_board)) { return NULL; }
+    board = deserialize_as_bitboards(chessboard, is_simple_board);
+
+    /* determine the game state */
+    state = get_game_state(board, last_draw);
+    return PyLong_FromUnsignedLong(state);
+}
+
+/* =================================================
                 B O A R D    H A S H
    ================================================= */
 
@@ -439,27 +669,6 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
     return is_simple_board
         ? serialize_as_pieces(simple_board)
         : serialize_as_bitboards(board);
-}
-
-/* =================================================
-                 G A M E    S T A T E
-   ================================================= */
-
-static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args)
-{
-    PyObject* chessboard;
-    Bitboard* board;
-    ChessDraw last_draw = DRAW_NULL;
-    ChessGameState state;
-    int is_simple_board = 0;
-
-    /* parse bitboards as ChessBoard struct */
-    if (!PyArg_ParseTuple(args, "Oi|i", &chessboard, &last_draw, &is_simple_board)) { return NULL; }
-    board = deserialize_as_bitboards(chessboard, is_simple_board);
-
-    /* determine the game state */
-    state = get_game_state(board, last_draw);
-    return PyLong_FromUnsignedLong(state);
 }
 
 /* =================================================
