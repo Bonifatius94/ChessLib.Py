@@ -456,6 +456,51 @@ def test_game_state():
     state = chesslib.GameState(checkmate_board, checkmate_draw)
     assert_equal(state, chesslib.GameState_Checkmate)
 
+    # create a chess board with a stalemate position
+    stalemate_board_pieces = np.array([
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E6')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('C1')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('F7')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+    ], dtype=np.uint16)
+    stalemate_board = chesslib.ChessBoard(stalemate_board_pieces)
+    stalemate_draw = chesslib.ChessDraw(stalemate_board,
+        chesslib.ChessPosition('C1'), chesslib.ChessPosition('D1'))
+    stalemate_board = chesslib.ApplyDraw(stalemate_board, stalemate_draw)
+
+    # test the GameState() function to detect the stalemate as tie
+    state = chesslib.GameState(stalemate_board, stalemate_draw)
+    assert_equal(state, chesslib.GameState_Tie)
+
+    # create a chess board with a position of insufficient pieces for a checkmate
+    insuff_board_pieces = np.array([
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E6')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+    ], dtype=np.uint16)
+    insuff_board = chesslib.ChessBoard(insuff_board_pieces)
+    insuff_draw = chesslib.ChessDraw(stalemate_board,
+        chesslib.ChessPosition('E8'), chesslib.ChessPosition('D8'))
+    insuff_board = chesslib.ApplyDraw(insuff_board, insuff_draw)
+
+    # test the GameState() function to detect the insufficient pieces as tie
+    state = chesslib.GameState(insuff_board, insuff_draw)
+    assert_equal(state, chesslib.GameState_Tie)
+
+    # create a chess board with a simple check that can still be defended
+    check_board_pieces = np.array([
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E1')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('D2')),
+        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+    ], dtype=np.uint16)
+    check_board = chesslib.ChessBoard(check_board_pieces)
+    check_draw = chesslib.ChessDraw(stalemate_board,
+        chesslib.ChessPosition('D2'), chesslib.ChessPosition('E2'))
+    check_board = chesslib.ApplyDraw(check_board, check_draw)
+
+    # test the GameState() function to detect a simple check
+    state = chesslib.GameState(check_board, check_draw)
+    assert_equal(state, chesslib.GameState_Check)
+
     # TODO: add at least one test for all other game states
 
     print("test passed!")
