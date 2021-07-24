@@ -14,43 +14,9 @@ Install the [official Python package](https://pypi.org/project/chesslib/) using 
 pip install chesslib
 ```
 
-Use the chesslib package like in the following example:
-```py
-import chesslib
-import numpy as np
-import random
-
-
-def test():
-
-    # create a new chess board in start formation
-    board = chesslib.ChessBoard_StartFormation()
-    
-    # generate all possible draws
-    draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
-    
-    # apply one of the possible draws
-    draw_to_apply = draws[random.randint(0, len(draws) - 1)]
-    new_board = chesslib.ApplyDraw(board, draw_to_apply)
-    
-    # write the draw's name
-    print(chesslib.VisualizeDraw(draw_to_apply))
-    
-    # visualize the board before / after applying the draw
-    print(chesslib.VisualizeBoard(board))
-    print(chesslib.VisualizeBoard(new_board))
-    
-    # revert the draw (just call ApplyDraw again with the new board)
-    rev_board = chesslib.ApplyDraw(new_board, draw_to_apply)
-    
-    # get the board's 40-byte-hash and create a new board instance from the hash
-    board_hash = chesslib.Board_ToHash(board)
-    board_reloaded = chesslib.Board_FromHash(board_hash)
-    
-    # see tests/ folder for more examples
-```
-
-For playing a chess game with randomly selected action, see this example:
+For implementing a chess AI, see following example applying randomly selected actions
+until the chess game is over. You might use this code snippet and make your AI choose more
+sophisticated actions instead of random ones, that's already it - as simple as that.
 
 ```py
 import chesslib
@@ -103,6 +69,47 @@ if __name__ == '__main__':
     main()
 ```
 
+Following example outlines some of the chesslib API functionality like applying / reverting draws,
+creating board hashes or visualizing boards / draws properly as human-readable texts:
+
+```py
+import chesslib
+import numpy as np
+
+
+def main():
+
+    # create a new chess board in start formation
+    board = chesslib.ChessBoard_StartFormation()
+    
+    # generate all possible draws
+    draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
+    
+    # apply one of the possible draws
+    draw_to_apply = draws[random.randint(0, len(draws) - 1)]
+    new_board = chesslib.ApplyDraw(board, draw_to_apply)
+    
+    # write the draw's name
+    print(chesslib.VisualizeDraw(draw_to_apply))
+    
+    # visualize the board before / after applying the draw
+    print(chesslib.VisualizeBoard(board))
+    print(chesslib.VisualizeBoard(new_board))
+    
+    # revert the draw (just call ApplyDraw again with the new board)
+    rev_board = chesslib.ApplyDraw(new_board, draw_to_apply)
+    
+    # get the board's 40-byte-hash and create a new board instance from the hash
+    board_hash = chesslib.Board_ToHash(board)
+    board_reloaded = chesslib.Board_FromHash(board_hash)
+    
+    # see tests/ folder for more examples
+
+
+if __name__ == '__main__':
+    main()
+```
+
 ## How to Develop
 
 For a quickstart, set up your dev machine as a VM (e.g. Ubuntu 20.04 hosted by VirtualBox). After 
@@ -141,6 +148,8 @@ docker run -v $PWD:/scripts "chesslib-dev" python3 /scripts/test.py
 # debug the GitHub release pipeline
 docker run -v $PWD/dist:/output -v $PWD:/build -it "chesslib-dev" bash
 ```
+
+See the GitHub wiki for more details.
 
 ## Copyright
 This software is available under the MIT licence's terms.
