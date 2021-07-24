@@ -533,7 +533,7 @@ static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args)
     CompactChessDraw *comp_out_draws;
     Bitboard* board; ChessColor drawing_side;
     int analyze_draw_into_check = 0;
-    int is_compact_format = 0; int is_simple_board = 0; int i = 0;
+    int is_compact_format = 0, is_simple_board = 0; size_t i = 0;
 
     /* parse input args */
     int is_valid = PyArg_ParseTuple(args, "Ok|iiii", &chessboard, &drawing_side, 
