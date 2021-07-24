@@ -674,8 +674,6 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
 
 static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 {
-    /* TODO: make sure here's no memory leak */
-
     PyObject* bitboards;
     Bitboard* board;
     char out[18 * 46], buf[6];
@@ -724,19 +722,17 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 
 static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
 {
-    /* TODO: make sure here's no memory leak */
-
     ChessDraw draw;
-    char out[100], buf[100], *old_pos, *new_pos;
+    char out[100], buf[100], old_pos[3], new_pos[3];
     int is_left_side = 0;
 
     /* parse bitboards as ChessBoard struct */
     if (!PyArg_ParseTuple(args, "i", &draw)) { return NULL; }
-    /* TODO: a chessboard is required for context information when only providing compact draws
+    /* info: a chessboard is required for context information when only providing compact draws
              this function only works for non-compact draws*/
 
-    old_pos = position_to_string(get_old_position(draw));
-    new_pos = position_to_string(get_new_position(draw));
+    position_to_string(get_old_position(draw), old_pos);
+    position_to_string(get_new_position(draw), new_pos);
 
     /* determine the chess draw's base representation */
     sprintf(buf, "%s %s %s-%s",
@@ -745,8 +741,6 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
         old_pos,
         new_pos);
     strcpy(out, buf);
-
-    free(old_pos); free(new_pos);
 
     /* append additional information for special draws */
     switch (get_draw_type(draw))

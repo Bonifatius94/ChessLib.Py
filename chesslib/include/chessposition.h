@@ -45,6 +45,6 @@ ChessPosition create_position(int8_t row, int8_t column);
 int8_t get_row(ChessPosition position);
 int8_t get_column(ChessPosition position);
 
-char* position_to_string(ChessPosition position);
+void position_to_string(ChessPosition position, char* pos_str);
 
 #endif
