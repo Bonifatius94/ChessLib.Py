@@ -774,26 +774,38 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
 
 static PyObject* serialize_as_pieces(const ChessPiece simple_board[])
 {
-    /* init a one-dimensional 8-bit integer numpy array with 64 elements */
-    npy_intp dims[1] = { 64 };
+    PyObject* nparray; npy_intp dims[1] = { 64 };
 
+    /* create a heap copy of the chess board */
     ChessPiece* data_copy = create_empty_simple_chessboard();
     if (data_copy == NULL) { return NULL; }
     copy_simple_board(simple_board, data_copy);
 
-    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, data_copy);
+    /* create a new numpy array from the board data */
+    nparray = PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT8, data_copy);
+
+    /* grant data ownership to the numpy array -> no memory leaks */
+    PyArray_ENABLEFLAGS((PyArrayObject*)nparray, NPY_ARRAY_OWNDATA);
+
+    return nparray;
 }
 
 static PyObject* serialize_as_bitboards(const Bitboard board[])
 {
-    /* init a one-dimensional 64-bit integer numpy array with 13 elements */
-    npy_intp dims[1] = { 13 };
+    PyObject* nparray; npy_intp dims[1] = { 13 };
 
+    /* create a heap copy of the chess board */
     Bitboard *data_copy = create_empty_chessboard();
     if (data_copy == NULL) { return NULL; }
     copy_board(board, data_copy);
 
-    return PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT64, data_copy);
+    /* create a new numpy array from the board data */
+    nparray = PyArray_SimpleNewFromData(1, (npy_intp*)dims, NPY_UINT64, data_copy);
+
+    /* grant data ownership to the numpy array -> no memory leaks */
+    PyArray_ENABLEFLAGS((PyArrayObject*)nparray, NPY_ARRAY_OWNDATA);
+
+    return nparray;
 }
 
 static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_board)
