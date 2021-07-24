@@ -32,7 +32,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-/* TODO: try to address the actual warning issue instead of removing the warning */
+/* info: fixing this warning would require to replace makros in the numpy
+         source code which is not appropriate at all -> keep it like that */
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
