@@ -506,7 +506,7 @@ Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side)
 
 void get_board_positions(Bitboard bitboard, ChessPosition* out_positions, size_t* out_length)
 {
-    uint8_t pos; size_t i;
+    uint8_t pos;
     *out_length = 0;
 
     /* loop through all bits of the board */
