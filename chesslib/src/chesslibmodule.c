@@ -287,7 +287,6 @@ static PyMethodDef chesslib_methods[] = {
 
     PY_METHODS_SENTINEL
 };
-/* TODO: enhance those simple description strings with some more pythonic style -> make module interface properly lintable */
 
 /* Define the chesslib python module. */
 static struct PyModuleDef chesslib_module = {
@@ -715,8 +714,6 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
         /* write separator line */
         strcat(out, "\n");
         strcat(out, separator);
-
-        if (row == -1) { return Py_BuildValue("s", out); }
     }
 
     /* write column descriptions */
