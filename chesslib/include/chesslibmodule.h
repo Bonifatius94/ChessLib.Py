@@ -41,12 +41,13 @@
             L O A D   C H E S S   L I B S
    ==================================================== */
 
-#include "chesspiece.h"
-#include "chessposition.h"
 #include "chessboard.h"
-#include "chesspieceatpos.h"
 #include "chessdraw.h"
 #include "chessdrawgen.h"
 #include "chessgamestate.h"
+#include "chesspiece.h"
+#include "chesspieceatpos.h"
+#include "chessposition.h"
+#include "chesstypes.h"
 
 #endif
