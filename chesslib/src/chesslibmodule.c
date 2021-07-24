@@ -287,7 +287,6 @@ static PyMethodDef chesslib_methods[] = {
 
     PY_METHODS_SENTINEL
 };
-/* TODO: enhance those simple description strings with some more pythonic style -> make module interface properly lintable */
 
 /* Define the chesslib python module. */
 static struct PyModuleDef chesslib_module = {
@@ -675,8 +674,6 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args)
 
 static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 {
-    /* TODO: make sure here's no memory leak */
-
     PyObject* bitboards;
     Bitboard* board;
     char out[18 * 46], buf[6];
@@ -715,8 +712,6 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
         /* write separator line */
         strcat(out, "\n");
         strcat(out, separator);
-
-        if (row == -1) { return Py_BuildValue("s", out); }
     }
 
     /* write column descriptions */
@@ -727,19 +722,17 @@ static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args)
 
 static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
 {
-    /* TODO: make sure here's no memory leak */
-
     ChessDraw draw;
-    char out[100], buf[100], *old_pos, *new_pos;
+    char out[100], buf[100], old_pos[3], new_pos[3];
     int is_left_side = 0;
 
     /* parse bitboards as ChessBoard struct */
     if (!PyArg_ParseTuple(args, "i", &draw)) { return NULL; }
-    /* TODO: a chessboard is required for context information when only providing compact draws
+    /* info: a chessboard is required for context information when only providing compact draws
              this function only works for non-compact draws*/
 
-    old_pos = position_to_string(get_old_position(draw));
-    new_pos = position_to_string(get_new_position(draw));
+    position_to_string(get_old_position(draw), old_pos);
+    position_to_string(get_new_position(draw), new_pos);
 
     /* determine the chess draw's base representation */
     sprintf(buf, "%s %s %s-%s",
@@ -748,8 +741,6 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
         old_pos,
         new_pos);
     strcpy(out, buf);
-
-    free(old_pos); free(new_pos);
 
     /* append additional information for special draws */
     switch (get_draw_type(draw))
@@ -776,6 +767,10 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
 /* =================================================
            H E L P E R    F U N C T I O N S
    ================================================= */
+
+/* TODO: add helper function for validating numpy arrays: shape, dtype, ...
+         use something like that:
+            if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8) */
 
 static PyObject* serialize_as_pieces(const ChessPiece simple_board[])
 {
@@ -806,10 +801,7 @@ static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_
     ChessPiece* out_board = NULL;
     PyArrayObject *bitboards, *pieces;
 
-    /* TODO: make sure PyArray_NDIM and PyArray_DTYPE are matching any chess board format */
-
     /* check if the given board can be interpreted as simple format */
-    /*if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8)*/
     if (is_simple_board)
     {
         /* parse simple chess board as ndarray of 64 raw bytes */
@@ -819,7 +811,6 @@ static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_
         out_board = (ChessPiece*)PyArray_DATA(pieces);
     }
     /* check if the given board can be interpreted as bitboards format */
-    /*else if (PyArray_NDIM(bitboards_obj) == 13 && PyArray_DTYPE(bitboards_obj) == NPY_UINT64)*/
     else
     {
         /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */
@@ -836,10 +827,7 @@ static Bitboard* deserialize_as_bitboards(PyObject* bitboards_obj, int is_simple
     Bitboard* out_board = NULL;
     PyArrayObject *bitboards, *pieces;
 
-    /* TODO: make sure PyArray_NDIM and PyArray_DTYPE are matching any chess board format */
-
     /* check if the given board can be interpreted as simple format */
-    /*if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8)*/
     if (is_simple_board)
     {
         /* parse simple chess board as ndarray of 64 raw bytes */
@@ -850,7 +838,6 @@ static Bitboard* deserialize_as_bitboards(PyObject* bitboards_obj, int is_simple
         from_simple_board((ChessPiece*)PyArray_DATA(pieces), out_board);
     }
     /* check if the given board can be interpreted as bitboards format */
-    /*else if (PyArray_NDIM(bitboards_obj) == 13 && PyArray_DTYPE(bitboards_obj) == NPY_UINT64)*/
     else
     {
         /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */

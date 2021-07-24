@@ -28,9 +28,9 @@
             H E L P E R    F U N C T I O N S
    ==================================================== */
 
-void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard bitboards[],
+void get_draws(ChessDraw* out_draws, size_t* out_length, const Bitboard bitboards[],
     ChessColor side, ChessPieceType type, ChessDraw last_draw);
-void eliminate_draws_into_check(ChessDraw** out_draws, size_t* out_length,
+void eliminate_draws_into_check(ChessDraw* out_draws, size_t* out_length,
     const Bitboard board[], ChessColor drawing_side);
 
 Bitboard get_king_draw_positions(const Bitboard bitboards[], ChessColor side, int rochade);
@@ -62,7 +62,6 @@ Bitboard get_peasant_draw_positions(const Bitboard bitboards[],
 void get_all_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[],
     ChessColor drawing_side, ChessDraw last_draw, int analyze_draw_into_check)
 {
-    /* TODO: think of allocating draws as fixed-size stack arrays -> no allocation in get_draws() */
     /* max. possible amount of draws per piece type (considering peasant proms):
           king:    8 ->  1 *  8 =   8
           queen:  28 ->  9 * 28 = 252
@@ -70,22 +69,21 @@ void get_all_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard boa
           bishop: 14 -> 10 * 14 = 140
           knight:  8 -> 10 *  8 =  80
           pawn:    4 ->  8 *  4 =  96 */
-    ChessDraw *king_draws, *queen_draws, *rook_draws,
-              *bishop_draws, *knight_draws, *peasant_draws;
-    size_t king_draws_len, queen_draws_len, rook_draws_len,
-           bishop_draws_len, knight_draws_len, peasant_draws_len;
+    ChessDraw king_draws[8], queen_draws[252], rook_draws[140],
+              bishop_draws[140], knight_draws[80], peasant_draws[96];
+    size_t king_draws_len = 0, queen_draws_len = 0, rook_draws_len = 0,
+           bishop_draws_len = 0, knight_draws_len = 0, peasant_draws_len = 0;
     size_t i, offset = 0;
 
     /* compute the draws for the pieces of each type */
-    get_draws(&king_draws,    &king_draws_len,    board, drawing_side, King,    last_draw);
-    get_draws(&queen_draws,   &queen_draws_len,   board, drawing_side, Queen,   last_draw);
-    get_draws(&rook_draws,    &rook_draws_len,    board, drawing_side, Rook,    last_draw);
-    get_draws(&bishop_draws,  &bishop_draws_len,  board, drawing_side, Bishop,  last_draw);
-    get_draws(&knight_draws,  &knight_draws_len,  board, drawing_side, Knight,  last_draw);
-    get_draws(&peasant_draws, &peasant_draws_len, board, drawing_side, Peasant, last_draw);
+    get_draws(king_draws,    &king_draws_len,    board, drawing_side, King,    last_draw);
+    get_draws(queen_draws,   &queen_draws_len,   board, drawing_side, Queen,   last_draw);
+    get_draws(rook_draws,    &rook_draws_len,    board, drawing_side, Rook,    last_draw);
+    get_draws(bishop_draws,  &bishop_draws_len,  board, drawing_side, Bishop,  last_draw);
+    get_draws(knight_draws,  &knight_draws_len,  board, drawing_side, Knight,  last_draw);
+    get_draws(peasant_draws, &peasant_draws_len, board, drawing_side, Peasant, last_draw);
 
     /* concatenate the draws of the different piece types */
-    /* TODO: think of doing this copying in a more intelligent way */
     *out_length = king_draws_len + queen_draws_len + rook_draws_len
         + bishop_draws_len + knight_draws_len + peasant_draws_len;
     *out_draws = (ChessDraw*)malloc(*out_length * sizeof(ChessDraw));
@@ -95,26 +93,17 @@ void get_all_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard boa
     for (i = 0; i < bishop_draws_len; i++)  { (*out_draws)[offset++] = bishop_draws[i];  }
     for (i = 0; i < knight_draws_len; i++)  { (*out_draws)[offset++] = knight_draws[i];  }
     for (i = 0; i < peasant_draws_len; i++) { (*out_draws)[offset++] = peasant_draws[i]; }
-
-    /* TODO: this will not be required when allocating draws on stack */
-    /* free temporary draws */
-    free(king_draws); free(queen_draws); free(rook_draws);
-    free(bishop_draws); free(knight_draws); free(peasant_draws);
+    /* TODO: think of doing this copying task in a more intelligent way, e.g. memcpy() */
 
     /* if flag is active, only return draws that do not cause draw-into-check */
-    if (analyze_draw_into_check) { eliminate_draws_into_check(out_draws, out_length, board, drawing_side); }
+    if (analyze_draw_into_check) { eliminate_draws_into_check(*out_draws, out_length, board, drawing_side); }
 }
 
-void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
+void eliminate_draws_into_check(ChessDraw* draws_to_validate, size_t* length,
     const Bitboard board[], ChessColor drawing_side)
 {
-    uint8_t side_offset; size_t i, legal_draws_count;
+    uint8_t side_offset; size_t i; ChessColor opponent;
     Bitboard sim_bitboards[13], king_mask, enemy_capturable_fields;
-    ChessColor opponent;
-
-    /* init draws to validate */
-    ChessDraw* draws_to_validate = *out_draws;
-    legal_draws_count = *length;
 
     /* make a working copy of all local bitboards */
     copy_board(board, sim_bitboards);
@@ -123,7 +112,7 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
     opponent = OPPONENT(drawing_side);
 
     /* loop through draws and simulate each draw */
-    for (i = 0; i < legal_draws_count; i++)
+    for (i = 0; i < (*length); i++)
     {
         /* simulate the draw */
         apply_draw(sim_bitboards, draws_to_validate[i]);
@@ -141,23 +130,20 @@ void eliminate_draws_into_check(ChessDraw** out_draws, size_t* length,
            allied king (bitwise AND) -> draw-into-check */
         if ((king_mask & enemy_capturable_fields) > 0)
         {
-            /* overwrite the illegal draw with the last
-               unevaluated draw in the array */
-            draws_to_validate[i--] = draws_to_validate[--legal_draws_count];
+            /* overwrite the illegal draw with the last unevaluated
+               draw in the array and decrement the length counter
+               to basically ignore the illegal draws */
+            draws_to_validate[i--] = draws_to_validate[--(*length)];
         }
     }
-
-    /* remove illegal draws by shrinking the
-       array length and ignoring them */
-    *length = legal_draws_count;
 }
 
-void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[],
+void get_draws(ChessDraw* out_draws, size_t* out_length, const Bitboard board[],
     ChessColor side, ChessPieceType type, ChessDraw last_draw)
 {
     uint8_t index, piece_type;
     size_t count = 0, i, j, drawing_pieces_len = 0, capturable_positions_len = 0;
-    ChessPosition *drawing_pieces, *capturable_positions;
+    ChessPosition drawing_pieces[28], capturable_positions[28]; /* 28 is worst case */
 
     ChessPosition pos;
     Bitboard filter, draw_bitboard;
@@ -165,14 +151,10 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[]
 
     /* determine board index and make sure that there are pieces to be drawn, otherwise quit */
     index = SIDE_OFFSET(side) + PIECE_OFFSET(type);
-    if (board[index] == 0x0uLL) { *out_draws = NULL; *out_length = 0; return; }
+    if (board[index] == 0x0uLL) { *out_length = 0; return; }
 
     /* get drawing pieces */
-    get_board_positions(board[index], &drawing_pieces, &drawing_pieces_len);
-
-    /* init draws result set (max. draws) */
-    *out_draws = (ChessDraw*)malloc(drawing_pieces_len * 28 * sizeof(ChessDraw));
-    /* TODO: don't do the allocation here ... */
+    get_board_positions(board[index], drawing_pieces, &drawing_pieces_len);
 
     /* loop through drawing pieces */
     for (i = 0; i < drawing_pieces_len; i++)
@@ -196,7 +178,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[]
         }
 
         /* extract all capturable positions from the draws bitboard */
-        get_board_positions(draw_bitboard, &capturable_positions, &capturable_positions_len);
+        get_board_positions(draw_bitboard, capturable_positions, &capturable_positions_len);
 
         /* check for peasant promotion */
         contains_peasant_promotion = (type == Peasant && (   /* check for peasant (both cases) */
@@ -211,7 +193,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[]
             {
                 /* add types that the piece can promote to (queen, rook, bishop, knight) */
                 for (piece_type = 2; piece_type < 6; piece_type++) {
-                    (*out_draws)[count++] = create_draw(board, drawing_pieces[i],
+                    out_draws[count++] = create_draw(board, drawing_pieces[i],
                         capturable_positions[j], (ChessPieceType)piece_type);
                 }
             }
@@ -220,7 +202,7 @@ void get_draws(ChessDraw** out_draws, size_t* out_length, const Bitboard board[]
         else
         {
             for (j = 0; j < capturable_positions_len; j++) {
-                (*out_draws)[count++] = create_draw(board, drawing_pieces[i],
+                out_draws[count++] = create_draw(board, drawing_pieces[i],
                     capturable_positions[j], Invalid);
             }
         }
@@ -522,26 +504,16 @@ Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side)
         | bitboards[offset + 3] | bitboards[offset + 4] | bitboards[offset + 5];
 }
 
-void get_board_positions(Bitboard bitboard, ChessPosition** out_positions, size_t* out_length)
+void get_board_positions(Bitboard bitboard, ChessPosition* out_positions, size_t* out_length)
 {
     uint8_t pos;
-    size_t count = 0, i;
-
-    /* init position cache for worst-case */
-    ChessPosition temp_pos[28];
+    *out_length = 0;
 
     /* loop through all bits of the board */
     for (pos = 0; pos < 64; pos++)
     {
-        if ((bitboard & 0x1uLL << pos)) { temp_pos[count++] = (ChessPosition)pos; }
+        if ((bitboard & 0x1uLL << pos)) { out_positions[(*out_length)++] = (ChessPosition)pos; }
     }
-
-    /* copy the positions to the results array (without empty entries) */
-    *out_length = count;
-    *out_positions = (ChessPosition*)malloc(count * sizeof(ChessPosition));
-    /* TODO: don't allocate memory here ... allocate it in the calling function */
-
-    for (i = 0; i < count; i++) { (*out_positions)[i] = temp_pos[i]; }
 }
 
 /**************************************************************************************************
