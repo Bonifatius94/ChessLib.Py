@@ -115,6 +115,8 @@ jobs:
       # TODO: think about splitting up build and upload tasks into two workflows
       #       -> wheels could be stored as artifacts that can be attached to a GitHub release, etc.
 
+      # TODO: add a sdist release targeting systems not supporting manylinux wheels
+
       # upload the manylinux wheel to PyPI using twine
       - name: Upload wheel to PyPI
         run: |

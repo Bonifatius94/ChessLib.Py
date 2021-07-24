@@ -56,6 +56,8 @@ cd /build && $PYTHON_ROOT/pip wheel /build -w /output-out
 echo 'created intermediate wheel file'
 ls /output-out
 
+# TODO: run the unit tests to ensure that everything works as expected
+
 # use the auditwheel tool to convert the wheel into a generic manywheel
 # artifact that gets written to the /output directory 
 auditwheel repair /output-out/chesslib*$PYTHON_VERSION*.whl -w /output
