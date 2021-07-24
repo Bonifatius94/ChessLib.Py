@@ -768,6 +768,10 @@ static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args)
            H E L P E R    F U N C T I O N S
    ================================================= */
 
+/* TODO: add helper function for validating numpy arrays: shape, dtype, ...
+         use something like that:
+            if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8) */
+
 static PyObject* serialize_as_pieces(const ChessPiece simple_board[])
 {
     /* init a one-dimensional 8-bit integer numpy array with 64 elements */
@@ -797,10 +801,7 @@ static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_
     ChessPiece* out_board = NULL;
     PyArrayObject *bitboards, *pieces;
 
-    /* TODO: make sure PyArray_NDIM and PyArray_DTYPE are matching any chess board format */
-
     /* check if the given board can be interpreted as simple format */
-    /*if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8)*/
     if (is_simple_board)
     {
         /* parse simple chess board as ndarray of 64 raw bytes */
@@ -810,7 +811,6 @@ static ChessPiece* deserialize_as_pieces(PyObject* bitboards_obj, int is_simple_
         out_board = (ChessPiece*)PyArray_DATA(pieces);
     }
     /* check if the given board can be interpreted as bitboards format */
-    /*else if (PyArray_NDIM(bitboards_obj) == 13 && PyArray_DTYPE(bitboards_obj) == NPY_UINT64)*/
     else
     {
         /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */
@@ -827,10 +827,7 @@ static Bitboard* deserialize_as_bitboards(PyObject* bitboards_obj, int is_simple
     Bitboard* out_board = NULL;
     PyArrayObject *bitboards, *pieces;
 
-    /* TODO: make sure PyArray_NDIM and PyArray_DTYPE are matching any chess board format */
-
     /* check if the given board can be interpreted as simple format */
-    /*if (PyArray_NDIM(bitboards_obj) == 64 && PyArray_DTYPE(bitboards_obj) == NPY_UINT8)*/
     if (is_simple_board)
     {
         /* parse simple chess board as ndarray of 64 raw bytes */
@@ -841,7 +838,6 @@ static Bitboard* deserialize_as_bitboards(PyObject* bitboards_obj, int is_simple
         from_simple_board((ChessPiece*)PyArray_DATA(pieces), out_board);
     }
     /* check if the given board can be interpreted as bitboards format */
-    /*else if (PyArray_NDIM(bitboards_obj) == 13 && PyArray_DTYPE(bitboards_obj) == NPY_UINT64)*/
     else
     {
         /* parse bitboards as 1-dimensional ndarray of type uint64 and size 13 */
