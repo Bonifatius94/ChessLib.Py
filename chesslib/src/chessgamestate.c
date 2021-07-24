@@ -28,8 +28,6 @@ int can_achieve_checkmate(const Bitboard board[], ChessColor side);
 
 ChessGameState get_game_state(const Bitboard board[], ChessDraw last_draw)
 {
-    /* TODO: find the error in this function that causes to not detecting checkmates correctly */
-
     ChessDraw *draws;
     size_t draws_count = 0;
     ChessColor allied_side, enemy_side;
