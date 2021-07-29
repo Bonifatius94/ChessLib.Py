@@ -331,7 +331,7 @@ uint8_t get_bits_at(const uint8_t data_bytes[], size_t arr_size, int bit_index, 
     /* load data bytes into cache */
     bitOffset = bit_index % 8;
     upper = data_bytes[bit_index / 8];
-    lower = (bit_index / 8 + 1 < arr_size) ? data_bytes[bit_index / 8 + 1] : (uint8_t)0x00;
+    lower = ((size_t)bit_index / 8 + 1 < arr_size) ? data_bytes[bit_index / 8 + 1] : (uint8_t)0x00;
     combined = (uint16_t)((uint16_t)upper << 8) | (lower & 0xFF);
 
     /* cut the desired bits from the combined bytes */

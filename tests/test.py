@@ -23,9 +23,10 @@
 # SOFTWARE.                                                                         #
 # ================================================================================= #
 
-from asserts import assert_true, assert_equal
+import sys
 import chesslib
 import numpy as np
+from asserts import assert_true, assert_equal
 
 
 def test_module():
@@ -170,21 +171,26 @@ def test_create_chessdraw():
     board = chesslib.ChessBoard_StartFormation()
     gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'))
     assert_equal(gen_draw, exp_draw)
+    assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in bitboards format
-    board = chesslib.ChessBoard_StartFormation()
+    # board = chesslib.ChessBoard_StartFormation()
     gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True)
     assert_equal(gen_draw, exp_compact_draw)
+    assert_equal(sys.getrefcount(board), 2)
 
     # standard creation, draw E2-E4 from start formation, board in simple format
     board = chesslib.ChessBoard_StartFormation(True)
     gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, False, True)
     assert_equal(gen_draw, exp_draw)
+    assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in simple format
-    board = chesslib.ChessBoard_StartFormation(True)
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True)
+    # board = chesslib.ChessBoard_StartFormation(True)
+    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True, True)
     assert_equal(gen_draw, exp_compact_draw)
+    print(gen_draw, exp_compact_draw)
+    assert_equal(sys.getrefcount(board), 2)
 
     # TODO: add a peasant prom. test case
 
@@ -227,6 +233,9 @@ def test_create_chessboard():
     board = chesslib.ChessBoard(pieces_at_pos)
     assert_true(np.array_equal(exp_board, board))
 
+    # make sure the pieces@pos reference counters were decremented properly
+    assert_equal(sys.getrefcount(pieces_at_pos), 2)
+
     # define the expected board
     exp_simple_board = np.array([
 		0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -242,6 +251,9 @@ def test_create_chessboard():
     # create the chessboard from pieces at pos array (simple format) and make sure it was created correctly
     simple_board = chesslib.ChessBoard(pieces_at_pos, True)
     assert_true(np.array_equal(exp_simple_board, simple_board))
+
+    # make sure the pieces@pos reference counters were decremented properly
+    assert_equal(sys.getrefcount(pieces_at_pos), 2)
 
     print("test passed!")
 
@@ -303,6 +315,10 @@ def test_drawgen():
     # make sure that simple board and bitboards representation produce the same output
     assert_true(set(draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, False, True)))
 
+    # make sure the board reference counters were decremented properly
+    assert_equal(sys.getrefcount(board), 2)
+    assert_equal(sys.getrefcount(simple_board), 2)
+
     # define the expected draws (16 peasant draws, 4 knight draws)
     expected_draws = np.array([
         18088016, 18088018, 18088341, 18088343, 18350608, 18350616, 18350673, 18350681,
@@ -321,6 +337,10 @@ def test_drawgen():
 
     # make sure that simple board and bitboards representation produce the same output
     assert_true(set(comp_draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True, True)))
+
+    # make sure the board reference counters were decremented properly
+    assert_equal(sys.getrefcount(board), 2)
+    assert_equal(sys.getrefcount(simple_board), 2)
 
     # define the expected draws (only lowest 15 bits of the long draw format)
     expected_comp_draws = expected_draws & 0x7FFF
@@ -346,6 +366,10 @@ def test_apply_draw():
     # try applying the draw
     board_after = chesslib.ApplyDraw(board, draw)
     simple_board_after = chesslib.ApplyDraw(simple_board, draw, True)
+
+    # make sure the board reference counters were decremented properly
+    assert_equal(sys.getrefcount(board), 2)
+    assert_equal(sys.getrefcount(simple_board), 2)
 
     # define the expected board after applying the draw
     exp_board_after = np.array([
@@ -384,6 +408,10 @@ def test_apply_draw():
     rev_board = chesslib.ApplyDraw(board_after, draw)
     simple_rev_board = chesslib.ApplyDraw(simple_board_after, draw, True)
 
+    # make sure the board reference counters were decremented properly
+    assert_equal(sys.getrefcount(board), 2)
+    assert_equal(sys.getrefcount(simple_board), 2)
+
     # make sure that the reverted board is the same as the original board
     assert_true(np.array_equal(board, rev_board))
     assert_true(np.array_equal(simple_board, simple_rev_board))
@@ -403,11 +431,13 @@ def test_board_hash():
     assert_true(np.array_equal(chesslib.Board_ToHash(board), chesslib.Board_ToHash(simple_board, True)))
 
     # compute the board's 40-byte hash
-    hash = bytes(chesslib.Board_ToHash(board))
-    #print(chesslib.Board_ToHash(board))
+    hash = chesslib.Board_ToHash(board)
+    assert_equal(sys.getrefcount(board), 2)
+    hash = chesslib.Board_ToHash(simple_board, True)
+    assert_equal(sys.getrefcount(simple_board), 2)
 
     # define the expected hash
-    exp_hash = bytes([
+    exp_hash = np.array([
         0x19, 0x48, 0x20, 0x90, 0xA3,
         0x31, 0x8C, 0x63, 0x18, 0xC6,
         0x00, 0x00, 0x00, 0x00, 0x00,
@@ -416,22 +446,26 @@ def test_board_hash():
         0x00, 0x00, 0x00, 0x00, 0x00,
         0x73, 0x9C, 0xE7, 0x39, 0xCE,
         0x5B, 0x58, 0xA4, 0xB1, 0xAB
-    ])
+    ], dtype=np.uint8)
 
     # make sure that the computed hash is correct
     assert_true(np.array_equal(exp_hash, hash))
 
     # convert the board's 40-byte hash back to a board instance
-    board_copy = chesslib.Board_FromHash(np.frombuffer(hash, dtype=np.uint8))
+    board_copy = chesslib.Board_FromHash(hash)
 
     # make sure that the board converted from 40-byte hash is the same as the original board
     assert_true(np.array_equal(board_copy, board))
+    assert_equal(sys.getrefcount(hash), 2)
 
     # convert the board's 40-byte hash back to a simple board instance
-    simple_board_copy = chesslib.Board_FromHash(np.frombuffer(hash, dtype=np.uint8), True)
+    simple_board_copy = chesslib.Board_FromHash(hash, True)
 
     # make sure that the board converted from 40-byte hash is the same as the original simple board
     assert_true(np.array_equal(simple_board_copy, simple_board))
+    assert_equal(sys.getrefcount(hash), 2)
+
+    # TODO: figure out why np.frombuffer(hash) causes a segfault when reading ndarray bytes
 
     print("test passed!")
 
@@ -626,5 +660,5 @@ def test_visualize_draw():
     # TODO: add more tests for edge cases (rochade, en-passant, promotion)
 
 
-# run all tests
-test_module()
+if __name__ == '__main__':
+    test_module()
