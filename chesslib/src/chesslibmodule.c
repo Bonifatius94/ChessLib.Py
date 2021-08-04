@@ -472,7 +472,7 @@ static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args, PyOb
     uint8_t count = 0;
     Bitboard board[13]; ChessPiece simple_board[64];
     int is_simple_board = 0;
-    static char* kwlist[] = {"board", "is_simple", NULL};
+    static char* kwlist[] = {"pieces_list", "is_simple", NULL};
 
     /* parse all args */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|i", kwlist,
