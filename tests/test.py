@@ -79,7 +79,7 @@ def test_chessposition():
         for col in range(8):
             # test the creation of a new chessposition of the given (row, column) tuple
             pos_string = col_chars[col] + str(row + 1)
-            pos = chesslib.ChessPosition(pos_string)
+            pos = chesslib.ChessPosition(pos_as_str=pos_string)
 
             # make sure that the position's numeric value is equal to the expected index
             assert_equal(pos, row * 8 + col)
@@ -101,7 +101,7 @@ def test_chesspiece():
                 # test the creation of the new chesspiece
                 color_char = 'W' if color == 0 else 'B'
                 type_char = piece_type_chars[type]
-                piece = chesslib.ChessPiece(color_char, type_char, was_moved)
+                piece = chesslib.ChessPiece(color=color_char, piece_type=type_char, was_moved=was_moved)
 
                 # make sure that the numeric value is correctly encoded
                 assert_equal(piece, type + 8 * color + 16 * was_moved)
@@ -136,7 +136,7 @@ def test_chesspieceatpos():
                         piece = chesslib.ChessPiece(color_char, type_char, was_moved)
 
                         # test the creation of a pieceatpos struct with the given piece and pos
-                        piece_at_pos = chesslib.ChessPieceAtPos(piece, pos)
+                        piece_at_pos = chesslib.ChessPieceAtPos(piece=piece, pos=pos)
 
                         # make sure that the numeric value of pieceatpos is correctly encoded
                         assert_equal(piece_at_pos, pos * 32 + piece)
@@ -169,25 +169,25 @@ def test_create_chessdraw():
 
     # standard creation, draw E2-E4 from start formation, board in bitboards format
     board = chesslib.ChessBoard_StartFormation()
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'))
+    gen_draw = chesslib.ChessDraw(board=board, old_pos=chesslib.ChessPosition('E2'), new_pos=chesslib.ChessPosition('E4'))
     assert_equal(gen_draw, exp_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in bitboards format
     # board = chesslib.ChessBoard_StartFormation()
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True)
+    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), is_compact_draw=True)
     assert_equal(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # standard creation, draw E2-E4 from start formation, board in simple format
     board = chesslib.ChessBoard_StartFormation(True)
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, False, True)
+    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), is_simple=True)
     assert_equal(gen_draw, exp_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in simple format
     # board = chesslib.ChessBoard_StartFormation(True)
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True, True)
+    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), is_compact_draw=True, is_simple=True)
     assert_equal(gen_draw, exp_compact_draw)
     print(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
@@ -230,7 +230,7 @@ def test_create_chessboard():
     ], dtype=np.uint64)
 
     # create the chessboard from pieces at pos array and make sure it was created correctly
-    board = chesslib.ChessBoard(pieces_at_pos)
+    board = chesslib.ChessBoard(pieces_list=pieces_at_pos)
     assert_true(np.array_equal(exp_board, board))
 
     # make sure the pieces@pos reference counters were decremented properly
@@ -249,7 +249,7 @@ def test_create_chessboard():
     ], dtype=np.uint8)
 
     # create the chessboard from pieces at pos array (simple format) and make sure it was created correctly
-    simple_board = chesslib.ChessBoard(pieces_at_pos, True)
+    simple_board = chesslib.ChessBoard(pieces_at_pos, is_simple=True)
     assert_true(np.array_equal(exp_simple_board, simple_board))
 
     # make sure the pieces@pos reference counters were decremented properly
@@ -297,7 +297,7 @@ def test_chessboard_start():
     ], dtype=np.uint8)
 
     # test if the expected board in start formation is returned
-    simple_start = chesslib.ChessBoard_StartFormation(True)
+    simple_start = chesslib.ChessBoard_StartFormation(is_simple=True)
     assert_true(np.array_equal(simple_start, exp_simple_start_formation))
 
     print("test passed!")
@@ -310,10 +310,10 @@ def test_drawgen():
     # get all draws for starting position (white side)
     board = chesslib.ChessBoard_StartFormation()
     simple_board = chesslib.ChessBoard_StartFormation(True)
-    draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
+    draws = chesslib.GenerateDraws(board=board, drawing_side=chesslib.ChessColor_White, last_draw=chesslib.ChessDraw_Null, analyze_check=True)
 
     # make sure that simple board and bitboards representation produce the same output
-    assert_true(set(draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, False, True)))
+    assert_true(set(draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, is_simple=True)))
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -333,7 +333,7 @@ def test_drawgen():
     print("testing draw-gen (compact draws)")
 
     # get all draws for starting position (white side)
-    comp_draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True)
+    comp_draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, is_compact_draw=True)
 
     # make sure that simple board and bitboards representation produce the same output
     assert_true(set(comp_draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True, True)))
@@ -365,7 +365,7 @@ def test_apply_draw():
 
     # try applying the draw
     board_after = chesslib.ApplyDraw(board, draw)
-    simple_board_after = chesslib.ApplyDraw(simple_board, draw, True)
+    simple_board_after = chesslib.ApplyDraw(board=simple_board, draw=draw, is_simple=True)
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -431,9 +431,9 @@ def test_board_hash():
     assert_true(np.array_equal(chesslib.Board_ToHash(board), chesslib.Board_ToHash(simple_board, True)))
 
     # compute the board's 40-byte hash
-    hash = chesslib.Board_ToHash(board)
+    hash = chesslib.Board_ToHash(board=board)
     assert_equal(sys.getrefcount(board), 2)
-    hash = chesslib.Board_ToHash(simple_board, True)
+    hash = chesslib.Board_ToHash(simple_board, is_simple=True)
     assert_equal(sys.getrefcount(simple_board), 2)
 
     # define the expected hash
@@ -452,14 +452,14 @@ def test_board_hash():
     assert_true(np.array_equal(exp_hash, hash))
 
     # convert the board's 40-byte hash back to a board instance
-    board_copy = chesslib.Board_FromHash(hash)
+    board_copy = chesslib.Board_FromHash(hash=hash)
 
     # make sure that the board converted from 40-byte hash is the same as the original board
     assert_true(np.array_equal(board_copy, board))
     assert_equal(sys.getrefcount(hash), 2)
 
     # convert the board's 40-byte hash back to a simple board instance
-    simple_board_copy = chesslib.Board_FromHash(hash, True)
+    simple_board_copy = chesslib.Board_FromHash(hash=hash, is_simple=True)
 
     # make sure that the board converted from 40-byte hash is the same as the original simple board
     assert_true(np.array_equal(simple_board_copy, simple_board))
@@ -487,7 +487,7 @@ def test_game_state():
     checkmate_board = chesslib.ApplyDraw(checkmate_board, checkmate_draw)
 
     # test the GameState() function to detect the mate
-    state = chesslib.GameState(checkmate_board, checkmate_draw)
+    state = chesslib.GameState(board=checkmate_board, last_draw=checkmate_draw)
     assert_equal(state, chesslib.GameState_Checkmate)
 
     # create a chess board with a stalemate position
@@ -631,7 +631,7 @@ def test_visualize_board():
     simple_board = chesslib.ChessBoard_StartFormation(True)
 
     # convert the board to a printable string
-    board_str = chesslib.VisualizeBoard(board)
+    board_str = chesslib.VisualizeBoard(board=board)
 
     # make sure that the simple board and bitboards representations produce the same output
     assert_equal(board_str, chesslib.VisualizeBoard(simple_board, True))
@@ -650,7 +650,7 @@ def test_visualize_draw():
     draw = 0x0118070C
 
     # convert the board to a printable string
-    draw_str = chesslib.VisualizeDraw(draw)
+    draw_str = chesslib.VisualizeDraw(draw=draw)
 
     # make sure that the expected content is retrieved
     assert_equal(draw_str, 'White Peasant E4-E2')
