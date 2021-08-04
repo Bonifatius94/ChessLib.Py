@@ -34,11 +34,18 @@ static PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args,
 static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_create_startformation(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args, PyObject *keywds);
+
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args, PyObject *keywds);
-static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args, PyObject *keywds);
-static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args, PyObject *keywds);
+
+static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds);
+
 static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args, PyObject *keywds);
 
@@ -720,8 +727,44 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObje
 
     /* signal python that the PyObject is no longer used by this function */
     Py_DecRef(hash_orig);
-    
+
     return chessboard;
+}
+
+/* =================================================
+            E X C H A N G E   F O R M A T S
+   ================================================= */
+
+static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
+    /* FEN structure:
+         1) positions of pieces
+         2) drawing side
+         3) possible rochades
+         4) possible en-passants
+         5) half-draws since last peasant draw
+         6) round no.
+     */
+
+    /* generate a board from FEN pieces list */
+
+    /* set was_moved flags for kings / rooks */
+}
+
+static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
+}
+
+static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
+}
+
+static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
 }
 
 /* =================================================
