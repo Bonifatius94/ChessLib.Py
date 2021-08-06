@@ -26,9 +26,9 @@
 
 /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
 
-int chess_board_from_fen(const char fen_str[], Bitboard* board)
+int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t i = 0; char temp = '\0'; size_t sep_count = 0;
+    size_t i = 0, sep_count = 0; char temp = '\0'; int is_terminal = 0;
     ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
 
     /* parse the first FEN section (positions of pieces on the board) */
@@ -39,53 +39,87 @@ int chess_board_from_fen(const char fen_str[], Bitboard* board)
 
         switch (temp)
         {
-            /* handle ignored valid characters (do nothing) */
-            case ' ': case '\0': break;
+            /* handle termination character */
+            case ' ': if (!is_terminal) { return 0; } break;
 
             /* ensure that the row bounds are not violated */
             case '/': if (pos != ++sep_count * 8) { return 0; } break;
 
-            /* handle empty fields declaration (increment position) */
+            /* handle empty fields declaration */
             case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8':
                 pos += (ChessPosition)(temp - '0'); break;
 
-            /* handle a piece to be put on the chess board */
+            /* put another piece on the chess board */
             case 'K': case 'Q': case 'R': case 'B': case 'N': case 'P':
             case 'k': case 'q': case 'r': case 'b': case 'n': case 'p':
                 color = (ChessColor)(isupper(temp) ? White : Black);
                 type = piece_type_from_char(temp);
                 was_moved = START_POSITIONS & (1uLL << pos) ? 0 : 1;
-                board[pos++] = create_piece(type, color, was_moved);
+                session->board[pos++] = create_piece(type, color, was_moved);
                 break;
 
             /* handle invalid / unexpected characters */
             default: return 0;
         }
 
-    /* loop until the end of the FEN string's first section */
-    } while (temp != '\0' && temp != ' ');
+        /* check if the next state is supposed to be terminal */
+        is_terminal = pos == 64 && sep_count == 7;
 
-    /* make sure that parsing the first section was successful */
-    if (temp != ' ' || pos != 64 || sep_count != 7) { return 0; }
+    /* loop until the end of the FEN string's first section */
+    } while (temp != ' ');
 
     /* parse the second FEN section (possible castlings) */
-    
+
+    /* disable all rochades (enable them gradually if they are still possible) */
+    session->board[12] |= FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8;
+
+    /* handle case with no castlings */
+    if (fen_str[i] == '-' && fen_str[i+1] == ' ') { /* do nothing */ }
+    else
+    {
+        /* enable castlings (ensure the correct order) */
+        if (fen_str[i] == 'K') { session->board[12] &= ~FIELD_H1; i++; }
+        if (fen_str[i] == 'Q') { session->board[12] &= ~FIELD_A1; i++; }
+        if (fen_str[i] == 'k') { session->board[12] &= ~FIELD_H8; i++; }
+        if (fen_str[i] == 'q') { session->board[12] &= ~FIELD_A8; i++; }
+
+        /* ensure that any rochade is possible and the terminal symbol is hit */
+        if (!(~(session->board[12]) & ~(FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8)
+            && fen_str[i] == 'q')) { return 0; }
+    }
+
+    /* info: the third FEN section (en-passant) can be skipped */
+    /* TODO: skip the en-passant section properly */
+
+    /* parse the fourth FEN section (halfdraws since last pawn draw) */
+    do
+    {
+        temp = fen_str[i++];
+
+        switch (temp)
+        {
+
+        }
+
+    } while (() != ' ' && temp != '\0');
+
+    /* parse the fifth FEN section (game round) */
 
     return 1;
 }
 
 int chess_board_to_fen(char** fen_str, const ChessGameSession session[])
 {
-
+    /* TODO: implement logic */
 }
 
 int chess_draw_from_pgn(const char fen_str[], Bitboard* board)
 {
-
+    /* TODO: implement logic */
 }
 
 int chess_draw_to_pgn(char** fen_str, Bitboard* board)
 {
-
+    /* TODO: implement logic */
 }
