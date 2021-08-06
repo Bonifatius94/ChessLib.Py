@@ -440,21 +440,7 @@ static PyObject* chesslib_create_startformation(PyObject* self, PyObject* args, 
     static char* kwlist[] = {"is_simple", NULL};
 
     /* create the chess board */
-    const Bitboard start_formation[] = {
-        0x0000000000000010uLL, /* white king     */
-        0x0000000000000008uLL, /* white queen(s) */
-        0x0000000000000081uLL, /* white rooks    */
-        0x0000000000000024uLL, /* white bishops  */
-        0x0000000000000042uLL, /* white knights  */
-        0x000000000000FF00uLL, /* white pawns    */
-        0x1000000000000000uLL, /* black king     */
-        0x0800000000000000uLL, /* black queen(s) */
-        0x8100000000000000uLL, /* black rooks    */
-        0x2400000000000000uLL, /* black bishops  */
-        0x4200000000000000uLL, /* black knights  */
-        0x00FF000000000000uLL, /* black pawns    */
-        0x0000FFFFFFFF0000uLL  /* was_moved mask */
-    };
+    const Bitboard start_formation[] = START_FORMATION
 
     /* parse all args */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i", kwlist, &is_simple_board)) { return NULL; }
@@ -748,6 +734,7 @@ static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObjec
      */
 
     /* generate a board from FEN pieces list */
+
 
     /* set was_moved flags for kings / rooks */
 }
