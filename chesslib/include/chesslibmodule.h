@@ -49,5 +49,6 @@
 #include "chesspieceatpos.h"
 #include "chessposition.h"
 #include "chesstypes.h"
+#include "chessxformat.h"
 
 #endif
