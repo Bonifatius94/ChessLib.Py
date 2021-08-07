@@ -33,15 +33,17 @@
 /* A chess game session semantically at least as powerful as the FEN notation.
    It is supposed to help carrying out professional chess matches. */
 typedef struct _CHESS_GAME_SESSION {
-   Bitboard board[13] = START_FORMATION;
-   ChessColor drawing_side = White;
-   int halfdraws_since_last_pawn_draw = 0;
-   int game_round = 1;
+   Bitboard board[13];
+   ChessColor drawing_side;
+   int halfdraws_since_last_pawn_draw;
+   int game_round;
 } ChessGameSession;
 
-int chess_board_from_fen(const char fen_str[], Bitboard* board);
-int chess_board_to_fen(char** fen_str, const ChessGameSession session[]);
+#define INIT_GAME_SESSION {START_FORMATION, White, 0, 1}
+
+int chess_board_from_fen(const char fen_str[], ChessGameSession* session);
+int chess_board_to_fen(char** fen_str, const ChessGameSession* session);
 int chess_draw_from_pgn(const char fen_str[], Bitboard* board);
-void chess_draw_to_pgn(char** fen_str, Bitboard* board);
+int chess_draw_to_pgn(char** fen_str, Bitboard* board);
 
 #endif

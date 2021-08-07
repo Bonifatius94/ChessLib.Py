@@ -26,9 +26,20 @@
 
 /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
 
+int parse_uint(char* value_str, int* out_value, char term)
+{
+    int value = 0; size_t i = 0;
+
+    while (isdigit(value_str[i]) && value_str[i] != term)
+    { value = value * 10 + (value_str[i] - '0'); i++; }
+
+    *out_value = value;
+    return value_str[i] == term ? i : -1;
+}
+
 int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t i = 0, sep_count = 0; char temp = '\0'; int is_terminal = 0;
+    size_t i = 0, sep_count = 0; char temp = '\0'; int is_terminal = 0, len = 0;
     ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
 
     /* parse the first FEN section (positions of pieces on the board) */
@@ -85,41 +96,38 @@ int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
         if (fen_str[i] == 'q') { session->board[12] &= ~FIELD_A8; i++; }
 
         /* ensure that any rochade is possible and the terminal symbol is hit */
-        if (!(~(session->board[12]) & ~(FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8)
-            && fen_str[i] == 'q')) { return 0; }
+        if (!((~session->board[12] & (FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8))
+            && fen_str[i] == ' ')) { return 0; }
     }
 
     /* info: the third FEN section (en-passant) can be skipped */
-    /* TODO: skip the en-passant section properly */
+    while ((temp = fen_str[i++]) != '\0' && temp != ' ') { }
 
     /* parse the fourth FEN section (halfdraws since last pawn draw) */
-    do
-    {
-        temp = fen_str[i++];
-
-        switch (temp)
-        {
-
-        }
-
-    } while (() != ' ' && temp != '\0');
+    len = parse_uint(fen_str + i, &(session->halfdraws_since_last_pawn_draw), ' ');
+    if (len > 0) { i += len + 1; } else { return 0; }
 
     /* parse the fifth FEN section (game round) */
+    len = parse_uint(fen_str + i, &(session->game_round), '\0');
+    if (len <= 0) { return 0; }
 
     return 1;
 }
 
-int chess_board_to_fen(char** fen_str, const ChessGameSession session[])
+int chess_board_to_fen(char** fen_str, const ChessGameSession* session)
 {
     /* TODO: implement logic */
+    return 0;
 }
 
 int chess_draw_from_pgn(const char fen_str[], Bitboard* board)
 {
     /* TODO: implement logic */
+    return 0;
 }
 
 int chess_draw_to_pgn(char** fen_str, Bitboard* board)
 {
     /* TODO: implement logic */
+    return 0;
 }
