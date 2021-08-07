@@ -22,21 +22,34 @@
  * SOFTWARE.
  */
 
-#ifndef CHESSXFORMAT_H
-#define CHESSXFORMAT_H
+#ifndef CHESSGAMESESSION_H
+#define CHESSGAMESESSION_H
 
-#include <stdlib.h>
-#include <string.h>
 #include "chesstypes.h"
-#include "chesspiece.h"
 #include "chessboard.h"
-#include "chessgamesession.h"
+#include "chessdraw.h"
 
-/* TODO: move the board hashing code here */
+/* A chess game session semantically at least as powerful as the FEN notation.
+   It is supposed to help carrying out professional chess matches. */
+typedef struct _CHESS_GAME_SESSION {
+   Bitboard board[13];
+   ChessGameContext context;
+} ChessGameSession;
 
-int chess_board_from_fen(const char fen_str[], ChessGameSession* session);
-int chess_board_to_fen(char** fen_str, const ChessGameSession* session);
-int chess_draw_from_pgn(const char fen_str[], Bitboard* board);
-int chess_draw_to_pgn(char** fen_str, Bitboard* board);
+/* default game context bits: 00000000 00001000 00011110 00000000 */
+#define DEFAULT_GAME_CONTEXT 0x00081E00uL
+
+/* inital game session: board in start formation and initial game context */
+#define INIT_GAME_SESSION {START_FORMATION, DEFAULT_GAME_CONTEXT}
+
+ChessGameContext create_context(ChessColor side, uint8_t en_passants,
+    uint8_t rochades, uint8_t halfdraws_since_last_pawn_draw, int game_round);
+
+Bitboard get_en_passant_mask(ChessGameContext context);
+Bitboard get_rochade_mask(ChessGameContext context);
+uint8_t get_hdslpd(ChessGameContext context);
+int get_game_rounds(ChessGameContext context);
+
+void apply_draw(ChessDraw draw, ChessGameContext* context);
 
 #endif

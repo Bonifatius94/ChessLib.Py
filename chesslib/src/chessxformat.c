@@ -26,20 +26,35 @@
 
 /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
 
+/* Parse a positive integer value from the given decimal numeric string
+   and return the length of the characters parsed (return -1 on format error). */
 int parse_uint(char* value_str, int* out_value, char term)
 {
     int value = 0; size_t i = 0;
 
-    while (isdigit(value_str[i]) && value_str[i] != term)
+    /* make sure there are no heading zeros for non-zero values */
+    if (value_str[i] == '0' && value_str[i+1] != term) { return -1; }
+
+    /* parse the uint value from decimal notation */
+    while (isdigit(value_str[i]) && value_str[i] != term && value_str[i] != '\0')
     { value = value * 10 + (value_str[i] - '0'); i++; }
 
     *out_value = value;
     return value_str[i] == term ? i : -1;
 }
 
-int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
+/* Look up the next appearance of the given character in the given zero-terminated string.
+   Return -1 if the string does not contain the character searched. */
+int str_index_of(char* search_str, char find)
 {
-    size_t i = 0, sep_count = 0; char temp = '\0'; int is_terminal = 0, len = 0;
+    size_t i = 0; char temp;
+    while ((temp = search_str[i++]) != find && temp != '\0') { }
+    return temp == find ? i - 1 : -1;
+}
+
+int parse_first_fen_section(const char fen_str[], Bitboard* board)
+{
+    size_t i = 0, sep_count = 0; char temp; int is_terminal = 0;
     ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
 
     /* parse the first FEN section (positions of pieces on the board) */
@@ -51,7 +66,7 @@ int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
         switch (temp)
         {
             /* handle termination character */
-            case ' ': if (!is_terminal) { return 0; } break;
+            case '\0': if (!is_terminal) { return 0; } break;
 
             /* ensure that the row bounds are not violated */
             case '/': if (pos != ++sep_count * 8) { return 0; } break;
@@ -78,36 +93,78 @@ int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
         is_terminal = pos == 64 && sep_count == 7;
 
     /* loop until the end of the FEN string's first section */
-    } while (temp != ' ');
+    } while (temp != '\0');
 
-    /* parse the second FEN section (possible castlings) */
+    return 1;
+}
 
-    /* disable all rochades (enable them gradually if they are still possible) */
-    session->board[12] |= FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8;
+int parse_second_fen_section(const char fen_str[], GameContext* context)
+{
+    ChessColor color = color_from_char(fen_str[0]);
+    *context ^= (GameContext)(color & 0x1); /* TODO: use a function for this assignment */
+    if (fen_str[1] != '\0') { return 0; }
+    return 1;
+}
+
+int parse_third_fen_section(const char fen_str[], Bitboard* board)
+{
+    size_t i = 0;
+
+    /* disable all rochades (enable them explicitly if they are possible) */
+    board[12] |= FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8;
 
     /* handle case with no castlings */
-    if (fen_str[i] == '-' && fen_str[i+1] == ' ') { /* do nothing */ }
+    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* do nothing */ }
     else
     {
         /* enable castlings (ensure the correct order) */
-        if (fen_str[i] == 'K') { session->board[12] &= ~FIELD_H1; i++; }
-        if (fen_str[i] == 'Q') { session->board[12] &= ~FIELD_A1; i++; }
-        if (fen_str[i] == 'k') { session->board[12] &= ~FIELD_H8; i++; }
-        if (fen_str[i] == 'q') { session->board[12] &= ~FIELD_A8; i++; }
+        if (fen_str[i] == 'K') { board[12] &= ~FIELD_H1; i++; }
+        if (fen_str[i] == 'Q') { board[12] &= ~FIELD_A1; i++; }
+        if (fen_str[i] == 'k') { board[12] &= ~FIELD_H8; i++; }
+        if (fen_str[i] == 'q') { board[12] &= ~FIELD_A8; i++; }
 
         /* ensure that any rochade is possible and the terminal symbol is hit */
-        if (!((~session->board[12] & (FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8))
-            && fen_str[i] == ' ')) { return 0; }
+        if (!((~board[12] & (FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8))
+            && fen_str[i] == '\0')) { return 0; }
     }
 
-    /* info: the third FEN section (en-passant) can be skipped */
+    return 1;
+}
+
+int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
+{
+    size_t start = 0, end = 0;
+    char temp_str[54];
+
+    /* create a carbon copy of the fen string (that can be safely modified) */
+    strcpy(temp_str, fen_str);
+
+    /* parse the first FEN section (positions of pieces on the board) */
+    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_first_fen_section(temp_str, session->board)) { return 0; }
+    temp_str += end + 1;
+
+    /* parse the second FEN section (drawing side) */
+    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_second_fen_section(temp_str, session->board)) { return 0; }
+    temp_str += end + 1;
+
+    /* parse the third FEN section (possible castlings) */
+    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_second_fen_section(temp_str, session->board)) { return 0; }
+    temp_str += end + 1;
+
+    /* info: the fourth FEN section (en-passant) can be skipped */
     while ((temp = fen_str[i++]) != '\0' && temp != ' ') { }
 
-    /* parse the fourth FEN section (halfdraws since last pawn draw) */
+    /* parse the fifth FEN section (halfdraws since last pawn draw) */
     len = parse_uint(fen_str + i, &(session->halfdraws_since_last_pawn_draw), ' ');
     if (len > 0) { i += len + 1; } else { return 0; }
 
-    /* parse the fifth FEN section (game round) */
+    /* parse the sixth FEN section (game round) */
     len = parse_uint(fen_str + i, &(session->game_round), '\0');
     if (len <= 0) { return 0; }
 
