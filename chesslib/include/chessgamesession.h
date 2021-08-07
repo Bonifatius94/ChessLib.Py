@@ -50,6 +50,6 @@ Bitboard get_rochade_mask(ChessGameContext context);
 uint8_t get_hdslpd(ChessGameContext context);
 int get_game_rounds(ChessGameContext context);
 
-void apply_draw(ChessDraw draw, ChessGameContext* context);
+void apply_draw_to_context(ChessDraw draw, ChessGameContext* context);
 
 #endif

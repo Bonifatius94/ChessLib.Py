@@ -56,6 +56,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
 {
     size_t i = 0, sep_count = 0; char temp; int is_terminal = 0;
     ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
+    ChessPiece simple_board[64];
 
     /* parse the first FEN section (positions of pieces on the board) */
     do
@@ -82,7 +83,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
                 color = (ChessColor)(isupper(temp) ? White : Black);
                 type = piece_type_from_char(temp);
                 was_moved = START_POSITIONS & (1uLL << pos) ? 0 : 1;
-                session->board[pos++] = create_piece(type, color, was_moved);
+                simple_board[pos++] = create_piece(type, color, was_moved);
                 break;
 
             /* handle invalid / unexpected characters */
@@ -95,46 +96,50 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
     /* loop until the end of the FEN string's first section */
     } while (temp != '\0');
 
+    /* convert the simple board to a bitboard representation */
+    from_simple_board(simple_board, board);
+
     return 1;
 }
 
-int parse_second_fen_section(const char fen_str[], GameContext* context)
+int parse_second_fen_section(const char fen_str[], ChessGameContext* context)
 {
     ChessColor color = color_from_char(fen_str[0]);
-    *context ^= (GameContext)(color & 0x1); /* TODO: use a function for this assignment */
+    *context = (*context & ~0x1uL) | color;
     if (fen_str[1] != '\0') { return 0; }
     return 1;
 }
 
-int parse_third_fen_section(const char fen_str[], Bitboard* board)
+int parse_third_fen_section(const char fen_str[], ChessGameContext* context)
 {
-    size_t i = 0;
-
-    /* disable all rochades (enable them explicitly if they are possible) */
-    board[12] |= FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8;
+    size_t i = 0; uint8_t poss_rochades = 0xF;
 
     /* handle case with no castlings */
     if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* do nothing */ }
+
+    /* handle case with rochades */
     else
     {
         /* enable castlings (ensure the correct order) */
-        if (fen_str[i] == 'K') { board[12] &= ~FIELD_H1; i++; }
-        if (fen_str[i] == 'Q') { board[12] &= ~FIELD_A1; i++; }
-        if (fen_str[i] == 'k') { board[12] &= ~FIELD_H8; i++; }
-        if (fen_str[i] == 'q') { board[12] &= ~FIELD_A8; i++; }
+        if (fen_str[i] == 'K') { poss_rochades ^= 0x2; i++; }
+        if (fen_str[i] == 'Q') { poss_rochades ^= 0x1; i++; }
+        if (fen_str[i] == 'k') { poss_rochades ^= 0x8; i++; }
+        if (fen_str[i] == 'q') { poss_rochades ^= 0x4; i++; }
 
         /* ensure that any rochade is possible and the terminal symbol is hit */
-        if (!((~board[12] & (FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8))
-            && fen_str[i] == '\0')) { return 0; }
+        if (!poss_rochades || fen_str[i] != '\0') { return 0; }
     }
+
+    /* TODO: apply the parsed rochades to the game context */
 
     return 1;
 }
 
 int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t start = 0, end = 0;
-    char temp_str[54];
+    size_t start = 0, end = 0; char temp; size_t len, i = 0;
+    char cache[54]; char* temp_str = cache;
+    ChessGameContext context = session->context;
 
     /* create a carbon copy of the fen string (that can be safely modified) */
     strcpy(temp_str, fen_str);
@@ -148,13 +153,13 @@ int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
     /* parse the second FEN section (drawing side) */
     if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
     temp_str[end] = '\0';
-    if (!parse_second_fen_section(temp_str, session->board)) { return 0; }
+    if (!parse_second_fen_section(temp_str, session->context)) { return 0; }
     temp_str += end + 1;
 
     /* parse the third FEN section (possible castlings) */
     if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
     temp_str[end] = '\0';
-    if (!parse_second_fen_section(temp_str, session->board)) { return 0; }
+    if (!parse_third_fen_section(temp_str, session->board)) { return 0; }
     temp_str += end + 1;
 
     /* info: the fourth FEN section (en-passant) can be skipped */

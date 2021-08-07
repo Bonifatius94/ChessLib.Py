@@ -68,7 +68,7 @@ int get_game_rounds(ChessGameContext context)
     return (int)(context >> 19);
 }
 
-void apply_draw(ChessDraw draw, ChessGameContext* context)
+void apply_draw_to_context(ChessDraw draw, ChessGameContext* context)
 {
     /* alternate the drawing side */
     *context ^= 0x1uL;

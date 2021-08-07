@@ -737,21 +737,25 @@ static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObjec
 
 
     /* set was_moved flags for kings / rooks */
+    return NULL;
 }
 
 static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds)
 {
     /* TODO: implement logic here ... */
+    return NULL;
 }
 
 static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds)
 {
     /* TODO: implement logic here ... */
+    return NULL;
 }
 
 static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds)
 {
     /* TODO: implement logic here ... */
+    return NULL;
 }
 
 /* =================================================
