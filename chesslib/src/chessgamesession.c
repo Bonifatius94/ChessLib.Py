@@ -26,6 +26,12 @@
 
 #define GC_DRAWING_SIDE(context) (ChessColor)((context) & 0x1uL)
 
+const ChessGameContext SIDE_MASK       = 0x00000001uL;
+const ChessGameContext EN_PASSANT_MASK = 0x000001FEuL;
+const ChessGameContext ROCHADE_MASK    = 0x00001E00uL;
+const ChessGameContext HDSLPD_MASK     = 0x0007E000uL;
+const ChessGameContext GAME_ROUND_MASK = 0xFFF80000uL;
+
 ChessGameContext create_context(ChessColor side, uint8_t en_passants,
     uint8_t rochades, uint8_t halfdraws_since_last_pawn_draw, int game_round)
 {
@@ -59,31 +65,61 @@ Bitboard get_rochade_mask(ChessGameContext context)
 uint8_t get_hdslpd(ChessGameContext context)
 {
     /* extract the 6 bits counting the halfdraws since the last pawn draw */
-    return (uint8_t)((context >> 13) & 0x3FuL);
+    return (uint8_t)((context & HDSLPD_MASK) >> 13);
 }
 
 int get_game_rounds(ChessGameContext context)
 {
     /* extract the 13 bits counting the game rounds */
-    return (int)(context >> 19);
+    return (int)((context & GAME_ROUND_MASK) >> 19);
 }
 
 void apply_draw_to_context(ChessDraw draw, ChessGameContext* context)
 {
+    ChessGameContext temp = *context;
+
     /* alternate the drawing side */
     *context ^= 0x1uL;
 
     /* increment the game round counter (if white is drawing) */
     if (GC_DRAWING_SIDE(*context) == White) {
-        *context = (((ChessGameContext)get_game_rounds(*context) + 1) << 19)
-            | (*context & 0x7FFFFuL);
+        *context = (((ChessGameContext)get_game_rounds(temp) + 1) << 19)
+            | (*context & ~GAME_ROUND_MASK);
     }
 
     /* update the hdslpd counter (either increment or reset) */
-    *context = *context & 0xFFF81FFFuL; /* reset bits */
+    *context = *context & ~HDSLPD_MASK; /* reset bits */
     if (get_drawing_piece_type(draw) != Peasant) {
-        *context |= (((ChessGameContext)get_hdslpd(*context) + 1) << 13);
+        *context |= (((ChessGameContext)get_hdslpd(temp) + 1) << 13);
     }
 
-    /* TODO: handle rochade / en-passant */
+    /* handle en-passant (if a peasant moved double-forward) */
+    *context = *context & ~EN_PASSANT_MASK; /* reset bits */
+    if (get_drawing_piece_type(draw) == Peasant
+        && abs(get_new_position(draw) - get_old_position(draw)) == 16
+        && ((get_drawing_side(draw) ? ROW_5 : ROW_4) & get_new_position(draw)))
+    {
+        /* determine the column of the possible en-passant and set the bit */
+        *context |= ((ChessGameContext)0x1uL << (get_new_position(draw) % 8 + 1));
+    }
+
+    /* handle rochade (if a king or a rook moved) */
+    *context = *context & ~ROCHADE_MASK; /* reset bits */
+    if (get_drawing_piece_type(draw) == King
+            && (get_old_position(draw) & (FIELD_E1 | FIELD_E8)))
+    {
+        /*  disable the rochade bits of the given side accordingly */
+        *context |= (get_drawing_side(draw) ? 0x1800uL : 0x600uL);
+    }
+    if (get_drawing_piece_type(draw) == Rook
+            && (get_old_position(draw) & (FIELD_A1 | FIELD_H1 | FIELD_A8 | FIELD_H8)))
+    {
+        /* disable the rochade bit of a single rook accordingly */
+        *context |= (ChessGameContext)(
+              ((get_old_position(draw) & FIELD_A1) << 9)    /* shift to 10th bit */
+            | ((get_old_position(draw) & FIELD_H1) << 3)    /* shift to 11th bit */
+            | ((get_old_position(draw) & FIELD_A8) >> 54)   /* shift to 12th bit */
+            | ((get_old_position(draw) & FIELD_H8) >> 60)); /* shift to 13th bit */
+            /* TODO: make sure the bit shifts are correct */
+    }
 }
