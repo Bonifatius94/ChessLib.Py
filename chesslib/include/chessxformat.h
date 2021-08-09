@@ -34,9 +34,9 @@
 
 /* TODO: move the board hashing code here */
 
-int chess_board_from_fen(const char fen_str[], ChessGameSession* session);
-int chess_board_to_fen(char** fen_str, const ChessGameSession* session);
-int chess_draw_from_pgn(const char fen_str[], Bitboard* board);
-int chess_draw_to_pgn(char** fen_str, Bitboard* board);
+int chess_session_from_fen(const char fen_str[], ChessGameSession* session);
+int chess_session_to_fen(char* fen_str, const ChessGameSession* session);
+int chess_session_from_pgn(const char pgn_str[], ChessGameSession* session);
+int chess_session_to_pgn(char* pgn_str, const ChessGameSession* session);
 
 #endif

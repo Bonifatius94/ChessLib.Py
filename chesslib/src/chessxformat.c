@@ -28,7 +28,7 @@
 
 /* Parse a positive integer value from the given decimal numeric string
    and return the length of the characters parsed (return -1 on format error). */
-int parse_uint(char* value_str, int* out_value, char term)
+int parse_uint(const char* value_str, int* out_value, char term)
 {
     int value = 0; size_t i = 0;
 
@@ -56,7 +56,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
 {
     size_t i = 0, sep_count = 0; char temp; int is_terminal = 0;
     ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
-    ChessPiece simple_board[64];
+    ChessPiece simple_board[64] = { 0 };
 
     /* parse the first FEN section (positions of pieces on the board) */
     do
@@ -102,15 +102,15 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
     return 1;
 }
 
-int parse_second_fen_section(const char fen_str[], ChessGameContext* context)
+int parse_second_fen_section(const char fen_str[], ChessColor* side)
 {
     ChessColor color = color_from_char(fen_str[0]);
-    *context = (*context & ~0x1uL) | color;
     if (fen_str[1] != '\0') { return 0; }
+    *side = color;
     return 1;
 }
 
-int parse_third_fen_section(const char fen_str[], ChessGameContext* context)
+int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
 {
     size_t i = 0; uint8_t poss_rochades = 0xF;
 
@@ -130,16 +130,17 @@ int parse_third_fen_section(const char fen_str[], ChessGameContext* context)
         if (!poss_rochades || fen_str[i] != '\0') { return 0; }
     }
 
-    /* TODO: apply the parsed rochades to the game context */
+    /* apply the parsed rochades to the game context */
+    *rochades = poss_rochades;
 
     return 1;
 }
 
-int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
+int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t start = 0, end = 0; char temp; size_t len, i = 0;
-    char cache[54]; char* temp_str = cache;
-    ChessGameContext context = session->context;
+    size_t end = 0; size_t len, i = 0; int game_round = 0;
+    ChessColor side; uint8_t rochades = 0, en_passants = 0, hdslpd = 0;
+    char cache[54]; char* temp_str = cache; Bitboard board[13] = { 0 };
 
     /* create a carbon copy of the fen string (that can be safely modified) */
     strcpy(temp_str, fen_str);
@@ -147,48 +148,83 @@ int chess_board_from_fen(const char fen_str[], ChessGameSession* session)
     /* parse the first FEN section (positions of pieces on the board) */
     if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
     temp_str[end] = '\0';
-    if (!parse_first_fen_section(temp_str, session->board)) { return 0; }
+    if (!parse_first_fen_section(temp_str, board)) { return 0; }
     temp_str += end + 1;
 
     /* parse the second FEN section (drawing side) */
     if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
     temp_str[end] = '\0';
-    if (!parse_second_fen_section(temp_str, session->context)) { return 0; }
+    if (!parse_second_fen_section(temp_str, &side)) { return 0; }
     temp_str += end + 1;
 
     /* parse the third FEN section (possible castlings) */
     if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
     temp_str[end] = '\0';
-    if (!parse_third_fen_section(temp_str, session->board)) { return 0; }
+    if (!parse_third_fen_section(temp_str, &rochades)) { return 0; }
     temp_str += end + 1;
 
-    /* info: the fourth FEN section (en-passant) can be skipped */
-    while ((temp = fen_str[i++]) != '\0' && temp != ' ') { }
+    /* parse the fourth FEN section (en-passant) */
+    /* TODO: add parsing logic */
 
     /* parse the fifth FEN section (halfdraws since last pawn draw) */
-    len = parse_uint(fen_str + i, &(session->halfdraws_since_last_pawn_draw), ' ');
+    len = parse_uint(fen_str + i, (int*)&hdslpd, ' ');
     if (len > 0) { i += len + 1; } else { return 0; }
 
     /* parse the sixth FEN section (game round) */
-    len = parse_uint(fen_str + i, &(session->game_round), '\0');
+    len = parse_uint(fen_str + i, &game_round, '\0');
     if (len <= 0) { return 0; }
+
+    /* assign the parsed FEN string content to the game session object */
+    copy_board(board, session->board);
+    session->context = create_context(side,
+        en_passants, rochades, hdslpd, game_round);
 
     return 1;
 }
 
-int chess_board_to_fen(char** fen_str, const ChessGameSession* session)
+int chess_session_to_fen(char* fen_str, const ChessGameSession* session)
+{
+    size_t i = 0, empty_cnt = 0; ChessPosition pos; ChessPiece piece; char temp;
+    ChessPiece simple_board[64] = { 0 };
+
+    /* write the first section to the game session (pieces on board) */
+    to_simple_board(session->board, simple_board);
+
+    for (pos = 0; pos < 64; pos++)
+    {
+        piece = simple_board[pos];
+
+        /* in case the field position is not empty */
+        if (piece != CHESS_PIECE_NULL)
+        {
+            /* write the piece type (either uppercase for white or lowercase for black) */
+            temp = piece_type_to_char(get_piece_type(piece));
+            fen_str[i++] = get_piece_color(piece)
+                ? tolower(temp) : toupper(temp);
+        }
+        else { empty_cnt++; }
+
+        /* handle empty field spaces */
+        if ((piece != CHESS_PIECE_NULL || (pos + 1) % 8 == 0) && empty_cnt > 0)
+        { fen_str[i++] = '0' + empty_cnt; empty_cnt = 0; }
+
+        /* handle end-of-row separator */
+        if ((pos + 1) % 8 == 0 && pos < 63) { fen_str[i++] = '/'; }
+    }
+
+    /* TODO  */
+
+    fen_str[i] = '\0';
+    return 1;
+}
+
+int chess_session_from_pgn(const char pgn_str[], ChessGameSession* session)
 {
     /* TODO: implement logic */
     return 0;
 }
 
-int chess_draw_from_pgn(const char fen_str[], Bitboard* board)
-{
-    /* TODO: implement logic */
-    return 0;
-}
-
-int chess_draw_to_pgn(char** fen_str, Bitboard* board)
+int chess_session_to_pgn(char* pgn_str, const ChessGameSession* session)
 {
     /* TODO: implement logic */
     return 0;
