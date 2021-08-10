@@ -57,7 +57,7 @@ int str_index_of(char* search_str, char find)
 int parse_first_fen_section(const char fen_str[], Bitboard* board)
 {
     size_t i = 0, sep_count = 0; char temp; int is_terminal = 0;
-    ChessPosition pos = 0; ChessColor color; ChessPieceType type; int was_moved;
+    ChessPosition pos = 56; ChessColor color; ChessPieceType type; int was_moved;
     ChessPiece simple_board[64] = { 0 };
 
     /* parse the first FEN section (positions of pieces on the board) */
@@ -72,7 +72,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
             case '\0': if (!is_terminal) { return 0; } break;
 
             /* ensure that the row bounds are not violated */
-            case '/': if (pos != ++sep_count * 8) { return 0; } break;
+            case '/': pos -= 16; if (pos != ++sep_count * 8) { return 0; } break;
 
             /* handle empty fields declaration */
             case '1': case '2': case '3': case '4':
@@ -206,6 +206,7 @@ int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
     copy_board(board, session->board);
     session->context = create_context(side,
         en_passants, rochades, hdslpd, game_round);
+    apply_game_context_to_board(session->board, session->context);
 
     return 1;
 }

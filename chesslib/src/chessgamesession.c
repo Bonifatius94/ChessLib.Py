@@ -123,3 +123,12 @@ void apply_draw_to_context(ChessDraw draw, ChessGameContext* context)
             /* TODO: make sure the bit shifts are correct */
     }
 }
+
+void apply_game_context_to_board(Bitboard* board, ChessGameContext context)
+{
+    Bitboard rochade_mask = 0;
+
+    /* set was_moved bits for rooks */
+    rochade_mask = get_rochade_mask(context);
+    board[12] &= ~rochade_mask; /* TODO: check if this works */
+}

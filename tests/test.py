@@ -46,6 +46,7 @@ def test_module():
     test_apply_draw()
     test_game_state()
     test_board_hash()
+    test_board_from_fen()
 
     # # test visualization functions
     test_visualize_board()
@@ -658,6 +659,26 @@ def test_visualize_draw():
     print("test passed!")
 
     # TODO: add more tests for edge cases (rochade, en-passant, promotion)
+
+
+def test_board_from_fen():
+
+    # TODO: make this test work
+
+    print("testing visualize chess draw")
+
+    # FEN string representing the initial game state
+    fen_str = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    board_exp = chesslib.ChessBoard_StartFormation()
+
+    # now, parse the FEN string into a chess board
+    board = chesslib.Board_FromFen(fen_str)
+    print(board)
+
+    # make sure that the expected content is retrieved
+    assert_true(np.array_equal(board, board_exp))
+
+    print("test passed!")
 
 
 if __name__ == '__main__':

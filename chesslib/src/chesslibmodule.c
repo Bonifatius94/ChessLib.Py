@@ -230,7 +230,20 @@ Args:\n\
     is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
 \n\
 Returns:\n\
-    the game state related to the given game situation, encoded as integer/ASCII byte";
+    the chess board represented by the given hash, as numpy array";
+
+/* if (!PyArg_ParseTuple(args, "s|i", &fen_str, &is_simple_board)) { return NULL; } */
+const char Board_FromFen_Docstring[] =
+"Board_FromFen(fen_str: str, is_simple_board: bool=False) -> int\n\
+\n\
+Convert the given FEN string to a chess board.\n\
+\n\
+Args:\n\
+    fen_str: The FEN string representation to be imported\n\
+    is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the chess board represented by the given FEN string, as numpy array";
 
 /* if (!PyArg_ParseTuple(args, "O|i", &bitboards, &is_simple_board)) { return NULL; } */
 const char VisualizeBoard_Docstring[] =
@@ -286,6 +299,7 @@ static PyMethodDef chesslib_methods[] = {
     /* extensions for data compression */
     {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
     {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
+    {"Board_FromFen", chesslib_board_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
 
     /* extensions for data visualization of complex type encodings */
     {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
@@ -432,7 +446,7 @@ static PyObject* chesslib_create_startformation(PyObject* self, PyObject* args, 
     static char* kwlist[] = {"is_simple", NULL};
 
     /* create the chess board */
-    const Bitboard start_formation[] = START_FORMATION
+    const Bitboard start_formation[] = START_FORMATION;
 
     /* parse all args */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i", kwlist, &is_simple_board)) { return NULL; }
@@ -716,20 +730,29 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObje
 static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObject *keywds)
 {
     /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
-    /* FEN structure:
-         1) positions of pieces
-         2) drawing side
-         3) possible rochades
-         4) possible en-passants
-         5) half-draws since last peasant draw
-         6) round no.
-     */
 
-    /* generate a board from FEN pieces list */
+    char* fen_str; int is_simple_board = 0; PyObject* chessboard;
+    ChessGameSession session = INIT_GAME_SESSION; ChessPiece simple_board[64];
+    static char* kwlist[] = {"fen_str", "is_simple", NULL};
 
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|i", kwlist,
+        &fen_str, &is_simple_board)) { return NULL; }
 
-    /* set was_moved flags for kings / rooks */
-    return NULL;
+    /* convert the FEN string to a game session */
+    if (!chess_session_from_fen(fen_str, &session)) { return NULL; }
+
+    /* convert the session's bitboard to a simple board if required */
+    if (is_simple_board) { to_simple_board(session.board, simple_board); }
+
+    /* return as simple board or bitboards format */
+    chessboard = is_simple_board
+        ? serialize_as_pieces(simple_board)
+        : serialize_as_bitboards(session.board);
+
+    /* TODO: think of returning the game session instead of just a chess board */
+
+    return chessboard;
 }
 
 static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds)

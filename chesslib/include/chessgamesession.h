@@ -36,10 +36,15 @@ typedef struct _CHESS_GAME_SESSION {
    ChessGameContext context;
 } ChessGameSession;
 
-/* default game context bits: 00000000 00001000 00011110 00000000 */
+/* default game context bits: 00000000 00001000 00011110 00000000
+ *
+ * meaning:
+ * first game round, all rochades possible, no en-passant possible,
+ * white drawing and zero halfdraws since the last pawn draw.
+ */
 #define DEFAULT_GAME_CONTEXT 0x00081E00uL
 
-/* inital game session: board in start formation and initial game context */
+/* initial game session: board in start formation and initial game context */
 #define INIT_GAME_SESSION {START_FORMATION, DEFAULT_GAME_CONTEXT}
 
 ChessGameContext create_context(ChessColor side, uint8_t en_passants,
@@ -51,5 +56,6 @@ uint8_t get_hdslpd(ChessGameContext context);
 int get_game_rounds(ChessGameContext context);
 
 void apply_draw_to_context(ChessDraw draw, ChessGameContext* context);
+void apply_game_context_to_board(Bitboard* board, ChessGameContext context);
 
 #endif
