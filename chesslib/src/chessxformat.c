@@ -26,6 +26,8 @@
 
 /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
 
+#define DECIMAL_LEN(num) ((int)((ceil(log10((num))) + 1) * sizeof(char)))
+
 /* Parse a positive integer value from the given decimal numeric string
    and return the length of the characters parsed (return -1 on format error). */
 int parse_uint(const char* value_str, int* out_value, char term)
@@ -211,9 +213,12 @@ int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
 int chess_session_to_fen(char* fen_str, const ChessGameSession* session)
 {
     size_t i = 0, empty_cnt = 0; ChessPosition pos; ChessPiece piece; char temp;
+    Bitboard rochades_mask = 0, en_passant_mask = 0; int i_temp;
     ChessPiece simple_board[64] = { 0 };
 
-    /* write the first section to the game session (pieces on board) */
+    /* write the first section to the FEN string (pieces on board) */
+
+    /* convert the session's board to the simple board format */
     to_simple_board(session->board, simple_board);
 
     /* loop through each field on the chess board */
@@ -230,8 +235,7 @@ int chess_session_to_fen(char* fen_str, const ChessGameSession* session)
         {
             /* write the piece type (uppercase -> white, lowercase -> black) */
             temp = piece_type_to_char(get_piece_type(piece));
-            fen_str[i++] = get_piece_color(piece)
-                ? tolower(temp) : toupper(temp);
+            fen_str[i++] = get_piece_color(piece) ? tolower(temp) : toupper(temp);
         }
         /* handle empty field -> increment counter */
         else { empty_cnt++; }
@@ -240,8 +244,44 @@ int chess_session_to_fen(char* fen_str, const ChessGameSession* session)
         if ((pos + 1) % 8 == 0 && pos < 63) { fen_str[i++] = '/'; }
     }
 
-    /* TODO: write missing FEN sections to the output string */
+    /* write the second section to the FEN string (drawing side) */
+    fen_str[i++] = ' ';
+    fen_str[i++] = tolower(color_to_char((ChessColor)(session->context & 1uL)));
 
+    /* write the third section to the FEN string (rochades) */
+    fen_str[i++] = ' ';
+    rochades_mask = get_rochade_mask(session->context);
+    if (rochades_mask & FIELD_H1) { fen_str[i++] = 'K'; }
+    if (rochades_mask & FIELD_A1) { fen_str[i++] = 'Q'; }
+    if (rochades_mask & FIELD_H8) { fen_str[i++] = 'k'; }
+    if (rochades_mask & FIELD_A8) { fen_str[i++] = 'q'; }
+    if (!rochades_mask) { fen_str[i++] = '-'; }
+
+    /* write the fourth section to the FEN string (en-passant) */
+    fen_str[i++] = ' ';
+    en_passant_mask = get_en_passant_mask(session->context);
+    if (!en_passant_mask) { fen_str[i++] = '-'; }
+    else
+    {
+        /* get the set bit's position as index and convert it to a string */
+        pos = get_board_position(en_passant_mask);
+        position_to_string(pos, (fen_str + i));
+        i += 2;
+    }
+
+    /* write the fifth section to the FEN string (hdslpd) */
+    fen_str[i++] = ' ';
+    i_temp = (int)get_hdslpd(session->context);
+    sprintf((fen_str + i), "%d", i_temp);
+    i += DECIMAL_LEN(i_temp);
+
+    /* write the sixth section to the FEN string (game round) */
+    fen_str[i++] = ' ';
+    i_temp = (int)get_hdslpd(session->context);
+    sprintf((fen_str + i), "%d", i_temp);
+    i += DECIMAL_LEN(i_temp);
+
+    /* write the zero-terminal char and return success! */
     fen_str[i] = '\0';
     return 1;
 }
