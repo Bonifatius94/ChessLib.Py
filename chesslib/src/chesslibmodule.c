@@ -359,25 +359,17 @@ PyMODINIT_FUNC PyInit_chesslib(void)
  **************************************************************************/
 static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args, PyObject *keywds)
 {
-    const char* pos_as_str;
-    uint8_t row = 0, column = 0;
+    const char* pos_as_str; ChessPosition pos = 0;
     static char *kwlist[] = {"pos_as_str", NULL};
 
     /* read position string, quit if the parameter does not exist */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &pos_as_str)) { return NULL; }
 
-    /* make sure that the overloaded string is of the correct format */
-    if (*(pos_as_str + 2) != '\0'
-        || (!isalpha(pos_as_str[0]) || toupper(pos_as_str[0]) - 'A' >= 8
-                                       || toupper(pos_as_str[0]) - 'A' < 0)
-        || (!isdigit(pos_as_str[1]) || pos_as_str[1] - '1' >= 8)) { return NULL; }
-
-    /* parse position from position string */
-    row = pos_as_str[1] - '1';
-    column = toupper(pos_as_str[0]) - 'A';
+    /* parse the position index from string */
+    if (!position_from_string(pos_as_str, &pos)) { return NULL; }
 
     /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong(create_position(row, column));
+    return PyLong_FromUnsignedLong(pos);
 }
 
 /**************************************************************************
