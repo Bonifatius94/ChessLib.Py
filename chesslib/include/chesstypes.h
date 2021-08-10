@@ -104,5 +104,6 @@ typedef uint64_t Bitboard;
    | ------------- | ------------------------- | -------- | ----------- | ---- |
    | xxxxxxxxxxxxx |                    xxxxxx |     xxxx |    xxxxxxxx |    x | */
 typedef uint32_t ChessGameContext;
+/* TODO: think of compressing the en-passant part to 3 bits, pos indices [0-7] */
 
 #endif
