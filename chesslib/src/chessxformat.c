@@ -136,6 +136,29 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
     return 1;
 }
 
+int parse_fourth_fen_section(const char fen_str[], uint8_t* en_passants)
+{
+    size_t i = 0; uint8_t poss_en_passants = 0xF; ChessPosition pos = 0;
+
+    /* handle case with no en-passant */
+    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* do nothing */ }
+
+    /* handle case with rochades */
+    else
+    {
+        /* parse the en-passant position from string */
+        if (!position_from_string(fen_str, &pos)) { return 0; }
+
+        /* set the en-passant bit accordingly */
+        poss_en_passants = 0x1 << (pos % 8);
+    }
+
+    /* apply the parsed en-passant to the game context */
+    *en_passants = poss_en_passants;
+
+    return 1;
+}
+
 int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
 {
     size_t end = 0; size_t len, i = 0; int game_round = 0;
@@ -164,7 +187,10 @@ int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
     temp_str += end + 1;
 
     /* parse the fourth FEN section (en-passant) */
-    /* TODO: add parsing logic */
+    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_third_fen_section(temp_str, &en_passants)) { return 0; }
+    temp_str += end + 1;
 
     /* parse the fifth FEN section (halfdraws since last pawn draw) */
     len = parse_uint(fen_str + i, (int*)&hdslpd, ' ');
@@ -190,29 +216,31 @@ int chess_session_to_fen(char* fen_str, const ChessGameSession* session)
     /* write the first section to the game session (pieces on board) */
     to_simple_board(session->board, simple_board);
 
+    /* loop through each field on the chess board */
     for (pos = 0; pos < 64; pos++)
     {
         piece = simple_board[pos];
 
-        /* in case the field position is not empty */
+        /* handle empty field spaces symbol */
+        if ((piece != CHESS_PIECE_NULL || (pos + 1) % 8 == 0) && empty_cnt > 0)
+        { fen_str[i++] = '0' + empty_cnt; empty_cnt = 0; }
+
+        /* handle piece symbol */
         if (piece != CHESS_PIECE_NULL)
         {
-            /* write the piece type (either uppercase for white or lowercase for black) */
+            /* write the piece type (uppercase -> white, lowercase -> black) */
             temp = piece_type_to_char(get_piece_type(piece));
             fen_str[i++] = get_piece_color(piece)
                 ? tolower(temp) : toupper(temp);
         }
+        /* handle empty field -> increment counter */
         else { empty_cnt++; }
-
-        /* handle empty field spaces */
-        if ((piece != CHESS_PIECE_NULL || (pos + 1) % 8 == 0) && empty_cnt > 0)
-        { fen_str[i++] = '0' + empty_cnt; empty_cnt = 0; }
 
         /* handle end-of-row separator */
         if ((pos + 1) % 8 == 0 && pos < 63) { fen_str[i++] = '/'; }
     }
 
-    /* TODO  */
+    /* TODO: write missing FEN sections to the output string */
 
     fen_str[i] = '\0';
     return 1;
