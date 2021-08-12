@@ -26,7 +26,10 @@
 #define CHESSXFORMAT_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <math.h>
+
 #include "chesstypes.h"
 #include "chesspiece.h"
 #include "chessboard.h"
