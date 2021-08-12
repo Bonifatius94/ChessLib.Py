@@ -678,6 +678,10 @@ def test_board_from_fen():
     # make sure that the expected content is retrieved
     assert_true(np.array_equal(board, board_exp))
 
+    # TODO: add test case with rochades deactivated
+    # TODO: add test case with en-passant activated
+    # TODO: add test case with multiple spaces in one row
+
     print("test passed!")
 
 
