@@ -29,24 +29,24 @@
 #define DECIMAL_LEN(num) ((int)((ceil(log10((num))) + 1) * sizeof(char)))
 
 /* Parse a positive integer value from the given decimal numeric string
-   and return the length of the characters parsed (return -1 on format error). */
+   and return the length of the characters parsed (return 0 on format error). */
 int parse_uint(const char* value_str, int* out_value, char term)
 {
     int value = 0; size_t i = 0;
 
     /* make sure there are no heading zeros for non-zero values */
-    if (value_str[i] == '0' && value_str[i+1] != term) { return 0; }
+    if (value_str[i] == '0' && value_str[++i] != term) { return 0; }
 
     /* parse the uint value from decimal notation */
     while (isdigit(value_str[i]) && value_str[i] != term && value_str[i] != '\0')
-    { value = value * 10 + (value_str[i] - '0'); i++; }
+    { value = value * 10 + (value_str[i++] - '0'); }
 
     *out_value = value;
-    return value_str[i] == term ? i : 0;
+    return value_str[i] == term && i > 0 ? i : 0;
 }
 
 /* Look up the next appearance of the given character in the given zero-terminated string.
-   Return -1 if the string does not contain the character searched. */
+   Return 0 if the string does not contain the character searched. */
 int str_index_of(char* search_str, char find)
 {
     size_t i = 0; char temp;
@@ -123,10 +123,10 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
     else
     {
         /* enable castlings (ensure the correct order) */
-        if (fen_str[i] == 'K') { poss_rochades ^= 0x2; i++; }
-        if (fen_str[i] == 'Q') { poss_rochades ^= 0x1; i++; }
-        if (fen_str[i] == 'k') { poss_rochades ^= 0x8; i++; }
-        if (fen_str[i] == 'q') { poss_rochades ^= 0x4; i++; }
+        if (fen_str[i] == 'K') { poss_rochades |= 0x2; i++; }
+        if (fen_str[i] == 'Q') { poss_rochades |= 0x1; i++; }
+        if (fen_str[i] == 'k') { poss_rochades |= 0x8; i++; }
+        if (fen_str[i] == 'q') { poss_rochades |= 0x4; i++; }
 
         /* ensure any rochade is possible and the terminal symbol is hit */
         if (!poss_rochades || fen_str[i] != '\0') { return 0; }
@@ -140,10 +140,10 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
 
 int parse_fourth_fen_section(const char fen_str[], uint8_t* en_passants)
 {
-    size_t i = 0; uint8_t poss_en_passants = 0xF; ChessPosition pos = 0;
+    size_t i = 0; uint8_t poss_en_passants = 0x00; ChessPosition pos = 0;
 
     /* handle case with no en-passant */
-    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* do nothing */ }
+    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* use default value */ }
 
     /* handle case with rochades */
     else
@@ -163,10 +163,10 @@ int parse_fourth_fen_section(const char fen_str[], uint8_t* en_passants)
 
 int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t end = 0; size_t len, i = 0; int game_round;
+    size_t end = 0; size_t len; int game_round;
     ChessColor side; uint8_t rochades, en_passants, hdslpd;
     char cache[100]; char* temp_str = cache; Bitboard board[13] = { 0 };
-    /* TODO: figure out the exact cap for the cache memory, 100 should be enough though */
+    /* TODO: figure out the exact cap for the cache memory */
 
     /* create a carbon copy of the fen string (that can be safely modified) */
     strcpy(temp_str, fen_str);
@@ -184,32 +184,30 @@ int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
     temp_str += end + 1;
 
     /* parse the third FEN section (possible castlings) */
-    // if (!(end = str_index_of(temp_str, ' '))) { return 0; }
-    // temp_str[end] = '\0';
-    // if (!parse_third_fen_section(temp_str, &rochades)) { return 0; }
-    // temp_str += end + 1;
+    if (!(end = str_index_of(temp_str, ' '))) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_third_fen_section(temp_str, &rochades)) { return 0; }
+    temp_str += end + 1;
 
     /* parse the fourth FEN section (en-passant) */
-    // if (!(end = str_index_of(temp_str, ' '))) { return 0; }
-    // temp_str[end] = '\0';
-    // if (!parse_fourth_fen_section(temp_str, &en_passants)) { return 0; }
-    // temp_str += end + 1;
+    if (!(end = str_index_of(temp_str, ' '))) { return 0; }
+    temp_str[end] = '\0';
+    if (!parse_fourth_fen_section(temp_str, &en_passants)) { return 0; }
+    temp_str += end + 1;
 
     /* parse the fifth FEN section (halfdraws since last pawn draw) */
-    // len = parse_uint(fen_str + i, (int*)&hdslpd, ' ');
-    // if (len > 0) { i += len + 1; } else { return 0; }
+    len = parse_uint(temp_str, (int*)&hdslpd, ' ');
+    if (len > 0) { temp_str += len + 1; } else { return 0; }
 
     /* parse the sixth FEN section (game round) */
-    // len = parse_uint(fen_str + i, &game_round, '\0');
-    // if (len <= 0) { return 0; }
+    len = parse_uint(temp_str, &game_round, '\0');
+    if (len <= 0) { return 0; }
 
     /* assign the parsed FEN string content to the game session object */
     copy_board(board, session->board);
     session->context = create_context(side,
         en_passants, rochades, hdslpd, game_round);
     apply_game_context_to_board(session->board, session->context);
-
-    // if (session->context != DEFAULT_GAME_CONTEXT) { return NULL; }
 
     return 1;
 }
