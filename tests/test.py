@@ -671,16 +671,36 @@ def test_board_from_fen():
     fen_str = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     board_exp = chesslib.ChessBoard_StartFormation()
 
-    # now, parse the FEN string into a chess board
-    board = chesslib.Board_FromFen(fen_str)
-    print(board)
-
-    # make sure that the expected content is retrieved
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
     assert_true(np.array_equal(board, board_exp))
+    assert_equal(531968, context)
 
-    # TODO: add test case with rochades deactivated
-    # TODO: add test case with en-passant activated
-    # TODO: add test case with multiple spaces in one row
+    # FEN string representing the game state after first draw 'white pawn F2-F4'
+    fen_str = 'rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq f3 10 12'
+    board_exp = chesslib.ApplyDraw(board, chesslib.ChessDraw(
+        board, chesslib.ChessPosition('F2'), chesslib.ChessPosition('F4')))
+
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
+    assert_true(np.array_equal(board, board_exp))
+    assert_equal(6381121, context)
+
+    # FEN string representing the game state after first draw 'white pawn F2-F4'
+    fen_str = '5k2/8/8/8/8/8/8/3K4 b - - 41 71'
+    board_exp = np.array([
+        1 << chesslib.ChessPosition('D1'),
+        0, 0, 0, 0, 0,
+        1 << chesslib.ChessPosition('F8'),
+        0, 0, 0, 0, 0,
+        0xFFFF00000000FFFF # info: was_moved mask cannot be 100% accurately restored
+                           #       -> draw-gen needs to be the same
+    ], dtype=np.uint64)
+
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
+    assert_true(np.array_equal(board[:12], board_exp[:12]))
+    assert_equal(37560321, context)
 
     print("test passed!")
 
