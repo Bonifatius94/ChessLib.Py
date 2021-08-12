@@ -41,7 +41,7 @@ static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args, PyObjec
 
 static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObject *keywds);
-static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_gamesession_from_fen(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds);
@@ -299,7 +299,7 @@ static PyMethodDef chesslib_methods[] = {
     /* extensions for data compression */
     {"Board_ToHash", (PyCFunction)chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
     {"Board_FromHash", (PyCFunction)chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
-    {"Board_FromFen", (PyCFunction)chesslib_board_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
+    {"Board_FromFen", (PyCFunction)chesslib_gamesession_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
 
     /* extensions for data visualization of complex type encodings */
     {"VisualizeBoard", (PyCFunction)chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
@@ -727,11 +727,12 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObje
             E X C H A N G E   F O R M A T S
    ================================================= */
 
-static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObject *keywds)
+static PyObject* chesslib_gamesession_from_fen(PyObject* self, PyObject* args, PyObject *keywds)
 {
     /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
 
-    char* fen_str; int is_simple_board = 0; PyObject* chessboard;
+    PyObject* chessboard, * tuple;
+    char* fen_str; int is_simple_board = 0;
     ChessGameSession session = INIT_GAME_SESSION; ChessPiece simple_board[64];
     static char* kwlist[] = {"fen_str", "is_simple", NULL};
 
@@ -750,9 +751,12 @@ static PyObject* chesslib_board_from_fen(PyObject* self, PyObject* args, PyObjec
         ? serialize_as_pieces(simple_board)
         : serialize_as_bitboards(session.board);
 
-    /* TODO: think of returning the game session instead of just a chess board */
+    /* zip the chess board and game context as a PyTuple */
+    tuple = PyTuple_New(2);
+    PyTuple_SetItem(tuple, 0, chessboard);
+    PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong(session.context));
 
-    return chessboard;
+    return tuple;
 }
 
 static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds)
