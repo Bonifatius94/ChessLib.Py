@@ -123,4 +123,8 @@ void to_simple_board(const Bitboard board[], ChessPiece* target);
 void compress_pieces_array(const ChessPiece pieces[], uint8_t* compr_bytes);
 void uncompress_pieces_array(const uint8_t compr_bytes[], ChessPiece* out_pieces);
 
+Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
+void get_board_positions(Bitboard bitboard, ChessPosition* out_positions, size_t* out_length);
+ChessPosition get_board_position(Bitboard bitboard);
+
 #endif
