@@ -114,7 +114,7 @@ int parse_second_fen_section(const char fen_str[], ChessColor* side)
 
 int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
 {
-    size_t i = 0; uint8_t poss_rochades = 0xF;
+    size_t i = 0; uint8_t poss_rochades = 0x0;
 
     /* handle case with no castlings */
     if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* use default value */ }
@@ -123,10 +123,10 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
     else
     {
         /* enable castlings (ensure the correct order) */
-        if (fen_str[i] == 'K') { poss_rochades |= 0x2; i++; }
-        if (fen_str[i] == 'Q') { poss_rochades |= 0x1; i++; }
-        if (fen_str[i] == 'k') { poss_rochades |= 0x8; i++; }
-        if (fen_str[i] == 'q') { poss_rochades |= 0x4; i++; }
+        if (fen_str[i] == 'K') { poss_rochades ^= 0x2; i++; }
+        if (fen_str[i] == 'Q') { poss_rochades ^= 0x1; i++; }
+        if (fen_str[i] == 'k') { poss_rochades ^= 0x8; i++; }
+        if (fen_str[i] == 'q') { poss_rochades ^= 0x4; i++; }
 
         /* ensure any rochade is possible and the terminal symbol is hit */
         if (!poss_rochades || fen_str[i] != '\0') { return 0; }
