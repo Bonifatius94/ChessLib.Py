@@ -37,10 +37,10 @@ ChessGameContext create_context(ChessColor side, uint8_t en_passants,
 {
     /* combine the attributes to a single 32-bit integer */
     return ((ChessGameContext)side & 0x1uL)
-        || (((ChessGameContext)en_passants & 0xFFuL) << 1)
-        || (((ChessGameContext)rochades & 0xFuL) << 9)
-        || (((ChessGameContext)halfdraws_since_last_pawn_draw & 0x3FuL) << 13)
-        || ((ChessGameContext)game_round << 19);
+        | (((ChessGameContext)en_passants & 0xFFuL) << 1)
+        | (((ChessGameContext)rochades & 0xFuL) << 9)
+        | (((ChessGameContext)halfdraws_since_last_pawn_draw & 0x3FuL) << 13)
+        | ((ChessGameContext)game_round << 19);
 }
 
 Bitboard get_en_passant_mask(ChessGameContext context)
