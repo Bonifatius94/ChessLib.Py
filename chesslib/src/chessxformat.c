@@ -35,14 +35,14 @@ int parse_uint(const char* value_str, int* out_value, char term)
     int value = 0; size_t i = 0;
 
     /* make sure there are no heading zeros for non-zero values */
-    if (value_str[i] == '0' && value_str[i+1] != term) { return -1; }
+    if (value_str[i] == '0' && value_str[i+1] != term) { return 0; }
 
     /* parse the uint value from decimal notation */
     while (isdigit(value_str[i]) && value_str[i] != term && value_str[i] != '\0')
     { value = value * 10 + (value_str[i] - '0'); i++; }
 
     *out_value = value;
-    return value_str[i] == term ? i : -1;
+    return value_str[i] == term ? i : 0;
 }
 
 /* Look up the next appearance of the given character in the given zero-terminated string.
@@ -51,7 +51,7 @@ int str_index_of(char* search_str, char find)
 {
     size_t i = 0; char temp;
     while ((temp = search_str[i++]) != find && temp != '\0') { }
-    return temp == find ? i - 1 : -1;
+    return temp == find ? i - 1 : 0;
 }
 
 int parse_first_fen_section(const char fen_str[], Bitboard* board)
@@ -72,7 +72,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
             case '\0': if (!is_terminal) { return 0; } break;
 
             /* ensure that the row bounds are not violated */
-            case '/': pos -= 16; if (pos != ++sep_count * 8) { return 0; } break;
+            case '/': if (pos != (8 - (sep_count++)) * 8) { return 0; } pos -= 16; break;
 
             /* handle empty fields declaration */
             case '1': case '2': case '3': case '4':
@@ -84,7 +84,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
             case 'k': case 'q': case 'r': case 'b': case 'n': case 'p':
                 color = (ChessColor)(isupper(temp) ? White : Black);
                 type = piece_type_from_char(temp);
-                was_moved = START_POSITIONS & (1uLL << pos) ? 0 : 1;
+                was_moved = (START_POSITIONS & (1uLL << pos)) ? 0 : 1;
                 simple_board[pos++] = create_piece(type, color, was_moved);
                 break;
 
@@ -93,7 +93,7 @@ int parse_first_fen_section(const char fen_str[], Bitboard* board)
         }
 
         /* check if the next state is supposed to be terminal */
-        is_terminal = pos == 64 && sep_count == 7;
+        is_terminal = (pos == 8 && sep_count == 7);
 
     /* loop until the end of the FEN string's first section */
     } while (temp != '\0');
@@ -117,7 +117,7 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
     size_t i = 0; uint8_t poss_rochades = 0xF;
 
     /* handle case with no castlings */
-    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* do nothing */ }
+    if (fen_str[i] == '-' && fen_str[i+1] == '\0') { /* use default value */ }
 
     /* handle case with rochades */
     else
@@ -128,7 +128,7 @@ int parse_third_fen_section(const char fen_str[], uint8_t* rochades)
         if (fen_str[i] == 'k') { poss_rochades ^= 0x8; i++; }
         if (fen_str[i] == 'q') { poss_rochades ^= 0x4; i++; }
 
-        /* ensure that any rochade is possible and the terminal symbol is hit */
+        /* ensure any rochade is possible and the terminal symbol is hit */
         if (!poss_rochades || fen_str[i] != '\0') { return 0; }
     }
 
@@ -163,50 +163,53 @@ int parse_fourth_fen_section(const char fen_str[], uint8_t* en_passants)
 
 int chess_session_from_fen(const char fen_str[], ChessGameSession* session)
 {
-    size_t end = 0; size_t len, i = 0; int game_round = 0;
-    ChessColor side; uint8_t rochades = 0, en_passants = 0, hdslpd = 0;
-    char cache[54]; char* temp_str = cache; Bitboard board[13] = { 0 };
+    size_t end = 0; size_t len, i = 0; int game_round;
+    ChessColor side; uint8_t rochades, en_passants, hdslpd;
+    char cache[100]; char* temp_str = cache; Bitboard board[13] = { 0 };
+    /* TODO: figure out the exact cap for the cache memory, 100 should be enough though */
 
     /* create a carbon copy of the fen string (that can be safely modified) */
     strcpy(temp_str, fen_str);
 
     /* parse the first FEN section (positions of pieces on the board) */
-    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    if (!(end = str_index_of(temp_str, ' '))) { return 0; }
     temp_str[end] = '\0';
     if (!parse_first_fen_section(temp_str, board)) { return 0; }
     temp_str += end + 1;
 
     /* parse the second FEN section (drawing side) */
-    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
+    if (!(end = str_index_of(temp_str, ' '))) { return 0; }
     temp_str[end] = '\0';
     if (!parse_second_fen_section(temp_str, &side)) { return 0; }
     temp_str += end + 1;
 
     /* parse the third FEN section (possible castlings) */
-    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
-    temp_str[end] = '\0';
-    if (!parse_third_fen_section(temp_str, &rochades)) { return 0; }
-    temp_str += end + 1;
+    // if (!(end = str_index_of(temp_str, ' '))) { return 0; }
+    // temp_str[end] = '\0';
+    // if (!parse_third_fen_section(temp_str, &rochades)) { return 0; }
+    // temp_str += end + 1;
 
     /* parse the fourth FEN section (en-passant) */
-    if ((end = str_index_of(temp_str, ' ')) == -1) { return 0; }
-    temp_str[end] = '\0';
-    if (!parse_third_fen_section(temp_str, &en_passants)) { return 0; }
-    temp_str += end + 1;
+    // if (!(end = str_index_of(temp_str, ' '))) { return 0; }
+    // temp_str[end] = '\0';
+    // if (!parse_fourth_fen_section(temp_str, &en_passants)) { return 0; }
+    // temp_str += end + 1;
 
     /* parse the fifth FEN section (halfdraws since last pawn draw) */
-    len = parse_uint(fen_str + i, (int*)&hdslpd, ' ');
-    if (len > 0) { i += len + 1; } else { return 0; }
+    // len = parse_uint(fen_str + i, (int*)&hdslpd, ' ');
+    // if (len > 0) { i += len + 1; } else { return 0; }
 
     /* parse the sixth FEN section (game round) */
-    len = parse_uint(fen_str + i, &game_round, '\0');
-    if (len <= 0) { return 0; }
+    // len = parse_uint(fen_str + i, &game_round, '\0');
+    // if (len <= 0) { return 0; }
 
     /* assign the parsed FEN string content to the game session object */
     copy_board(board, session->board);
     session->context = create_context(side,
         en_passants, rochades, hdslpd, game_round);
     apply_game_context_to_board(session->board, session->context);
+
+    // if (session->context != DEFAULT_GAME_CONTEXT) { return NULL; }
 
     return 1;
 }
