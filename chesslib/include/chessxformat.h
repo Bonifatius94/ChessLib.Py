@@ -22,33 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef CHESSSLIBMODULE_H
-#define CHESSSLIBMODULE_H
+#ifndef CHESSXFORMAT_H
+#define CHESSXFORMAT_H
 
-/* ====================================================
-      I N I T I A L I Z E    P Y T H O N   T O O L S
-   ==================================================== */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-/* info: fixing this warning would require to replace makros in the numpy
-         source code which is not appropriate at all -> keep it like that */
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
-/* ====================================================
-            L O A D   C H E S S   L I B S
-   ==================================================== */
-
-#include "chessboard.h"
-#include "chessdraw.h"
-#include "chessdrawgen.h"
-#include "chessgamestate.h"
-#include "chesspiece.h"
-#include "chesspieceatpos.h"
-#include "chessposition.h"
 #include "chesstypes.h"
-#include "chessxformat.h"
+#include "chesspiece.h"
+#include "chessboard.h"
+#include "chessgamesession.h"
+
+/* TODO: move the board hashing code here */
+
+int chess_session_from_fen(const char fen_str[], ChessGameSession* session);
+int chess_session_to_fen(char* fen_str, const ChessGameSession* session);
+int chess_session_from_pgn(const char pgn_str[], ChessGameSession* session);
+int chess_session_to_pgn(char* pgn_str, const ChessGameSession* session);
 
 #endif

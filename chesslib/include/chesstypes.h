@@ -95,4 +95,15 @@ typedef uint16_t CompactChessDraw;
    highest bit as H8 (indexes A1=0, B1=1, ..., A2=8, ..., H8=63). */
 typedef uint64_t Bitboard;
 
+/* TODO: add a definition for a FEN game session context to replace the was_moved bitboards
+         e.g. 1 bit for drawing_side, 8 bits for en-passants, 4 bits for rochades,
+              6 bits for draws_since_last_pawn_draw, remaining bits for game_round
+         -> new 32-bit integer bitwise type */
+
+/* |    game round | halfdraws since pawn draw | rochades | en-passants | side |
+   | ------------- | ------------------------- | -------- | ----------- | ---- |
+   | xxxxxxxxxxxxx |                    xxxxxx |     xxxx |    xxxxxxxx |    x | */
+typedef uint32_t ChessGameContext;
+/* TODO: think of compressing the en-passant part to 3 bits, pos indices [0-7] */
+
 #endif

@@ -98,7 +98,9 @@ def main():
         "chesslib/src/chessdraw.c",
         "chesslib/src/chessdrawgen.c",
         "chesslib/src/chesspieceatpos.c",
-        "chesslib/src/chessgamestate.c"
+        "chesslib/src/chessgamestate.c",
+        "chesslib/src/chessxformat.c",
+        "chesslib/src/chessgamesession.c",
     ]
 
     # define extension module settings (for cross-plattform builds)

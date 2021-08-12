@@ -34,11 +34,18 @@ static PyObject* chesslib_create_chesspieceatpos(PyObject* self, PyObject* args,
 static PyObject* chesslib_create_chessboard(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_create_startformation(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_create_chessdraw(PyObject* self, PyObject* args, PyObject *keywds);
+
 static PyObject* chesslib_get_all_draws(PyObject* self, PyObject* args, PyObject *keywds);
-static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args, PyObject *keywds);
-static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_apply_draw(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_get_game_state(PyObject* self, PyObject* args, PyObject *keywds);
+
+static PyObject* chesslib_board_to_hash(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_gamesession_from_fen(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds);
+static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds);
+
 static PyObject* chesslib_visualize_board(PyObject* self, PyObject* args, PyObject *keywds);
 static PyObject* chesslib_visualize_draw(PyObject* self, PyObject* args, PyObject *keywds);
 
@@ -223,7 +230,20 @@ Args:\n\
     is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
 \n\
 Returns:\n\
-    the game state related to the given game situation, encoded as integer/ASCII byte";
+    the chess board represented by the given hash, as numpy array";
+
+/* if (!PyArg_ParseTuple(args, "s|i", &fen_str, &is_simple_board)) { return NULL; } */
+const char Board_FromFen_Docstring[] =
+"Board_FromFen(fen_str: str, is_simple_board: bool=False) -> int\n\
+\n\
+Convert the given FEN string to a chess board.\n\
+\n\
+Args:\n\
+    fen_str: The FEN string representation to be imported\n\
+    is_simple_board: Indicates whether the resulting chess board should be of the simple board format, defaults to False\n\
+\n\
+Returns:\n\
+    the chess board represented by the given FEN string, as numpy array";
 
 /* if (!PyArg_ParseTuple(args, "O|i", &bitboards, &is_simple_board)) { return NULL; } */
 const char VisualizeBoard_Docstring[] =
@@ -264,25 +284,26 @@ Returns:\n\
 static PyMethodDef chesslib_methods[] = {
 
     /* data types and structures */
-    {"ChessPosition", chesslib_create_chessposition, METH_VARARGS | METH_KEYWORDS, ChessPosition_Docstring},
-    {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS | METH_KEYWORDS, ChessPiece_Docstring},
-    {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS | METH_KEYWORDS, ChessPieceAtPos_Docstring},
-    {"ChessBoard", chesslib_create_chessboard, METH_VARARGS | METH_KEYWORDS, ChessBoard_Docstring},
-    {"ChessBoard_StartFormation", chesslib_create_startformation, METH_VARARGS | METH_KEYWORDS, ChessBoard_StartFormation_Docstring},
-    {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS | METH_KEYWORDS, ChessDraw_Docstring},
+    {"ChessPosition", (PyCFunction)chesslib_create_chessposition, METH_VARARGS | METH_KEYWORDS, ChessPosition_Docstring},
+    {"ChessPiece", (PyCFunction)chesslib_create_chesspiece, METH_VARARGS | METH_KEYWORDS, ChessPiece_Docstring},
+    {"ChessPieceAtPos", (PyCFunction)chesslib_create_chesspieceatpos, METH_VARARGS | METH_KEYWORDS, ChessPieceAtPos_Docstring},
+    {"ChessBoard", (PyCFunction)chesslib_create_chessboard, METH_VARARGS | METH_KEYWORDS, ChessBoard_Docstring},
+    {"ChessBoard_StartFormation", (PyCFunction)chesslib_create_startformation, METH_VARARGS | METH_KEYWORDS, ChessBoard_StartFormation_Docstring},
+    {"ChessDraw", (PyCFunction)chesslib_create_chessdraw, METH_VARARGS | METH_KEYWORDS, ChessDraw_Docstring},
 
     /* core chess logic for gameplay */
-    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS | METH_KEYWORDS, GenerateDraws_Docstring},
-    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS | METH_KEYWORDS, ApplyDraw_Docstring},
-    {"GameState", chesslib_get_game_state, METH_VARARGS | METH_KEYWORDS, GameState_Docstring},
+    {"GenerateDraws", (PyCFunction)chesslib_get_all_draws, METH_VARARGS | METH_KEYWORDS, GenerateDraws_Docstring},
+    {"ApplyDraw", (PyCFunction)chesslib_apply_draw, METH_VARARGS | METH_KEYWORDS, ApplyDraw_Docstring},
+    {"GameState", (PyCFunction)chesslib_get_game_state, METH_VARARGS | METH_KEYWORDS, GameState_Docstring},
 
     /* extensions for data compression */
-    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
-    {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
+    {"Board_ToHash", (PyCFunction)chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
+    {"Board_FromHash", (PyCFunction)chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
+    {"Board_FromFen", (PyCFunction)chesslib_gamesession_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
 
     /* extensions for data visualization of complex type encodings */
-    {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
-    {"VisualizeDraw", chesslib_visualize_draw, METH_VARARGS | METH_KEYWORDS, VisualizeDraw_Docstring},
+    {"VisualizeBoard", (PyCFunction)chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
+    {"VisualizeDraw", (PyCFunction)chesslib_visualize_draw, METH_VARARGS | METH_KEYWORDS, VisualizeDraw_Docstring},
     /* TODO: add functions for visualizing remaining data structures like chess piece, chess pos, piece@pos */
     /* TODO: add functions for converting from/to portable formats like FEN / PGN, etc. */
 
@@ -352,25 +373,17 @@ PyMODINIT_FUNC PyInit_chesslib(void)
  **************************************************************************/
 static PyObject* chesslib_create_chessposition(PyObject* self, PyObject* args, PyObject *keywds)
 {
-    const char* pos_as_str;
-    uint8_t row = 0, column = 0;
+    const char* pos_as_str; ChessPosition pos = 0;
     static char *kwlist[] = {"pos_as_str", NULL};
 
     /* read position string, quit if the parameter does not exist */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &pos_as_str)) { return NULL; }
 
-    /* make sure that the overloaded string is of the correct format */
-    if (*(pos_as_str + 2) != '\0'
-        || (!isalpha(pos_as_str[0]) || toupper(pos_as_str[0]) - 'A' >= 8
-                                       || toupper(pos_as_str[0]) - 'A' < 0)
-        || (!isdigit(pos_as_str[1]) || pos_as_str[1] - '1' >= 8)) { return NULL; }
-
-    /* parse position from position string */
-    row = pos_as_str[1] - '1';
-    column = toupper(pos_as_str[0]) - 'A';
+    /* parse the position index from string */
+    if (!position_from_string(pos_as_str, &pos)) { return NULL; }
 
     /* create uint32 python object and return it */
-    return PyLong_FromUnsignedLong(create_position(row, column));
+    return PyLong_FromUnsignedLong(pos);
 }
 
 /**************************************************************************
@@ -433,21 +446,7 @@ static PyObject* chesslib_create_startformation(PyObject* self, PyObject* args, 
     static char* kwlist[] = {"is_simple", NULL};
 
     /* create the chess board */
-    const Bitboard start_formation[] = {
-        0x0000000000000010uLL, /* white king     */
-        0x0000000000000008uLL, /* white queen(s) */
-        0x0000000000000081uLL, /* white rooks    */
-        0x0000000000000024uLL, /* white bishops  */
-        0x0000000000000042uLL, /* white knights  */
-        0x000000000000FF00uLL, /* white pawns    */
-        0x1000000000000000uLL, /* black king     */
-        0x0800000000000000uLL, /* black queen(s) */
-        0x8100000000000000uLL, /* black rooks    */
-        0x2400000000000000uLL, /* black bishops  */
-        0x4200000000000000uLL, /* black knights  */
-        0x00FF000000000000uLL, /* black pawns    */
-        0x0000FFFFFFFF0000uLL  /* was_moved mask */
-    };
+    const Bitboard start_formation[] = START_FORMATION;
 
     /* parse all args */
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i", kwlist, &is_simple_board)) { return NULL; }
@@ -720,8 +719,62 @@ static PyObject* chesslib_board_from_hash(PyObject* self, PyObject* args, PyObje
 
     /* signal python that the PyObject is no longer used by this function */
     Py_DecRef(hash_orig);
-    
+
     return chessboard;
+}
+
+/* =================================================
+            E X C H A N G E   F O R M A T S
+   ================================================= */
+
+static PyObject* chesslib_gamesession_from_fen(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* start formation in FEN: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' */
+
+    PyObject* chessboard, * tuple;
+    char* fen_str; int is_simple_board = 0;
+    ChessGameSession session = INIT_GAME_SESSION; ChessPiece simple_board[64];
+    static char* kwlist[] = {"fen_str", "is_simple", NULL};
+
+    /* parse bitboards as ChessBoard struct */
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|i", kwlist,
+        &fen_str, &is_simple_board)) { return NULL; }
+
+    /* convert the FEN string to a game session */
+    if (!chess_session_from_fen(fen_str, &session)) { return NULL; }
+
+    /* convert the session's bitboard to a simple board if required */
+    if (is_simple_board) { to_simple_board(session.board, simple_board); }
+
+    /* return as simple board or bitboards format */
+    chessboard = is_simple_board
+        ? serialize_as_pieces(simple_board)
+        : serialize_as_bitboards(session.board);
+
+    /* zip the chess board and game context as a PyTuple */
+    tuple = PyTuple_New(2);
+    PyTuple_SetItem(tuple, 0, chessboard);
+    PyTuple_SetItem(tuple, 1, PyLong_FromUnsignedLong(session.context));
+
+    return tuple;
+}
+
+static PyObject* chesslib_board_to_fen(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
+    return NULL;
+}
+
+static PyObject* chesslib_draw_from_pgn(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
+    return NULL;
+}
+
+static PyObject* chesslib_draw_to_pgn(PyObject* self, PyObject* args, PyObject *keywds)
+{
+    /* TODO: implement logic here ... */
+    return NULL;
 }
 
 /* =================================================

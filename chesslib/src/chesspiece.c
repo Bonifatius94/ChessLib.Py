@@ -55,7 +55,7 @@ ChessColor color_from_char(char c)
     {
         case 'W': return White;
         case 'B': return Black;
-        default:  return White;
+        default:  return White; /* TODO: think of throwing an error instead */
     }
 }
 

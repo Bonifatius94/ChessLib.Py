@@ -39,6 +39,31 @@ int8_t get_column(ChessPosition position)
     return (position & 7);
 }
 
+int position_from_string(const char* pos_str, ChessPosition* pos)
+{
+    uint8_t row, column;
+
+    /* make sure the first character is within [a-h] or [A-H] */
+    if (!isalpha(pos_str[0])
+        || toupper(pos_str[0]) - 'A' >= 8
+        || toupper(pos_str[0]) - 'A' < 0)
+    { return 0; }
+
+    /* make sure the second character is within [1-8] */
+    if (!isdigit(pos_str[1]) || pos_str[1] - '1' >= 8) { return 0; }
+
+    /* make sure the third character is a zero-terminal */
+    if (pos_str[2] != '\0') { return 0; }
+
+    /* finally, do the actual parsing */
+    row = pos_str[1] - '1';
+    column = toupper(pos_str[0]) - 'A';
+    *pos = create_position(row, column);
+
+    /* parsing successful! */
+    return 1;
+}
+
 void position_to_string(ChessPosition position, char* pos_str)
 {
     /* serialize position as string*/

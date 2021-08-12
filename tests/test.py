@@ -46,6 +46,7 @@ def test_module():
     test_apply_draw()
     test_game_state()
     test_board_hash()
+    test_board_from_fen()
 
     # # test visualization functions
     test_visualize_board()
@@ -189,7 +190,7 @@ def test_create_chessdraw():
     # board = chesslib.ChessBoard_StartFormation(True)
     gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), is_compact_draw=True, is_simple=True)
     assert_equal(gen_draw, exp_compact_draw)
-    print(gen_draw, exp_compact_draw)
+    # print(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # TODO: add a peasant prom. test case
@@ -658,6 +659,50 @@ def test_visualize_draw():
     print("test passed!")
 
     # TODO: add more tests for edge cases (rochade, en-passant, promotion)
+
+
+def test_board_from_fen():
+
+    # TODO: make this test work
+
+    print("testing FEN to chess board")
+
+    # FEN string representing the initial game state
+    fen_str = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    board_exp = chesslib.ChessBoard_StartFormation()
+
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
+    assert_true(np.array_equal(board, board_exp))
+    assert_equal(531968, context)
+
+    # FEN string representing the game state after first draw 'white pawn F2-F4'
+    fen_str = 'rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq f3 10 12'
+    board_exp = chesslib.ApplyDraw(board, chesslib.ChessDraw(
+        board, chesslib.ChessPosition('F2'), chesslib.ChessPosition('F4')))
+
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
+    assert_true(np.array_equal(board, board_exp))
+    assert_equal(6381121, context)
+
+    # FEN string representing the game state after first draw 'white pawn F2-F4'
+    fen_str = '5k2/8/8/8/8/8/8/3K4 b - - 41 71'
+    board_exp = np.array([
+        1 << chesslib.ChessPosition('D1'),
+        0, 0, 0, 0, 0,
+        1 << chesslib.ChessPosition('F8'),
+        0, 0, 0, 0, 0,
+        0xFFFF00000000FFFF # info: was_moved mask cannot be 100% accurately restored
+                           #       -> draw-gen needs to be the same
+    ], dtype=np.uint64)
+
+    # parse the FEN string and make sure it's correct
+    board, context = chesslib.Board_FromFen(fen_str)
+    assert_true(np.array_equal(board[:12], board_exp[:12]))
+    assert_equal(37560321, context)
+
+    print("test passed!")
 
 
 if __name__ == '__main__':

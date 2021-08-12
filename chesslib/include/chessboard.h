@@ -41,6 +41,14 @@
                 D E F I N E    M A K R O S
    ==================================================== */
 
+/* The chess bitboards in start formation */
+#define START_FORMATION {\
+    0x0000000000000010uLL, 0x0000000000000008uLL, 0x0000000000000081uLL,\
+    0x0000000000000024uLL, 0x0000000000000042uLL, 0x000000000000FF00uLL,\
+    0x1000000000000000uLL, 0x0800000000000000uLL, 0x8100000000000000uLL,\
+    0x2400000000000000uLL, 0x4200000000000000uLL, 0x00FF000000000000uLL,\
+    0x0000FFFFFFFF0000uLL }
+
 /* row masks */
 #define ROW_1 0x00000000000000FFuLL
 #define ROW_2 0x000000000000FF00uLL
@@ -114,5 +122,9 @@ void to_simple_board(const Bitboard board[], ChessPiece* target);
 
 void compress_pieces_array(const ChessPiece pieces[], uint8_t* compr_bytes);
 void uncompress_pieces_array(const uint8_t compr_bytes[], ChessPiece* out_pieces);
+
+Bitboard get_captured_fields(const Bitboard bitboards[], ChessColor side);
+void get_board_positions(Bitboard bitboard, ChessPosition* out_positions, size_t* out_length);
+ChessPosition get_board_position(Bitboard bitboard);
 
 #endif
