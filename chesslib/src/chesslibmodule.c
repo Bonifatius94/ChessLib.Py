@@ -87,14 +87,14 @@ Returns:\n\
 const char ChessPieceAtPos_Docstring[] =
 "ChessPieceAtPos(piece: byte, pos: byte) -> int\n\
 \n\
-Create a chess piece given its color, type and whether it was already moved.\n\
+Attach positional information to a chess piece.\n\
 \n\
 Args:\n\
     piece: The chess piece encoded as a single byte (e.g. using ChessPiece() function)\n\
     pos: The chess position encoded as a single byte (e.g. using ChessPosition() function)\n\
 \n\
 Returns:\n\
-    the piece@pos attaching positional information to the given chess pice as 16-bit integer";
+    the piece@pos attaching positional information to the given chess piece as 16-bit integer";
 
 /* if (!PyArg_ParseTuple(args, "O|i", &pieces_list, &is_simple_board)) { return NULL; } */
 const char ChessBoard_Docstring[] =
