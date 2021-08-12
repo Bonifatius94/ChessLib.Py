@@ -190,7 +190,7 @@ def test_create_chessdraw():
     # board = chesslib.ChessBoard_StartFormation(True)
     gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), is_compact_draw=True, is_simple=True)
     assert_equal(gen_draw, exp_compact_draw)
-    print(gen_draw, exp_compact_draw)
+    # print(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # TODO: add a peasant prom. test case
@@ -665,7 +665,7 @@ def test_board_from_fen():
 
     # TODO: make this test work
 
-    print("testing visualize chess draw")
+    print("testing FEN to chess board")
 
     # FEN string representing the initial game state
     fen_str = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
