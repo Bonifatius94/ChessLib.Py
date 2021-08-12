@@ -284,26 +284,26 @@ Returns:\n\
 static PyMethodDef chesslib_methods[] = {
 
     /* data types and structures */
-    {"ChessPosition", chesslib_create_chessposition, METH_VARARGS | METH_KEYWORDS, ChessPosition_Docstring},
-    {"ChessPiece", chesslib_create_chesspiece, METH_VARARGS | METH_KEYWORDS, ChessPiece_Docstring},
-    {"ChessPieceAtPos", chesslib_create_chesspieceatpos, METH_VARARGS | METH_KEYWORDS, ChessPieceAtPos_Docstring},
-    {"ChessBoard", chesslib_create_chessboard, METH_VARARGS | METH_KEYWORDS, ChessBoard_Docstring},
-    {"ChessBoard_StartFormation", chesslib_create_startformation, METH_VARARGS | METH_KEYWORDS, ChessBoard_StartFormation_Docstring},
-    {"ChessDraw", chesslib_create_chessdraw, METH_VARARGS | METH_KEYWORDS, ChessDraw_Docstring},
+    {"ChessPosition", (PyCFunction)chesslib_create_chessposition, METH_VARARGS | METH_KEYWORDS, ChessPosition_Docstring},
+    {"ChessPiece", (PyCFunction)chesslib_create_chesspiece, METH_VARARGS | METH_KEYWORDS, ChessPiece_Docstring},
+    {"ChessPieceAtPos", (PyCFunction)chesslib_create_chesspieceatpos, METH_VARARGS | METH_KEYWORDS, ChessPieceAtPos_Docstring},
+    {"ChessBoard", (PyCFunction)chesslib_create_chessboard, METH_VARARGS | METH_KEYWORDS, ChessBoard_Docstring},
+    {"ChessBoard_StartFormation", (PyCFunction)chesslib_create_startformation, METH_VARARGS | METH_KEYWORDS, ChessBoard_StartFormation_Docstring},
+    {"ChessDraw", (PyCFunction)chesslib_create_chessdraw, METH_VARARGS | METH_KEYWORDS, ChessDraw_Docstring},
 
     /* core chess logic for gameplay */
-    {"GenerateDraws", chesslib_get_all_draws, METH_VARARGS | METH_KEYWORDS, GenerateDraws_Docstring},
-    {"ApplyDraw", chesslib_apply_draw, METH_VARARGS | METH_KEYWORDS, ApplyDraw_Docstring},
-    {"GameState", chesslib_get_game_state, METH_VARARGS | METH_KEYWORDS, GameState_Docstring},
+    {"GenerateDraws", (PyCFunction)chesslib_get_all_draws, METH_VARARGS | METH_KEYWORDS, GenerateDraws_Docstring},
+    {"ApplyDraw", (PyCFunction)chesslib_apply_draw, METH_VARARGS | METH_KEYWORDS, ApplyDraw_Docstring},
+    {"GameState", (PyCFunction)chesslib_get_game_state, METH_VARARGS | METH_KEYWORDS, GameState_Docstring},
 
     /* extensions for data compression */
-    {"Board_ToHash", chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
-    {"Board_FromHash", chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
-    {"Board_FromFen", chesslib_board_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
+    {"Board_ToHash", (PyCFunction)chesslib_board_to_hash, METH_VARARGS | METH_KEYWORDS, Board_ToHash_Docstring},
+    {"Board_FromHash", (PyCFunction)chesslib_board_from_hash, METH_VARARGS | METH_KEYWORDS, Board_FromHash_Docstring},
+    {"Board_FromFen", (PyCFunction)chesslib_board_from_fen, METH_VARARGS | METH_KEYWORDS, Board_FromFen_Docstring},
 
     /* extensions for data visualization of complex type encodings */
-    {"VisualizeBoard", chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
-    {"VisualizeDraw", chesslib_visualize_draw, METH_VARARGS | METH_KEYWORDS, VisualizeDraw_Docstring},
+    {"VisualizeBoard", (PyCFunction)chesslib_visualize_board, METH_VARARGS | METH_KEYWORDS, VisualizeBoard_Docstring},
+    {"VisualizeDraw", (PyCFunction)chesslib_visualize_draw, METH_VARARGS | METH_KEYWORDS, VisualizeDraw_Docstring},
     /* TODO: add functions for visualizing remaining data structures like chess piece, chess pos, piece@pos */
     /* TODO: add functions for converting from/to portable formats like FEN / PGN, etc. */
 
