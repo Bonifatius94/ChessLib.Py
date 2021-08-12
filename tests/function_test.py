@@ -24,7 +24,7 @@
 # ================================================================================= #
 
 import sys
-import chesslib
+import chesslib as cl
 import numpy as np
 from asserts import assert_true, assert_equal
 
@@ -45,6 +45,8 @@ def test_module():
     test_drawgen()
     test_apply_draw()
     test_game_state()
+
+    # test serialization functions
     test_board_hash()
 
     # # test visualization functions
@@ -57,11 +59,11 @@ def test_chesscolor():
     print("testing chess color struct")
 
     # test white side (expected integer with value=0)
-    white_side = chesslib.ChessColor_White
+    white_side = cl.ChessColor_White
     assert_equal(white_side, 0)
 
     # test black side (expected integer with value=1)
-    black_side = chesslib.ChessColor_Black
+    black_side = cl.ChessColor_Black
     assert_equal(black_side, 1)
 
     print("test passed!")
@@ -79,7 +81,7 @@ def test_chessposition():
         for col in range(8):
             # test the creation of a new chessposition of the given (row, column) tuple
             pos_string = col_chars[col] + str(row + 1)
-            pos = chesslib.ChessPosition(pos_string)
+            pos = cl.ChessPosition(pos_string)
 
             # make sure that the position's numeric value is equal to the expected index
             assert_equal(pos, row * 8 + col)
@@ -101,7 +103,7 @@ def test_chesspiece():
                 # test the creation of the new chesspiece
                 color_char = 'W' if color == 0 else 'B'
                 type_char = piece_type_chars[type]
-                piece = chesslib.ChessPiece(color_char, type_char, was_moved)
+                piece = cl.ChessPiece(color_char, type_char, was_moved)
 
                 # make sure that the numeric value is correctly encoded
                 assert_equal(piece, type + 8 * color + 16 * was_moved)
@@ -124,7 +126,7 @@ def test_chesspieceatpos():
         for col in range(8):
             # test the creation of a new chessposition of the given (row, column) tuple
             pos_string = col_chars[col] + str(row + 1)
-            pos = chesslib.ChessPosition(pos_string)
+            pos = cl.ChessPosition(pos_string)
 
             # loop through all possible pieces
             for type in range(1, 7):
@@ -133,10 +135,10 @@ def test_chesspieceatpos():
                         # test the creation of the new chesspiece
                         color_char = 'W' if color == 0 else 'B'
                         type_char = piece_type_chars[type]
-                        piece = chesslib.ChessPiece(color_char, type_char, was_moved)
+                        piece = cl.ChessPiece(color_char, type_char, was_moved)
 
                         # test the creation of a pieceatpos struct with the given piece and pos
-                        piece_at_pos = chesslib.ChessPieceAtPos(piece, pos)
+                        piece_at_pos = cl.ChessPieceAtPos(piece, pos)
 
                         # make sure that the numeric value of pieceatpos is correctly encoded
                         assert_equal(piece_at_pos, pos * 32 + piece)
@@ -149,7 +151,7 @@ def test_chessdraw_null():
     print("testing chessdraw null value")
 
     # test if the expected null value is returned
-    assert_equal(chesslib.ChessDraw_Null, 0)
+    assert_equal(cl.ChessDraw_Null, 0)
 
     print("test passed!")
 
@@ -168,26 +170,26 @@ def test_create_chessdraw():
     exp_compact_draw = 18350876 & 0x7FFF
 
     # standard creation, draw E2-E4 from start formation, board in bitboards format
-    board = chesslib.ChessBoard_StartFormation()
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'))
+    board = cl.ChessBoard_StartFormation()
+    gen_draw = cl.ChessDraw(board, cl.ChessPosition('E2'), cl.ChessPosition('E4'))
     assert_equal(gen_draw, exp_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in bitboards format
-    # board = chesslib.ChessBoard_StartFormation()
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True)
+    # board = cl.ChessBoard_StartFormation()
+    gen_draw = cl.ChessDraw(board, cl.ChessPosition('E2'), cl.ChessPosition('E4'), 0, True)
     assert_equal(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # standard creation, draw E2-E4 from start formation, board in simple format
-    board = chesslib.ChessBoard_StartFormation(True)
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, False, True)
+    board = cl.ChessBoard_StartFormation(True)
+    gen_draw = cl.ChessDraw(board, cl.ChessPosition('E2'), cl.ChessPosition('E4'), 0, False, True)
     assert_equal(gen_draw, exp_draw)
     assert_equal(sys.getrefcount(board), 2)
 
     # compact creation, draw E2-E4 from start formation, board in simple format
-    # board = chesslib.ChessBoard_StartFormation(True)
-    gen_draw = chesslib.ChessDraw(board, chesslib.ChessPosition('E2'), chesslib.ChessPosition('E4'), 0, True, True)
+    # board = cl.ChessBoard_StartFormation(True)
+    gen_draw = cl.ChessDraw(board, cl.ChessPosition('E2'), cl.ChessPosition('E4'), 0, True, True)
     assert_equal(gen_draw, exp_compact_draw)
     print(gen_draw, exp_compact_draw)
     assert_equal(sys.getrefcount(board), 2)
@@ -203,12 +205,12 @@ def test_create_chessboard():
 
     # define the pieces to be put onto the board at the given positions
     pieces_at_pos = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', True ), chesslib.ChessPosition('G8')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True ), chesslib.ChessPosition('A3')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'Q', False), chesslib.ChessPosition('D8')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True ), chesslib.ChessPosition('B7')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'B', True ), chesslib.ChessPosition('C5')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', True ), cl.ChessPosition('G8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True ), cl.ChessPosition('A3')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'Q', False), cl.ChessPosition('D8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True ), cl.ChessPosition('B7')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'B', True ), cl.ChessPosition('C5')),
     ], np.uint16)
     # TODO: add pawns to the collection for edge case testing
 
@@ -230,7 +232,7 @@ def test_create_chessboard():
     ], dtype=np.uint64)
 
     # create the chessboard from pieces at pos array and make sure it was created correctly
-    board = chesslib.ChessBoard(pieces_at_pos)
+    board = cl.ChessBoard(pieces_at_pos)
     assert_true(np.array_equal(exp_board, board))
 
     # make sure the pieces@pos reference counters were decremented properly
@@ -249,7 +251,7 @@ def test_create_chessboard():
     ], dtype=np.uint8)
 
     # create the chessboard from pieces at pos array (simple format) and make sure it was created correctly
-    simple_board = chesslib.ChessBoard(pieces_at_pos, True)
+    simple_board = cl.ChessBoard(pieces_at_pos, True)
     assert_true(np.array_equal(exp_simple_board, simple_board))
 
     # make sure the pieces@pos reference counters were decremented properly
@@ -280,7 +282,7 @@ def test_chessboard_start():
     ], dtype=np.uint64)
 
     # test if the expected board in start formation is returned
-    start = chesslib.ChessBoard_StartFormation()
+    start = cl.ChessBoard_StartFormation()
     assert_true(np.array_equal(start, exp_start_formation))
 
     # test simple chess board format
@@ -297,7 +299,7 @@ def test_chessboard_start():
     ], dtype=np.uint8)
 
     # test if the expected board in start formation is returned
-    simple_start = chesslib.ChessBoard_StartFormation(True)
+    simple_start = cl.ChessBoard_StartFormation(True)
     assert_true(np.array_equal(simple_start, exp_simple_start_formation))
 
     print("test passed!")
@@ -308,12 +310,12 @@ def test_drawgen():
     print("testing draw-gen")
 
     # get all draws for starting position (white side)
-    board = chesslib.ChessBoard_StartFormation()
-    simple_board = chesslib.ChessBoard_StartFormation(True)
-    draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True)
+    board = cl.ChessBoard_StartFormation()
+    simple_board = cl.ChessBoard_StartFormation(True)
+    draws = cl.GenerateDraws(board, cl.ChessColor_White, cl.ChessDraw_Null, True)
 
     # make sure that simple board and bitboards representation produce the same output
-    assert_true(set(draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, False, True)))
+    assert_true(set(draws) == set(cl.GenerateDraws(simple_board, cl.ChessColor_White, cl.ChessDraw_Null, True, False, True)))
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -333,10 +335,10 @@ def test_drawgen():
     print("testing draw-gen (compact draws)")
 
     # get all draws for starting position (white side)
-    comp_draws = chesslib.GenerateDraws(board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True)
+    comp_draws = cl.GenerateDraws(board, cl.ChessColor_White, cl.ChessDraw_Null, True, True)
 
     # make sure that simple board and bitboards representation produce the same output
-    assert_true(set(comp_draws) == set(chesslib.GenerateDraws(simple_board, chesslib.ChessColor_White, chesslib.ChessDraw_Null, True, True, True)))
+    assert_true(set(comp_draws) == set(cl.GenerateDraws(simple_board, cl.ChessColor_White, cl.ChessDraw_Null, True, True, True)))
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -359,13 +361,13 @@ def test_apply_draw():
     print("test applying draws to chess boards")
 
     # get board in start formation and opening draw 'white peasant E2-E4'
-    board = chesslib.ChessBoard_StartFormation()
-    simple_board = chesslib.ChessBoard_StartFormation(True)
+    board = cl.ChessBoard_StartFormation()
+    simple_board = cl.ChessBoard_StartFormation(True)
     draw = 0x0118070C
 
     # try applying the draw
-    board_after = chesslib.ApplyDraw(board, draw)
-    simple_board_after = chesslib.ApplyDraw(simple_board, draw, True)
+    board_after = cl.ApplyDraw(board, draw)
+    simple_board_after = cl.ApplyDraw(simple_board, draw, True)
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -405,8 +407,8 @@ def test_apply_draw():
     assert_true(np.array_equal(exp_simple_board_after, simple_board_after))
 
     # test if ApplyDraw() function is revertible
-    rev_board = chesslib.ApplyDraw(board_after, draw)
-    simple_rev_board = chesslib.ApplyDraw(simple_board_after, draw, True)
+    rev_board = cl.ApplyDraw(board_after, draw)
+    simple_rev_board = cl.ApplyDraw(simple_board_after, draw, True)
 
     # make sure the board reference counters were decremented properly
     assert_equal(sys.getrefcount(board), 2)
@@ -424,16 +426,16 @@ def test_board_hash():
     print("testing board to hash function")
 
     # create board in start formation
-    board = chesslib.ChessBoard_StartFormation()
-    simple_board = chesslib.ChessBoard_StartFormation(True)
+    board = cl.ChessBoard_StartFormation()
+    simple_board = cl.ChessBoard_StartFormation(True)
 
     # make sure that simple and bitboards representations create the same hash
-    assert_true(np.array_equal(chesslib.Board_ToHash(board), chesslib.Board_ToHash(simple_board, True)))
+    assert_true(np.array_equal(cl.Board_ToHash(board), cl.Board_ToHash(simple_board, True)))
 
     # compute the board's 40-byte hash
-    hash = chesslib.Board_ToHash(board)
+    hash = cl.Board_ToHash(board)
     assert_equal(sys.getrefcount(board), 2)
-    hash = chesslib.Board_ToHash(simple_board, True)
+    hash = cl.Board_ToHash(simple_board, True)
     assert_equal(sys.getrefcount(simple_board), 2)
 
     # define the expected hash
@@ -452,14 +454,14 @@ def test_board_hash():
     assert_true(np.array_equal(exp_hash, hash))
 
     # convert the board's 40-byte hash back to a board instance
-    board_copy = chesslib.Board_FromHash(hash)
+    board_copy = cl.Board_FromHash(hash)
 
     # make sure that the board converted from 40-byte hash is the same as the original board
     assert_true(np.array_equal(board_copy, board))
     assert_equal(sys.getrefcount(hash), 2)
 
     # convert the board's 40-byte hash back to a simple board instance
-    simple_board_copy = chesslib.Board_FromHash(hash, True)
+    simple_board_copy = cl.Board_FromHash(hash, True)
 
     # make sure that the board converted from 40-byte hash is the same as the original simple board
     assert_true(np.array_equal(simple_board_copy, simple_board))
@@ -476,127 +478,127 @@ def test_game_state():
 
     # create a chess board with a check-mate position
     checkmate_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('H1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('G7')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True), cl.ChessPosition('H1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True), cl.ChessPosition('G7')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    checkmate_board = chesslib.ChessBoard(checkmate_board_pieces)
-    checkmate_draw = chesslib.ChessDraw(checkmate_board,
-        chesslib.ChessPosition('H1'), chesslib.ChessPosition('H8'))
-    checkmate_board = chesslib.ApplyDraw(checkmate_board, checkmate_draw)
+    checkmate_board = cl.ChessBoard(checkmate_board_pieces)
+    checkmate_draw = cl.ChessDraw(checkmate_board,
+        cl.ChessPosition('H1'), cl.ChessPosition('H8'))
+    checkmate_board = cl.ApplyDraw(checkmate_board, checkmate_draw)
 
     # test the GameState() function to detect the mate
-    state = chesslib.GameState(checkmate_board, checkmate_draw)
-    assert_equal(state, chesslib.GameState_Checkmate)
+    state = cl.GameState(checkmate_board, checkmate_draw)
+    assert_equal(state, cl.GameState_Checkmate)
 
     # create a chess board with a stalemate position
     stalemate_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E6')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('C1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('F7')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', True), cl.ChessPosition('E6')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True), cl.ChessPosition('C1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True), cl.ChessPosition('F7')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    stalemate_board = chesslib.ChessBoard(stalemate_board_pieces)
-    stalemate_draw = chesslib.ChessDraw(stalemate_board,
-        chesslib.ChessPosition('C1'), chesslib.ChessPosition('D1'))
-    stalemate_board = chesslib.ApplyDraw(stalemate_board, stalemate_draw)
+    stalemate_board = cl.ChessBoard(stalemate_board_pieces)
+    stalemate_draw = cl.ChessDraw(stalemate_board,
+        cl.ChessPosition('C1'), cl.ChessPosition('D1'))
+    stalemate_board = cl.ApplyDraw(stalemate_board, stalemate_draw)
 
     # test the GameState() function to detect the stalemate as tie
-    state = chesslib.GameState(stalemate_board, stalemate_draw)
-    assert_equal(state, chesslib.GameState_Tie)
+    state = cl.GameState(stalemate_board, stalemate_draw)
+    assert_equal(state, cl.GameState_Tie)
 
     # create a chess board with a position of insufficient pieces for a checkmate
     insuff_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E6')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', True), cl.ChessPosition('E6')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    insuff_board = chesslib.ChessBoard(insuff_board_pieces)
-    insuff_draw = chesslib.ChessDraw(insuff_board,
-        chesslib.ChessPosition('E8'), chesslib.ChessPosition('D8'))
-    insuff_board = chesslib.ApplyDraw(insuff_board, insuff_draw)
+    insuff_board = cl.ChessBoard(insuff_board_pieces)
+    insuff_draw = cl.ChessDraw(insuff_board,
+        cl.ChessPosition('E8'), cl.ChessPosition('D8'))
+    insuff_board = cl.ApplyDraw(insuff_board, insuff_draw)
 
     # test the GameState() function to detect the insufficient pieces as tie
-    state = chesslib.GameState(insuff_board, insuff_draw)
-    assert_equal(state, chesslib.GameState_Tie)
+    state = cl.GameState(insuff_board, insuff_draw)
+    assert_equal(state, cl.GameState_Tie)
 
     # create a chess board with a simple check that can still be defended
     check_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', True), chesslib.ChessPosition('E1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'R', True), chesslib.ChessPosition('D2')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', True), cl.ChessPosition('E1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'R', True), cl.ChessPosition('D2')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    check_board = chesslib.ChessBoard(check_board_pieces)
-    check_draw = chesslib.ChessDraw(check_board,
-        chesslib.ChessPosition('D2'), chesslib.ChessPosition('E2'))
-    check_board = chesslib.ApplyDraw(check_board, check_draw)
+    check_board = cl.ChessBoard(check_board_pieces)
+    check_draw = cl.ChessDraw(check_board,
+        cl.ChessPosition('D2'), cl.ChessPosition('E2'))
+    check_board = cl.ApplyDraw(check_board, check_draw)
 
     # test the GameState() function to detect a simple check
-    state = chesslib.GameState(check_board, check_draw)
-    assert_equal(state, chesslib.GameState_Check)
+    state = cl.GameState(check_board, check_draw)
+    assert_equal(state, cl.GameState_Check)
 
     # tests with inverted piece colors, so the logic is not only working for one side
 
     # create a chess board with a check-mate position
     checkmate_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', False), chesslib.ChessPosition('E1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'R', True), chesslib.ChessPosition('H1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'R', True), chesslib.ChessPosition('G7')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', False), cl.ChessPosition('E1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'R', True), cl.ChessPosition('H1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'R', True), cl.ChessPosition('G7')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    checkmate_board = chesslib.ChessBoard(checkmate_board_pieces)
-    checkmate_draw = chesslib.ChessDraw(checkmate_board,
-        chesslib.ChessPosition('H1'), chesslib.ChessPosition('H8'))
-    checkmate_board = chesslib.ApplyDraw(checkmate_board, checkmate_draw)
+    checkmate_board = cl.ChessBoard(checkmate_board_pieces)
+    checkmate_draw = cl.ChessDraw(checkmate_board,
+        cl.ChessPosition('H1'), cl.ChessPosition('H8'))
+    checkmate_board = cl.ApplyDraw(checkmate_board, checkmate_draw)
 
     # test the GameState() function to detect the mate
-    state = chesslib.GameState(checkmate_board, checkmate_draw)
-    assert_equal(state, chesslib.GameState_Checkmate)
+    state = cl.GameState(checkmate_board, checkmate_draw)
+    assert_equal(state, cl.GameState_Checkmate)
 
     # create a chess board with a stalemate position
     stalemate_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', True), chesslib.ChessPosition('E6')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'R', True), chesslib.ChessPosition('C1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'R', True), chesslib.ChessPosition('F7')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', True), cl.ChessPosition('E6')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'R', True), cl.ChessPosition('C1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'R', True), cl.ChessPosition('F7')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    stalemate_board = chesslib.ChessBoard(stalemate_board_pieces)
-    stalemate_draw = chesslib.ChessDraw(stalemate_board,
-        chesslib.ChessPosition('C1'), chesslib.ChessPosition('D1'))
-    stalemate_board = chesslib.ApplyDraw(stalemate_board, stalemate_draw)
+    stalemate_board = cl.ChessBoard(stalemate_board_pieces)
+    stalemate_draw = cl.ChessDraw(stalemate_board,
+        cl.ChessPosition('C1'), cl.ChessPosition('D1'))
+    stalemate_board = cl.ApplyDraw(stalemate_board, stalemate_draw)
 
     # test the GameState() function to detect the stalemate as tie
-    state = chesslib.GameState(stalemate_board, stalemate_draw)
-    assert_equal(state, chesslib.GameState_Tie)
+    state = cl.GameState(stalemate_board, stalemate_draw)
+    assert_equal(state, cl.GameState_Tie)
 
     # create a chess board with a position of insufficient pieces for a checkmate
     insuff_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', True), chesslib.ChessPosition('E6')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', True), cl.ChessPosition('E6')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    insuff_board = chesslib.ChessBoard(insuff_board_pieces)
-    insuff_draw = chesslib.ChessDraw(insuff_board,
-        chesslib.ChessPosition('E8'), chesslib.ChessPosition('D8'))
-    insuff_board = chesslib.ApplyDraw(insuff_board, insuff_draw)
+    insuff_board = cl.ChessBoard(insuff_board_pieces)
+    insuff_draw = cl.ChessDraw(insuff_board,
+        cl.ChessPosition('E8'), cl.ChessPosition('D8'))
+    insuff_board = cl.ApplyDraw(insuff_board, insuff_draw)
 
     # test the GameState() function to detect the insufficient pieces as tie
-    state = chesslib.GameState(insuff_board, insuff_draw)
-    assert_equal(state, chesslib.GameState_Tie)
+    state = cl.GameState(insuff_board, insuff_draw)
+    assert_equal(state, cl.GameState_Tie)
 
     # create a chess board with a simple check that can still be defended
     check_board_pieces = np.array([
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'K', True), chesslib.ChessPosition('E1')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('B', 'R', True), chesslib.ChessPosition('D2')),
-        chesslib.ChessPieceAtPos(chesslib.ChessPiece('W', 'K', False), chesslib.ChessPosition('E8')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'K', True), cl.ChessPosition('E1')),
+        cl.ChessPieceAtPos(cl.ChessPiece('B', 'R', True), cl.ChessPosition('D2')),
+        cl.ChessPieceAtPos(cl.ChessPiece('W', 'K', False), cl.ChessPosition('E8')),
     ], dtype=np.uint16)
-    check_board = chesslib.ChessBoard(check_board_pieces)
-    check_draw = chesslib.ChessDraw(check_board,
-        chesslib.ChessPosition('D2'), chesslib.ChessPosition('E2'))
-    check_board = chesslib.ApplyDraw(check_board, check_draw)
+    check_board = cl.ChessBoard(check_board_pieces)
+    check_draw = cl.ChessDraw(check_board,
+        cl.ChessPosition('D2'), cl.ChessPosition('E2'))
+    check_board = cl.ApplyDraw(check_board, check_draw)
 
     # test the GameState() function to detect a simple check
-    state = chesslib.GameState(check_board, check_draw)
-    assert_equal(state, chesslib.GameState_Check)
+    state = cl.GameState(check_board, check_draw)
+    assert_equal(state, cl.GameState_Check)
 
     print("test passed!")
 
@@ -627,14 +629,14 @@ def test_visualize_board():
     print("testing visualize chess board")
 
     # generate a chess board in start formation
-    board = chesslib.ChessBoard_StartFormation()
-    simple_board = chesslib.ChessBoard_StartFormation(True)
+    board = cl.ChessBoard_StartFormation()
+    simple_board = cl.ChessBoard_StartFormation(True)
 
     # convert the board to a printable string
-    board_str = chesslib.VisualizeBoard(board)
+    board_str = cl.VisualizeBoard(board)
 
     # make sure that the simple board and bitboards representations produce the same output
-    assert_equal(board_str, chesslib.VisualizeBoard(simple_board, True))
+    assert_equal(board_str, cl.VisualizeBoard(simple_board, True))
 
     # make sure that the expected content is retrieved
     assert_equal(board_str, exp_board_str)
@@ -650,7 +652,7 @@ def test_visualize_draw():
     draw = 0x0118070C
 
     # convert the board to a printable string
-    draw_str = chesslib.VisualizeDraw(draw)
+    draw_str = cl.VisualizeDraw(draw)
 
     # make sure that the expected content is retrieved
     assert_equal(draw_str, 'White Peasant E4-E2')
