@@ -33,13 +33,13 @@ const ChessGameContext HDSLPD_MASK     = 0x0007E000uL;
 const ChessGameContext GAME_ROUND_MASK = 0xFFF80000uL;
 
 ChessGameContext create_context(ChessColor side, uint8_t en_passants,
-    uint8_t rochades, uint8_t halfdraws_since_last_pawn_draw, int game_round)
+    uint8_t rochades, uint8_t hdslpd, int game_round)
 {
     /* combine the attributes to a single 32-bit integer */
     return ((ChessGameContext)side & 0x1uL)
         | (((ChessGameContext)en_passants & 0xFFuL) << 1)
         | (((ChessGameContext)rochades & 0xFuL) << 9)
-        | (((ChessGameContext)halfdraws_since_last_pawn_draw & 0x3FuL) << 13)
+        | (((ChessGameContext)hdslpd & 0x3FuL) << 13)
         | ((ChessGameContext)game_round << 19);
 }
 
