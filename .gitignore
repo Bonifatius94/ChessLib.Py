@@ -1,7 +1,4 @@
-/.vs
-/out
-/ChessLib/out
-/ChessLib/.vscode
-/ChessLib/.vs
-/.pypirc
-/.vscode
+.vs
+.vscode
+build
+out

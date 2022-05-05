@@ -1,3 +1,0 @@
-
-# TODO: determine the minimal supported numpy version
-numpy==1.19.5
